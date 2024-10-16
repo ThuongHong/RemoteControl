@@ -12,15 +12,14 @@ Libraries for Gmail API:
 ## Installation
 First, clone this repo:
 ```bash 
-https://github.com/ThuongHong/RemoteControl.git
+git clone https://github.com/ThuongHong/RemoteControl.git
 ```
 ### curl
 
 * Next, clone this repo 
-```
-bash https://github.com/curl/curl.git 
+```bash
+git clone https://github.com/curl/curl.git 
 ``` 
-in the same folder
 
 * Open CMake GUI.
 * In "Where is the source code", browse the entire curl folder.

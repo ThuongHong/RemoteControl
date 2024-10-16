@@ -28,6 +28,7 @@ git clone https://github.com/curl/curl.git
 
 ### Run code (In Visual Studio 2022):
 * Open folder client (or server) by VS.
+* Open CMakeLists.txt, Ctrl+S to generate.
 * Build all (F7).
 * Open client.cpp (or server.cpp) to run .exe file.
 

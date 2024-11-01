@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.24)
 
 # Enable Hot Reload for MSVC compilers if supported.
 if(POLICY CMP0141)
@@ -35,8 +35,14 @@ else()
 endif()
 
 # Find and link CURL library
+set(CURL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/out/build/curl/include")  # Update this path
+set(CURL_LIBRARY "${CMAKE_SOURCE_DIR}/out/build/curl/build/lib/Release/libcurl.lib")  # Update this path
 find_package(CURL REQUIRED)
-target_link_libraries(client PRIVATE CURL::libcurl)
+# target_link_libraries(client PRIVATE CURL::libcurl)
+target_link_libraries(client PRIVATE ${CURL_LIBRARY})
+target_compile_definitions(client PRIVATE CURL_STATICLIB)
+target_link_libraries(client PRIVATE ws2_32 wldap32 crypt32)
+
 
 # Find and link wxWidgets libraries
 find_package(wxWidgets REQUIRED)

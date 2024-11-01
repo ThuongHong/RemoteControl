@@ -36,8 +36,7 @@ mkdir build && cd build
     * After the first configuration, use the search box at the top to look for the following option: ```BUILD_SHARED_LIBS```: Make sure this is unchecked to disable shared library building.
     * After setting the options, click **Configure again** if prompted to apply changes. Once configuration is complete and there are no errors, click **Generate** to create the build files.
 
-* Build the Library:
-   * Open a terminal or command prompt, navigate to your build directory, and run the following command:
+* Open a terminal or command prompt, navigate to your **build** directory, and run the following command:
      ```bash
      cmake --build . --config Release
      ```

@@ -32,13 +32,27 @@ mkdir build && cd build
 * Open CMake GUI
     * **"Where is the source code"**: Select the main ```curl``` folder.
     * **"Where to build the binaries"**: Select the the ```curl/build``` dỉrectory.
-    * Click **Configure**, then **Generate**, and **Close** once completed.
+    * Click **Configure**.
+    * After the first configuration, use the search box at the top to look for the following option: ```BUILD_SHARED_LIBS```: Make sure this is unchecked to disable shared library building.
+    * After setting the options, click **Configure again** if prompted to apply changes. Once configuration is complete and there are no errors, click **Generate** to create the build files.
+
+* Build the Library:
+   * Open a terminal or command prompt, navigate to your build directory, and run the following command:
+     ```bash
+     cmake --build . --config Release
+     ```
 
 ## wxWidgets
 * Download wxWidgets from [wxWidgets Downloads](https://www.wxwidgets.org/downloads/).
 
 
 * Unzip the folder and place it in a location of your choice.
+* Set up the wxWidgets path in Windows environment variables:
+    * Open **Environment Variables**.
+    * In **System variables**, click **New**:
+        * **Varialbe name**: WXWIN
+        * **Variable value**: ```<your_path>\WxWidget```
+    * Confirm by clicking OK to save changes.
 
 # Server
 ## OpenCV

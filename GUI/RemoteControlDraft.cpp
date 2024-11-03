@@ -7,39 +7,72 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	wxInitAllImageHandlers();
 
 	/*Create Panel*/
-
 	panel1 = new wxPanel(this);
-	panel1->Hide();
+	//panel1->Hide();
 	panel2 = new wxPanel(this);
 	panel2->Hide();
 	panel3 = new wxPanel(this);
-	//panel3->Hide();
+	panel3->Hide();
+	panel4 = new wxPanel(this);
+	panel4->Hide();
+	panel5 = new wxPanel(this);
+	panel5->Hide();
 
-	// Meta Data
+	//Meta Data
 	wxString description("Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna.\
 		Nunc viverra imperdiet enim.Fusce est.Vivamus a tellus.\
 		");
 	wxFont headerFont(35, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Impact"); //Unispace, Impact
 	wxFont mainFont(11, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
 	wxImage image(".\\HCMUS.png", wxBITMAP_TYPE_PNG);
-	panel1Image = image.Scale(180, 180, wxIMAGE_QUALITY_HIGH);
 	wxImage icon(".\\google_icon.png", wxBITMAP_TYPE_PNG);
 	icon = icon.Scale(50, 50, wxIMAGE_QUALITY_HIGH);
 	wxBitmap bitmap(icon);
-	wxArrayString roles;
-	roles.Add("Sender");
-	roles.Add("Receiver");
+
+	// wxWebView* webView = wxWebView::New(this, wxID_ANY, "https://mail.google.com/", wxDefaultPosition, wxSize(800, 600));
 
 	/*PANEL 1*/
+	CreatePanel1(description, image);
+	SetPanel1(headerFont, mainFont, bitmap);
+	CreateSizerPanel1();
 
+	/*PANEL 2*/
+	CreatePanel2(description, image);
+	SetPanel2(headerFont, mainFont);
+	CreateSizerPanel2();
+
+	/*PANEL 3*/
+	CreatePanel3(image);
+	SetPanel3(headerFont, mainFont);
+	CreateSizerPanel3();
+
+	/*PANEL 4*/
+	CreatePanel4();
+	SetPanel4(headerFont, mainFont);
+	CreateSizerPanel4();
+
+	BindControl();
+	/**/
+	sizerMain = new wxBoxSizer(wxVERTICAL);
+	sizerMain->Add(panel1, 1, wxEXPAND);
+	sizerMain->Add(panel2, 1, wxEXPAND);
+	sizerMain->Add(panel3, 1, wxEXPAND);
+	sizerMain->Add(panel4, 1, wxEXPAND);
+
+	this->SetSizer(sizerMain);
+}
+
+void RemoteControlDraft::CreatePanel1(wxString description, wxImage image) {
+	panel1Image = image.Scale(180, 180, wxIMAGE_QUALITY_HIGH);
+	roles = { "Sender", "Receiver" };
 	panel1ProgramTitle = new wxStaticText(panel1, wxID_ANY, "PC REMOTE CONTROL", wxDefaultPosition, wxSize(600, -1), wxALIGN_CENTER);
 	panel1ProgramDescription = new wxStaticText(panel1, wxID_ANY, description);
 	panel1ButtonLogin = new wxButton(panel1, wxID_ANY, "LOGIN WITH GOOGLE", wxDefaultPosition, wxSize(280, 80));
 	panel1Logo = new wxStaticBitmap(panel1, wxID_ANY, wxBitmap(panel1Image));
+}
 
-	// wxWebView* webView = wxWebView::New(this, wxID_ANY, "https://mail.google.com/", wxDefaultPosition, wxSize(800, 600));
-
-	// Modify
+void RemoteControlDraft::SetPanel1(wxFont headerFont, wxFont mainFont, wxBitmap bitmap)
+{
 	panel1ProgramTitle->SetFont(headerFont);
 	panel1ProgramTitle->SetBackgroundColour(wxColour(255, 228, 196));
 	panel1ProgramDescription->SetFont(mainFont);
@@ -48,16 +81,16 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	panel1ButtonLogin->SetBitmap(bitmap);
 	panel1ButtonLogin->SetBitmapPosition(wxLEFT);
 	panel1ButtonLogin->SetBitmapMargins(30, 0);
+}
 
-	// Bind Event
-	panel1ButtonLogin->Bind(wxEVT_BUTTON, &RemoteControlDraft::OnPanel1ButtonSwitch, this);
-
+void RemoteControlDraft::CreateSizerPanel1()
+{
 	panel1MainSizer = new wxBoxSizer(wxVERTICAL);
 	panel1SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
 	panel1SubSizer2 = new wxBoxSizer(wxHORIZONTAL);
 
 	panel1SubSizer1->Add(panel1ProgramDescription, 0, wxLEFT, 20);
-	
+
 	panel1SubSizer2->Add(panel1Logo);
 	panel1SubSizer2->Add(panel1ButtonLogin, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, 50);
 
@@ -66,15 +99,20 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	panel1MainSizer->Add(panel1SubSizer2);
 
 	panel1->SetSizer(panel1MainSizer);
+}
 
-	/*PANEL 2*/
+void RemoteControlDraft::CreatePanel2(wxString description, wxImage image)
+{
 	panel2ProgramTitle = new wxStaticText(panel2, wxID_ANY, "PC REMOTE CONTROL", wxDefaultPosition, wxSize(600, -1), wxALIGN_CENTER);
 	panel2ProgramDescription = new wxStaticText(panel2, wxID_ANY, description);
 	panel2SubText = new wxStaticText(panel2, wxID_ANY, "Receiver Email");
 	panel2Roles = new wxRadioBox(panel2, wxID_ANY, "Choose your role:", wxDefaultPosition, wxDefaultSize, roles, 2, wxRA_SPECIFY_ROWS);
 	panel2InputField = new wxTextCtrl(panel2, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
 	panel2ButtonConfirm = new wxButton(panel2, wxID_ANY, "CONFIRM", wxDefaultPosition, wxSize(150, -1));
+}
 
+void RemoteControlDraft::SetPanel2(wxFont headerFont, wxFont mainFont)
+{
 	panel2ProgramTitle->SetFont(headerFont);
 	panel2ProgramTitle->SetBackgroundColour(wxColour(255, 228, 196));
 	panel2ProgramDescription->SetFont(mainFont);
@@ -83,11 +121,10 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	panel2SubText->SetFont(mainFont);
 	panel2ButtonConfirm->SetFont(mainFont);
 	panel2ButtonConfirm->Disable();
+}
 
-	panel2Roles->Bind(wxEVT_RADIOBOX, &RemoteControlDraft::OnPanel2RadioBoxChanged, this);
-	panel2ButtonConfirm->Bind(wxEVT_BUTTON, &RemoteControlDraft::OnPanel2ButtonSwitch, this);
-	panel2InputField->Bind(wxEVT_TEXT, &RemoteControlDraft::OnPanel2TextCtrlChanged, this);
-
+void RemoteControlDraft::CreateSizerPanel2()
+{
 	panel2MainSizer = new wxBoxSizer(wxVERTICAL);
 	panel2SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
 	panel2SubSizer2 = new wxBoxSizer(wxVERTICAL);
@@ -107,82 +144,6 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	panel2MainSizer->Add(panel2ButtonConfirm, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP, 20);
 
 	panel2->SetSizer(panel2MainSizer);
-
-	/*PANEL 3*/
-	panel3Image = image.Scale(120, 120, wxIMAGE_QUALITY_HIGH);
-	features = { "Application", "Service", "File", "Screen Capture", "Webcam", "Shutdown", "Logout"};
-	optionsLSS = { "List", "Start", "Stop" };
-	optionsTD = { "Take", "Delete" };
-
-	panel3Sender = new wxStaticText(panel3, wxID_ANY, "ROLE: SENDER");
-	panel3Features = new wxRadioBox(panel3, wxID_ANY, "Features", wxDefaultPosition, wxDefaultSize, features, 7, wxRA_SPECIFY_ROWS);
-	panel3Options = new wxRadioBox(panel3, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsLSS, 3, wxRA_SPECIFY_COLS);
-	panel3SubText = new wxStaticText(panel3, wxID_ANY, "Choose Directory to Save Result");
-	panel3Directory = new wxTextCtrl(panel3, wxID_ANY, "Default: .\\result", wxDefaultPosition, wxSize(200, -1));
-	panel3ButtonBrowse = new wxButton(panel3, wxID_ANY, "Browse");
-	panel3ButtonConfirm = new wxButton(panel3, wxID_ANY, "Confirm");
-	panel3ButtonExit = new wxButton(panel3, wxID_ANY, "Exit");
-	panel3ImageDisplay = new wxStaticBitmap(panel3, wxID_ANY, wxBitmap(panel3Image));
-
-	panel3Features->Bind(wxEVT_RADIOBOX, &RemoteControlDraft::OnPanel3FeaturesChanged, this);
-
-	panel3Sender->SetFont(headerFont);
-	panel3Features->SetFont(mainFont);
-	panel3Options->SetFont(mainFont);
-	panel3SubText->SetFont(mainFont);
-	panel3Directory->SetFont(mainFont);
-	panel3ButtonBrowse->SetFont(mainFont);
-	panel3ButtonConfirm->SetFont(mainFont);
-	panel3ButtonExit->SetFont(mainFont);
-	
-
-	wxBoxSizer* panel3MainSizer = new wxBoxSizer(wxVERTICAL);
-	wxBoxSizer* panel3SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
-	wxBoxSizer* panel3SubSizer2 = new wxBoxSizer(wxHORIZONTAL);
-	wxBoxSizer* panel3SubSizer3 = new wxBoxSizer(wxVERTICAL);
-	wxBoxSizer* panel3SubSizer4 = new wxBoxSizer(wxVERTICAL);
-	wxBoxSizer* panel3SubSizer5 = new wxBoxSizer(wxHORIZONTAL);
-	wxBoxSizer* panel3SubSizer6 = new wxBoxSizer(wxHORIZONTAL);
-	
-	panel3SubSizer1->AddSpacer(30);
-	panel3SubSizer1->Add(panel3Sender, 0, wxTOP, 25);
-	panel3SubSizer1->AddSpacer(100);
-	panel3SubSizer1->Add(panel3ImageDisplay);
-
-	panel3SubSizer3->Add(panel3Features);
-
-	panel3SubSizer4->Add(panel3Options);
-	panel3SubSizer4->AddSpacer(30);
-	panel3SubSizer4->Add(panel3SubText, 0, wxLEFT, 20);
-
-	panel3SubSizer5->Add(panel3Directory);
-	panel3SubSizer5->AddSpacer(10);
-	panel3SubSizer5->Add(panel3ButtonBrowse);
-
-	panel3SubSizer6->Add(panel3ButtonConfirm);
-	panel3SubSizer6->AddSpacer(30);
-	panel3SubSizer6->Add(panel3ButtonExit);
-
-	panel3SubSizer4->Add(panel3SubSizer5);
-	panel3SubSizer4->AddSpacer(50);
-	panel3SubSizer4->Add(panel3SubSizer6);
-
-	panel3SubSizer2->AddSpacer(50);
-	panel3SubSizer2->Add(panel3SubSizer3);
-	panel3SubSizer2->AddSpacer(50);
-	panel3SubSizer2->Add(panel3SubSizer4);
-
-	panel3MainSizer->Add(panel3SubSizer1);
-	panel3MainSizer->Add(panel3SubSizer2);
-	panel3->SetSizer(panel3MainSizer);
-
-	/**/
-	sizerMain = new wxBoxSizer(wxVERTICAL);
-	sizerMain->Add(panel1, 1, wxEXPAND);
-	sizerMain->Add(panel2, 1, wxEXPAND);
-	sizerMain->Add(panel3, 1, wxEXPAND);
-
-	this->SetSizer(sizerMain);
 }
 
 void RemoteControlDraft::OnPanel1ButtonSwitch(wxCommandEvent& evt)
@@ -194,12 +155,22 @@ void RemoteControlDraft::OnPanel1ButtonSwitch(wxCommandEvent& evt)
 
 void RemoteControlDraft::OnPanel2ButtonSwitch(wxCommandEvent& evt)
 {
-	panel2->Hide();
-	panel3->Show();
+	switch (panel2Roles->GetSelection()) {
+	case 0: // To SENDER PANEL
+		panel2->Hide();
+		panel3->Show();
+		break;
+	case 1: // To RECEIVER PANEL
+		panel2->Hide();
+		panel4->Show();
+		break;
+	}
 	Layout();
+	panel4->Layout();
+	panel4->Refresh();
 }
 
-void RemoteControlDraft::OnPanel2RadioBoxChanged(wxCommandEvent& evt)
+void RemoteControlDraft::OnPanel2RolesChanged(wxCommandEvent& evt)
 {
 	int selection = evt.GetInt();
 	switch (selection) {
@@ -242,24 +213,146 @@ void RemoteControlDraft::OnPanel2TextCtrlChanged(wxCommandEvent& event) {
 void RemoteControlDraft::OnPanel3FeaturesChanged(wxCommandEvent& evt)
 {
 	int selection = evt.GetInt();
+
+	if (panel3OptionsLSS->IsShown()) {
+		panel3OptionsLSS->Hide();
+	}
+	else if (panel3OptionsTD->IsShown()) {
+		panel3OptionsTD->Hide();
+	}
+
 	switch (selection) {
 	case 0: case 1:
-		panel3Options->Show();
-		for (int i = 0; i < optionsLSS.GetCount(); i++) {
-			panel3Options->SetString(i, optionsLSS[i]);
-		}
-		panel3Options->Refresh();
+		panel3OptionsLSS->Show();
 		break;
 	case 2:
-		panel3Options->Show();
-		for (int i = 0; i < optionsTD.GetCount(); i++) {
-			panel3Options->SetString(i, optionsTD[i]);
-		}
-		panel3Options->Refresh();
+		panel3OptionsTD->Show();
 		break;
 	default:
-		panel3Options->Hide();
 		break;
 	}
-	panel3SubSizer4->Layout();
+
+	panel3->Layout();
+}
+
+void RemoteControlDraft::OnPanel4ButtonSettingsClicked(wxCommandEvent& evt)
+{
+	panel4->Hide();
+	panel5->Show();
+	Layout();
+}
+
+void RemoteControlDraft::OnButtonExitClicked(wxCommandEvent& evt)
+{
+	Close(true);
+}
+
+void RemoteControlDraft::CreatePanel3(wxImage image)
+{
+	panel3Image = image.Scale(120, 120, wxIMAGE_QUALITY_HIGH);
+	features = { "Application", "Service", "File", "Screen Capture", "Webcam", "Shutdown", "Logout" };
+	optionsLSS = { "List", "Start", "Stop" };
+	optionsTD = { "Take", "Delete" };
+
+	panel3Sender = new wxStaticText(panel3, wxID_ANY, "ROLE: SENDER");
+	panel3Features = new wxRadioBox(panel3, wxID_ANY, "Features", wxDefaultPosition, wxDefaultSize, features, 7, wxRA_SPECIFY_ROWS);
+	panel3OptionsLSS = new wxRadioBox(panel3, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsLSS, 3, wxRA_SPECIFY_COLS);
+	panel3OptionsTD = new wxRadioBox(panel3, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsTD, 2, wxRA_SPECIFY_COLS);
+	panel3ButtonConfirm = new wxButton(panel3, wxID_ANY, "Confirm");
+	panel3ButtonExit = new wxButton(panel3, wxID_ANY, "Exit");
+	panel3ImageDisplay = new wxStaticBitmap(panel3, wxID_ANY, wxBitmap(panel3Image));
+}
+
+void RemoteControlDraft::SetPanel3(wxFont headerFont, wxFont mainFont) {
+	panel3Sender->SetFont(headerFont);
+	panel3Features->SetFont(mainFont);
+	panel3OptionsLSS->SetFont(mainFont);
+	panel3OptionsTD->SetFont(mainFont);
+	panel3OptionsTD->Hide();
+	panel3ButtonConfirm->SetFont(mainFont);
+	panel3ButtonExit->SetFont(mainFont);
+}
+
+void RemoteControlDraft::CreateSizerPanel3()
+{
+	panel3MainSizer = new wxBoxSizer(wxVERTICAL);
+	panel3SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
+	panel3SubSizer2 = new wxBoxSizer(wxHORIZONTAL);
+	panel3SubSizer3 = new wxBoxSizer(wxHORIZONTAL);
+	panel3SubSizer4 = new wxBoxSizer(wxVERTICAL);
+
+	panel3SubSizer3->Add(panel3ButtonConfirm);
+	panel3SubSizer3->AddSpacer(30);
+	panel3SubSizer3->Add(panel3ButtonExit);
+
+	panel3SubSizer4->Add(panel3OptionsLSS);
+	panel3SubSizer4->Add(panel3OptionsTD);
+	panel3SubSizer4->AddSpacer(30);
+	panel3SubSizer4->Add(panel3SubSizer3);
+
+	panel3SubSizer1->AddSpacer(30);
+	panel3SubSizer1->Add(panel3Sender, 0, wxTOP, 25);
+	panel3SubSizer1->AddSpacer(100);
+	panel3SubSizer1->Add(panel3ImageDisplay);
+
+	panel3SubSizer2->AddSpacer(50);
+	panel3SubSizer2->Add(panel3Features);
+	panel3SubSizer2->AddSpacer(100);
+	panel3SubSizer2->Add(panel3SubSizer4, 0, wxALIGN_CENTER);
+
+	panel3MainSizer->Add(panel3SubSizer1);
+	panel3MainSizer->Add(panel3SubSizer2);
+	panel3->SetSizer(panel3MainSizer);
+}
+
+void RemoteControlDraft::CreatePanel4()
+{
+	panel4Receiver = new wxStaticText(panel4, wxID_ANY, "ROLE: RECEIVER");
+	panel4ButtonExit = new wxButton(panel4, wxID_ANY, "Exit");
+	panel4ImageDisplay = new wxStaticBitmap(panel4, wxID_ANY, wxBitmap(panel3Image));
+	panel4TextWaiting = new wxStaticText(panel4, wxID_ANY, "WAITING FOR COMMAND...");
+	panel4TextProcessing = new wxStaticText(panel4, wxID_ANY, "CURRENT PROCESSING:");
+	panel4TextFeature = new wxStaticText(panel4, wxID_ANY, "FEATURE");
+}
+
+void RemoteControlDraft::SetPanel4(wxFont headerFont, wxFont mainFont)
+{
+	panel4Receiver->SetFont(headerFont);
+	panel4TextWaiting->SetFont(headerFont);
+	panel4ButtonExit->SetFont(mainFont);
+	panel4TextProcessing->Hide();
+	panel4TextFeature->Hide();
+}
+
+void RemoteControlDraft::CreateSizerPanel4()
+{
+	panel4MainSizer = new wxBoxSizer(wxVERTICAL);
+	panel4SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
+
+	panel4SubSizer1->AddSpacer(30);
+	panel4SubSizer1->Add(panel4Receiver, 0, wxTOP, 25);
+	panel4SubSizer1->AddSpacer(100);
+	panel4SubSizer1->Add(panel4ImageDisplay);
+
+	panel4MainSizer->Add(panel4SubSizer1);
+	panel4MainSizer->Add(panel4TextWaiting, 0, wxALIGN_CENTER | wxTOP | wxBOTTOM, 40);
+	panel4MainSizer->Add(panel4TextProcessing, 0, wxALIGN_CENTER);
+	panel4MainSizer->Add(panel4TextFeature, 0, wxALIGN_CENTER);
+	panel4MainSizer->AddSpacer(30);
+	panel4MainSizer->Add(panel4ButtonExit, 0, wxALIGN_CENTER | wxBOTTOM, 30);
+	panel4->SetSizer(panel4MainSizer);
+}
+
+void RemoteControlDraft::BindControl()
+{
+	panel1ButtonLogin->Bind(wxEVT_BUTTON, &RemoteControlDraft::OnPanel1ButtonSwitch, this);
+
+	panel2Roles->Bind(wxEVT_RADIOBOX, &RemoteControlDraft::OnPanel2RolesChanged, this);
+	panel2ButtonConfirm->Bind(wxEVT_BUTTON, &RemoteControlDraft::OnPanel2ButtonSwitch, this);
+	panel2InputField->Bind(wxEVT_TEXT, &RemoteControlDraft::OnPanel2TextCtrlChanged, this);
+	
+	panel3Features->Bind(wxEVT_RADIOBOX, &RemoteControlDraft::OnPanel3FeaturesChanged, this);
+	panel3ButtonExit->Bind(wxEVT_BUTTON, &RemoteControlDraft::OnButtonExitClicked, this);
+
+	panel4ButtonExit->Bind(wxEVT_BUTTON, &RemoteControlDraft::OnButtonExitClicked, this);
 }

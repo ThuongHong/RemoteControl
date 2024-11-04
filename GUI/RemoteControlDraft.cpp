@@ -8,7 +8,6 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 
 	/*Create Panel*/
 	panel1 = new wxPanel(this);
-	//panel1->Hide();
 	panel2 = new wxPanel(this);
 	panel2->Hide();
 	panel3 = new wxPanel(this);
@@ -70,7 +69,6 @@ void RemoteControlDraft::CreatePanel1(wxString description, wxImage image) {
 	panel1ButtonLogin = new wxButton(panel1, wxID_ANY, "LOGIN WITH GOOGLE", wxDefaultPosition, wxSize(280, 80));
 	panel1Logo = new wxStaticBitmap(panel1, wxID_ANY, wxBitmap(panel1Image));
 }
-
 void RemoteControlDraft::SetPanel1(wxFont headerFont, wxFont mainFont, wxBitmap bitmap)
 {
 	panel1ProgramTitle->SetFont(headerFont);
@@ -80,9 +78,8 @@ void RemoteControlDraft::SetPanel1(wxFont headerFont, wxFont mainFont, wxBitmap 
 	panel1ButtonLogin->SetFont(mainFont);
 	panel1ButtonLogin->SetBitmap(bitmap);
 	panel1ButtonLogin->SetBitmapPosition(wxLEFT);
-	panel1ButtonLogin->SetBitmapMargins(30, 0);
+	panel1ButtonLogin->SetBitmapMargins(20, 0);
 }
-
 void RemoteControlDraft::CreateSizerPanel1()
 {
 	panel1MainSizer = new wxBoxSizer(wxVERTICAL);
@@ -110,7 +107,6 @@ void RemoteControlDraft::CreatePanel2(wxString description, wxImage image)
 	panel2InputField = new wxTextCtrl(panel2, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
 	panel2ButtonConfirm = new wxButton(panel2, wxID_ANY, "CONFIRM", wxDefaultPosition, wxSize(150, -1));
 }
-
 void RemoteControlDraft::SetPanel2(wxFont headerFont, wxFont mainFont)
 {
 	panel2ProgramTitle->SetFont(headerFont);
@@ -122,7 +118,6 @@ void RemoteControlDraft::SetPanel2(wxFont headerFont, wxFont mainFont)
 	panel2ButtonConfirm->SetFont(mainFont);
 	panel2ButtonConfirm->Disable();
 }
-
 void RemoteControlDraft::CreateSizerPanel2()
 {
 	panel2MainSizer = new wxBoxSizer(wxVERTICAL);
@@ -146,107 +141,6 @@ void RemoteControlDraft::CreateSizerPanel2()
 	panel2->SetSizer(panel2MainSizer);
 }
 
-void RemoteControlDraft::OnPanel1ButtonSwitch(wxCommandEvent& evt)
-{
-	panel1->Hide();
-	panel2->Show();
-	Layout();
-}
-
-void RemoteControlDraft::OnPanel2ButtonSwitch(wxCommandEvent& evt)
-{
-	switch (panel2Roles->GetSelection()) {
-	case 0: // To SENDER PANEL
-		panel2->Hide();
-		panel3->Show();
-		break;
-	case 1: // To RECEIVER PANEL
-		panel2->Hide();
-		panel4->Show();
-		break;
-	}
-	Layout();
-	panel4->Layout();
-	panel4->Refresh();
-}
-
-void RemoteControlDraft::OnPanel2RolesChanged(wxCommandEvent& evt)
-{
-	int selection = evt.GetInt();
-	switch (selection) {
-	case 0:
-		panel2SubText->SetLabel("Receiver Email");
-		break;
-	case 1:
-		panel2SubText->SetLabel("Server IP");
-		break;
-	}
-	panel2InputField->Clear();
-	panel2SubSizer2->Layout();
-}
-
-bool RemoteControlDraft::IsEmailFormat(const wxString& text)
-{
-	const std::regex emailPattern(R"((\w+)(\.\w+)*@gmail\.com)");
-	return std::regex_match(text.ToStdString(), emailPattern);
-}
-
-bool RemoteControlDraft::IsIPFormat(const wxString& text) {
-	const std::regex ipPattern("^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
-	return std::regex_match(text.ToStdString(), ipPattern);
-}
-
-void RemoteControlDraft::OnPanel2TextCtrlChanged(wxCommandEvent& event) {
-	wxString text = panel2InputField->GetValue();
-	bool enableButton = false;
-
-	if (panel2Roles->GetSelection() == 0) {  // Gmail
-		enableButton = IsEmailFormat(text);
-	}
-	else if (panel2Roles->GetSelection() == 1) {  // IP
-		enableButton = IsIPFormat(text);
-	}
-
-	panel2ButtonConfirm->Enable(enableButton);
-}
-
-void RemoteControlDraft::OnPanel3FeaturesChanged(wxCommandEvent& evt)
-{
-	int selection = evt.GetInt();
-
-	if (panel3OptionsLSS->IsShown()) {
-		panel3OptionsLSS->Hide();
-	}
-	else if (panel3OptionsTD->IsShown()) {
-		panel3OptionsTD->Hide();
-	}
-
-	switch (selection) {
-	case 0: case 1:
-		panel3OptionsLSS->Show();
-		break;
-	case 2:
-		panel3OptionsTD->Show();
-		break;
-	default:
-		break;
-	}
-
-	panel3->Layout();
-}
-
-void RemoteControlDraft::OnPanel4ButtonSettingsClicked(wxCommandEvent& evt)
-{
-	panel4->Hide();
-	panel5->Show();
-	Layout();
-}
-
-void RemoteControlDraft::OnButtonExitClicked(wxCommandEvent& evt)
-{
-	Close(true);
-}
-
 void RemoteControlDraft::CreatePanel3(wxImage image)
 {
 	panel3Image = image.Scale(120, 120, wxIMAGE_QUALITY_HIGH);
@@ -262,7 +156,6 @@ void RemoteControlDraft::CreatePanel3(wxImage image)
 	panel3ButtonExit = new wxButton(panel3, wxID_ANY, "Exit");
 	panel3ImageDisplay = new wxStaticBitmap(panel3, wxID_ANY, wxBitmap(panel3Image));
 }
-
 void RemoteControlDraft::SetPanel3(wxFont headerFont, wxFont mainFont) {
 	panel3Sender->SetFont(headerFont);
 	panel3Features->SetFont(mainFont);
@@ -272,7 +165,6 @@ void RemoteControlDraft::SetPanel3(wxFont headerFont, wxFont mainFont) {
 	panel3ButtonConfirm->SetFont(mainFont);
 	panel3ButtonExit->SetFont(mainFont);
 }
-
 void RemoteControlDraft::CreateSizerPanel3()
 {
 	panel3MainSizer = new wxBoxSizer(wxVERTICAL);
@@ -310,20 +202,22 @@ void RemoteControlDraft::CreatePanel4()
 	panel4Receiver = new wxStaticText(panel4, wxID_ANY, "ROLE: RECEIVER");
 	panel4ButtonExit = new wxButton(panel4, wxID_ANY, "Exit");
 	panel4ImageDisplay = new wxStaticBitmap(panel4, wxID_ANY, wxBitmap(panel3Image));
-	panel4TextWaiting = new wxStaticText(panel4, wxID_ANY, "WAITING FOR COMMAND...");
+	panel4TextWaiting = new wxStaticText(panel4, wxID_ANY, "WAITING FOR COMMAND");
 	panel4TextProcessing = new wxStaticText(panel4, wxID_ANY, "CURRENT PROCESSING:");
 	panel4TextFeature = new wxStaticText(panel4, wxID_ANY, "FEATURE");
+	panel4Timer = new wxTimer(panel4, wxID_ANY);
+	panel4Timer->Start(2000);
 }
-
 void RemoteControlDraft::SetPanel4(wxFont headerFont, wxFont mainFont)
 {
 	panel4Receiver->SetFont(headerFont);
 	panel4TextWaiting->SetFont(headerFont);
+	panel4TextProcessing->SetFont(headerFont);
+	panel4TextFeature->SetFont(headerFont);
 	panel4ButtonExit->SetFont(mainFont);
 	panel4TextProcessing->Hide();
 	panel4TextFeature->Hide();
 }
-
 void RemoteControlDraft::CreateSizerPanel4()
 {
 	panel4MainSizer = new wxBoxSizer(wxVERTICAL);
@@ -335,9 +229,9 @@ void RemoteControlDraft::CreateSizerPanel4()
 	panel4SubSizer1->Add(panel4ImageDisplay);
 
 	panel4MainSizer->Add(panel4SubSizer1);
-	panel4MainSizer->Add(panel4TextWaiting, 0, wxALIGN_CENTER | wxTOP | wxBOTTOM, 40);
-	panel4MainSizer->Add(panel4TextProcessing, 0, wxALIGN_CENTER);
-	panel4MainSizer->Add(panel4TextFeature, 0, wxALIGN_CENTER);
+	panel4MainSizer->Add(panel4TextWaiting, 1, wxALIGN_CENTER | wxTOP | wxBOTTOM, 40);
+	panel4MainSizer->Add(panel4TextProcessing, 1, wxALIGN_CENTER);
+	panel4MainSizer->Add(panel4TextFeature, 1, wxALIGN_CENTER);
 	panel4MainSizer->AddSpacer(30);
 	panel4MainSizer->Add(panel4ButtonExit, 0, wxALIGN_CENTER | wxBOTTOM, 30);
 	panel4->SetSizer(panel4MainSizer);
@@ -345,14 +239,195 @@ void RemoteControlDraft::CreateSizerPanel4()
 
 void RemoteControlDraft::BindControl()
 {
-	panel1ButtonLogin->Bind(wxEVT_BUTTON, &RemoteControlDraft::OnPanel1ButtonSwitch, this);
+	panel1ButtonLogin->Bind(wxEVT_BUTTON, &RemoteControlDraft::OnPanel1ButtonClicked, this);
 
 	panel2Roles->Bind(wxEVT_RADIOBOX, &RemoteControlDraft::OnPanel2RolesChanged, this);
-	panel2ButtonConfirm->Bind(wxEVT_BUTTON, &RemoteControlDraft::OnPanel2ButtonSwitch, this);
+	panel2ButtonConfirm->Bind(wxEVT_BUTTON, &RemoteControlDraft::OnPanel2ButtonClicked, this);
 	panel2InputField->Bind(wxEVT_TEXT, &RemoteControlDraft::OnPanel2TextCtrlChanged, this);
-	
+
 	panel3Features->Bind(wxEVT_RADIOBOX, &RemoteControlDraft::OnPanel3FeaturesChanged, this);
 	panel3ButtonExit->Bind(wxEVT_BUTTON, &RemoteControlDraft::OnButtonExitClicked, this);
-
+	panel3ButtonConfirm->Bind(wxEVT_BUTTON, &RemoteControlDraft::OnPanel3ButtonConfirm, this);
 	panel4ButtonExit->Bind(wxEVT_BUTTON, &RemoteControlDraft::OnButtonExitClicked, this);
+	panel4->Bind(wxEVT_TIMER, &RemoteControlDraft::OnTimer, this, panel4Timer->GetId());
 }
+
+void RemoteControlDraft::OnPanel1ButtonClicked(wxCommandEvent& evt)
+{
+	//Open webview to sign in gmail
+	panel1->Hide();
+	panel2->Show();
+	Layout();
+}
+void RemoteControlDraft::OnPanel2ButtonClicked(wxCommandEvent& evt)
+{
+	int selection = panel2Roles->GetSelection();
+	switch (selection) {
+	case 0: // To SENDER PANEL
+		//Set target email
+		panel2->Hide();
+		panel3->Show();
+		break;
+	case 1: // To RECEIVER PANEL
+		//Connect receiver to server
+		panel2->Hide();
+		panel4->Show();
+		break;
+	}
+	Layout();
+	panel4->Layout();
+	panel4->Refresh();
+}
+void RemoteControlDraft::OnButtonExitClicked(wxCommandEvent& evt)
+{
+	//Close socket
+	Close(true);
+	panel4Timer->Stop();
+}
+
+void RemoteControlDraft::OnPanel3ButtonConfirm(wxCommandEvent& evt)
+{
+	int selection1 = panel3Features->GetSelection();
+	int selection2 = panel3OptionsLSS->GetSelection();
+	int selection3 = panel3OptionsTD->GetSelection();
+
+	switch (selection1) {
+	case 0:
+		if (selection2 == 0) {
+			// list app
+			break;
+		}
+		else if (selection2 == 1) {
+			// start app
+			break;
+		}
+		else if (selection2 == 2) {
+			// stop app
+			break;
+		}
+	case 1:
+		if (selection2 == 0) {
+			// list service
+			break;
+		}
+		else if (selection2 == 1) {
+			// start service
+			break;
+		}
+		else if (selection2 == 2) {
+			// stop service
+			break;
+		}
+	case 2:
+		if (selection3 == 0) {
+			// take file
+			break;
+		}
+		else if (selection3 == 1) {
+			// delete file
+			break;
+		}
+	case 3:
+		// capture screen
+		break;
+	case 4:
+		// webcam
+		break;
+	case 5:
+		// shut down
+		break;
+	case 6:
+		// log out
+		break;
+	}
+}
+
+bool RemoteControlDraft::IsEmailFormat(const wxString& text)
+{
+	const std::regex emailPattern(R"((\w+)(\.\w+)*@gmail\.com)");
+	return std::regex_match(text.ToStdString(), emailPattern);
+}
+bool RemoteControlDraft::IsIPFormat(const wxString& text) {
+	const std::regex ipPattern("^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+	return std::regex_match(text.ToStdString(), ipPattern);
+}
+
+void RemoteControlDraft::OnPanel2RolesChanged(wxCommandEvent& evt)
+{
+	int selection = evt.GetInt();
+	switch (selection) {
+	case 0:
+		panel2SubText->SetLabel("Receiver Email");
+		break;
+	case 1:
+		panel2SubText->SetLabel("Server IP");
+		break;
+	}
+	panel2InputField->Clear();
+	panel2SubSizer2->Layout();
+}
+void RemoteControlDraft::OnPanel2TextCtrlChanged(wxCommandEvent& event) {
+	wxString text = panel2InputField->GetValue();
+	bool enableButton = false;
+
+	if (panel2Roles->GetSelection() == 0) {  // Gmail
+		enableButton = IsEmailFormat(text);
+	}
+	else if (panel2Roles->GetSelection() == 1) {  // IP
+		enableButton = IsIPFormat(text);
+	}
+
+	panel2ButtonConfirm->Enable(enableButton);
+}
+void RemoteControlDraft::OnPanel3FeaturesChanged(wxCommandEvent& evt)
+{
+	int selection = evt.GetInt();
+
+	if (panel3OptionsLSS->IsShown()) {
+		panel3OptionsLSS->SetSelection(0);
+		panel3OptionsLSS->Hide();
+	}
+	else if (panel3OptionsTD->IsShown()) {
+		panel3OptionsTD->SetSelection(0);
+		panel3OptionsTD->Hide();
+	}
+
+	switch (selection) {
+	case 0: case 1:
+		panel3OptionsLSS->Show();
+		break;
+	case 2:
+		panel3OptionsTD->Show();
+		break;
+	}
+
+	panel3->Layout();
+}
+
+bool RemoteControlDraft::OnPanel4EventListened() {
+	return rand() % 2 == 0;
+}
+
+
+void RemoteControlDraft::OnTimer(wxTimerEvent& event)
+{
+	// Check the command from the server
+	UpdateStatusText();
+}
+
+void RemoteControlDraft::UpdateStatusText() {
+	bool commandReceived = OnPanel4EventListened();
+	if (commandReceived) {
+		panel4TextWaiting->Show();
+		panel4TextProcessing->Hide();
+		panel4TextFeature->Hide();
+	}
+	else {
+		panel4TextWaiting->Hide();
+		panel4TextProcessing->Show();
+		panel4TextFeature->Show();
+	}
+	panel4->Layout();
+}
+
+// Todo: OnPanel1ButtonClicked -> Login Gmail, OnPanel2ButtonClicked -> Create socket, OnButtonExitClicked -> Close socket, OnPanel3ButtonConfirm -> Process command, OnPanel4EventListened -> Listen to command,

@@ -1,5 +1,6 @@
 #pragma once
 #include <wx/wx.h>
+#include <wx/timer.h>
 
 class RemoteControlDraft : public wxFrame
 {
@@ -24,15 +25,19 @@ private:
 
 	void BindControl();
 
-	void OnPanel1ButtonSwitch(wxCommandEvent& evt);
-	void OnPanel2ButtonSwitch(wxCommandEvent& evt);
+	void OnPanel1ButtonClicked(wxCommandEvent& evt);
+	void OnPanel2ButtonClicked(wxCommandEvent& evt);
 	void OnPanel2RolesChanged(wxCommandEvent& evt);
 	void OnPanel2TextCtrlChanged(wxCommandEvent& event);
 	bool IsEmailFormat(const wxString& text);
 	bool IsIPFormat(const wxString& text);
 	void OnPanel3FeaturesChanged(wxCommandEvent& evt);
-	void OnPanel4ButtonSettingsClicked(wxCommandEvent& evt);
+	void OnPanel3ButtonConfirm(wxCommandEvent& evt);
 	void OnButtonExitClicked(wxCommandEvent& evt);
+
+	bool OnPanel4EventListened();
+	void OnTimer(wxTimerEvent& event);
+	void UpdateStatusText();
 
 	wxPanel* panel1;
 	wxPanel* panel2;
@@ -89,10 +94,12 @@ private:
 	wxStaticText* panel4TextWaiting;
 	wxStaticText* panel4TextProcessing;
 	wxStaticText* panel4TextFeature;
+	wxTimer* panel4Timer;
 
 	wxBoxSizer* panel4MainSizer;
 	wxBoxSizer* panel4SubSizer1;
 
 	wxBoxSizer* sizerMain;
+
 };
 

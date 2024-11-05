@@ -18,10 +18,27 @@ set(SOURCE_FILES
     src/client.h
     src/client.cpp
     src/main.cpp
+    src/App.cpp
+    src/App.h
+    src/RemoteControlDraft.cpp
+    src/RemoteControlDraft.h
 )
 
 # Create an executable target
 add_executable(client ${SOURCE_FILES})
+
+# Set the path for your assets folder
+set(ASSETS_DIR "${CMAKE_SOURCE_DIR}/assets")
+
+# Set the output directory (where the binary is built)
+set(OUTPUT_DIR "${CMAKE_BINARY_DIR}/assets")
+
+# Copy image assets to the build directory
+add_custom_command(
+    TARGET client POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${ASSETS_DIR} ${OUTPUT_DIR}
+)
 
 # Specify C++ standard
 set_property(TARGET client PROPERTY CXX_STANDARD 20)

@@ -1,25 +1,32 @@
-// server_socket.h : Include file for standard system include files,
-// or project specific include files.
-
-#pragma once
+#ifndef SERVER_SOCKET_H
+#define SERVER_SOCKET_H
 
 #include <iostream>
-
-// TODO: Reference additional headers your program requires here.
 #include <fstream>
 #include <string>
-#include <vector>
-
 #include <winsock2.h>
-#pragma comment(lib, "Ws2_32.lib")  // Link Winsock library
+#include <ws2tcpip.h>
 
-#include <windows.h>
+#pragma comment(lib, "Ws2_32.lib")
+#include <Gdiplus.h>
 
-bool initializeWinsock();
-SOCKET createServerSocket();
-bool bindServerSocket(SOCKET& serverSocket, int port);
-bool listenForConnections(SOCKET& serverSocket);
-SOCKET acceptClient(SOCKET& serverSocket);
-bool sendFile(SOCKET& socket, const std::wstring& filename);
-bool receiveString(SOCKET& socket, std::string& receivedMessage);
-void cleanup(SOCKET& socket);
+class ServerSocket
+{
+public:
+    ServerSocket();  // Constructor
+    ~ServerSocket(); // Destructor
+
+    bool initialize();                                                       // Initializes Winsock
+    SOCKET create();                                                         // Creates a server socket
+    bool bind(int port);                                                     // Binds the server socket to an IP and port
+    bool listenForConnections();                                             // Listens for incoming connections
+    SOCKET acceptClient();                                                   // Accepts a client connection
+    bool sendFile(SOCKET &clientSocket, const std::wstring &filename);       // Sends a file
+    bool receiveMessage(SOCKET &clientSocket, std::string &receivedMessage); // Receives a string
+    void cleanup();                                                          // Cleans up the socket
+
+private:
+    SOCKET serverSocket; // The server socket handle
+};
+
+#endif // SERVER_SOCKET_H

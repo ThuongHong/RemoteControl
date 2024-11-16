@@ -2,9 +2,11 @@
 //
 
 #include "client.h"
+#include "App.h"
 
 int main(int argc, char **argv)
 {
+    return wxEntry(argc, argv);
 
     std::string ip_address;
     int port;

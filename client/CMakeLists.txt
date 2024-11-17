@@ -22,8 +22,8 @@ set(SOURCE_FILES
     src/App.h
     src/RemoteControlDraft.cpp
     src/RemoteControlDraft.h
-    src/panel_login.h
-    src/panel_login.cpp
+    src/panels.h
+    src/panels.cpp
 )
 
 # Create an executable target

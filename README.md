@@ -6,6 +6,7 @@
 
 **Libraries for Client:**
 * curl
+* OpenSSL
 * nlohmann/json
 * wxWidgets
 
@@ -24,21 +25,38 @@ git clone https://github.com/ThuongHong/RemoteControl.git
 ```bash
 git clone https://github.com/curl/curl.git 
 ``` 
-* Move the cloned CURL repo to ```client/out/build```.
-* In ```client/out/build/curl```, create a build directory and navigate into it:
-```bash
-mkdir build && cd build
-```
+* In client folder, create new folder `lib`.
 * Open CMake GUI
-    * **"Where is the source code"**: Select the main ```curl``` folder.
-    * **"Where to build the binaries"**: Select the the ```curl/build``` dỉrectory.
-    * Click **Configure**, then **Generate**, and **Close** once completed.
+    * **"Where is the source code"**: Select the cloned ```curl``` folder.
+    * **"Where to build the binaries"**: Select the ```/lib/curl``` dỉrectory.
+    * Click **Configure**.
+    * After the first configuration, use the search box at the top to look for the following option:
+        * ```BUILD_SHARED_LIBS```: Uncheck to disable shared library building.
+        * `CURL_USE_OPENSSL`: Check to enable OpenSSL support.
+        * `CMAKE_INSTALL_PREFIX`: Set this to `/lib/curl/install`.
+    * After setting the options, click **Configure again** if prompted to apply changes. Once configuration is complete and there are no errors, click **Generate** to create the build files.
+
+* Click **Open Project**:
+    * Select **Release** configuration.
+    * Locate the **INSTALL** project in the **Solution Explorer**.
+    * Right-click on **INSTALL** and select **Build**.
+    * Repeat the above steps for the **Debug** configuration.
+
+## OpenSSL:
+* Download **Win64 OpenSSL** MSI file from [Shining Line Productions](https://slproweb.com/products/Win32OpenSSL.html).
+* Extract the folder and place it in the `/lib`.
 
 ## wxWidgets
-* Download wxWidgets from [wxWidgets Downloads](https://www.wxwidgets.org/downloads/).
+* Download wxWidgets ZIP from [wxWidgets Downloads](https://www.wxwidgets.org/downloads/).
 
 
 * Unzip the folder and place it in a location of your choice.
+* Set up the wxWidgets path in Windows environment variables:
+    * Open **Environment Variables**.
+    * In **System variables**, click **New**:
+        * **Varialbe name**: WXWIN
+        * **Variable value**: ```<your_path>\WxWidget```
+    * Confirm by clicking OK to save changes.
 
 # Server
 ## OpenCV

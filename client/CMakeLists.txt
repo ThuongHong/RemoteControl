@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.24)
 
 # Project name
 project(client)
@@ -15,6 +15,10 @@ set(SOURCE_FILES
     src/client.h
     src/client.cpp
     src/main.cpp
+    src/App.cpp
+    src/App.h
+    src/RemoteControlDraft.cpp
+    src/RemoteControlDraft.h
     src/App.cpp
     src/App.h
     src/RemoteControlDraft.cpp

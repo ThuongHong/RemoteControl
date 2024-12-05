@@ -25,7 +25,7 @@ void PanelLogin::Set(wxFont headerFont, wxFont mainFont, wxBitmap bitmap)
 	TextTitle->SetFont(headerFont);
 	TextTitle->SetBackgroundColour(wxColour(255, 228, 196));
 	TextDescription->SetFont(mainFont);
-	TextDescription->Wrap(500);
+	TextDescription->Wrap(300);
 	ButtonLogin->SetFont(mainFont);
 	ButtonLogin->SetBitmap(bitmap);
 	ButtonLogin->SetBitmapPosition(wxLEFT);
@@ -43,7 +43,7 @@ void PanelLogin::CreateSizer()
 	SubSizer2->Add(ButtonLogin, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 35);
 
 	MainSizer->Add(TextTitle, 0, wxBOTTOM, 10);
-	MainSizer->Add(SubSizer1);
+	MainSizer->Add(SubSizer1, 0, wxBOTTOM, 20);
 	MainSizer->Add(SubSizer2);
 
 	this->SetSizer(MainSizer);
@@ -124,17 +124,35 @@ void PanelRoles::CreateSizer()
 
 	this->SetSizer(MainSizer);
 }
-void PanelRoles::BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string &ip_address, int &port, std::string &target_email, wxScopedPtr<Client> &client)
+void PanelRoles::BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<GmailClient>& gmailClient)
 {
 	Roles->Bind(wxEVT_RADIOBOX, &PanelRoles::OnRolesChanged, this);
-	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &target_email, &client](wxCommandEvent&) {
-		OnButtonClicked(desPanel1, desPanel2, ip_address, port, target_email, client);
+	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &target_email, m_statusText, &client, client_id, client_secret, redirect_uri, &gmailClient](wxCommandEvent&) {
+		OnButtonClicked(desPanel1, desPanel2, ip_address, port, target_email, m_statusText, client, client_id, client_secret, redirect_uri, gmailClient);
 	});
+
+
+	//const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<GmailClient>& gmailClient
+
+
 	InputFieldEmail->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
 	InputFieldIP->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
 	InputFieldPort->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
 }
-void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string &ip_address, int &port, std::string &target_email, wxScopedPtr<Client> &client)
+bool PanelRoles::CreateClient(std::string& ip_address, int& port, wxStaticText* m_statusText, wxScopedPtr<Client>& client)
+{
+	client.reset(new Client(ip_address, port, m_statusText));
+	if (client) return true;
+	return false;
+}
+bool PanelRoles::CreateEmailClient(const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<GmailClient>& gmailClient)
+{
+	gmailClient.reset(new GmailClient(client_id, client_secret, redirect_uri));
+	if (gmailClient) return true;
+	return false;
+}
+
+void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<GmailClient>& gmailClient)
 {
 	int selection = Roles->GetSelection();
 	switch (selection) {
@@ -152,11 +170,21 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 		desPanel2->Layout();
 		ip_address = InputFieldIP->GetValue().ToStdString();
 		port = std::stoi(InputFieldPort->GetValue().ToStdString());
-		if (CreateClient(ip_address, port, client)) {
-			std::cout << "Create client" << std::endl;
+		if (CreateClient(ip_address, port, m_statusText, client)) {
+			std::cout << "Create client successfully!" << std::endl;
 			std::cout << "Client IP: " << client->ip_address_ << std::endl;
 			std::cout << "Client port: " << client->port_ << std::endl;
 		}
+
+		if (CreateEmailClient(client_id, client_secret, redirect_uri, gmailClient)) {
+			std::cout << "Create email client successfully!" << std::endl;
+			std::cout << "Client ID: " << gmailClient->m_client_id << std::endl;
+			std::cout << "Client secret: " << gmailClient->m_client_secret << std::endl;
+			std::cout << "Redirect URI: " << gmailClient->m_redirect_uri << std::endl;
+		}
+
+		client->loadAccessToken();
+		client->initialize(m_statusText);
 		break;
 	}
 	parent_->Layout();
@@ -228,18 +256,6 @@ bool PanelRoles::IsPortFormat(const wxString& text)
 	int portNum = std::stoi(text.ToStdString());
 	return portNum >= 0 && portNum <= 65535;
 }
-bool PanelRoles::CreateClient(const std::string &ip_address, int port, wxScopedPtr<Client> &client)
-{
-	client.reset(new Client(ip_address, port));
-	if (client) return true;
-	return false;
-}
-bool PanelRoles::CreateEmailClient(const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<GmailClient> &gmailClient)
-{
-	gmailClient.reset(new GmailClient(client_id, client_secret, redirect_uri));
-	if (gmailClient) return true;
-	return false;
-}
 
 PanelAuthorization::PanelAuthorization(wxWindow* parent, wxFont headerFont, wxFont mainFont) : wxPanel(parent, wxID_ANY)
 {
@@ -261,6 +277,7 @@ void PanelAuthorization::BindControl(wxPanel* desPanel, std::string &authorizati
 void PanelAuthorization::Create()
 {
 	TextTitle = new wxStaticText(this, wxID_ANY, "PC REMOTE CONTROL", wxDefaultPosition, wxSize(600, -1), wxALIGN_CENTER);
+	TextHelp = new wxStaticText(this, wxID_ANY, "After logging in, please copy the authorization code from the URL and paste it here");
 	TextAsk = new wxStaticText(this, wxID_ANY, "Do you want to exchange authorization code for access token?");
 	TextAuthorization = new wxStaticText(this, wxID_ANY, "Enter your authorization code:");
 	TextSuccess = new wxStaticText(this, wxID_ANY, "Access token exchanged and saved successfully!");
@@ -276,6 +293,7 @@ void PanelAuthorization::Set(wxFont headerFont, wxFont mainFont)
 {
 	TextTitle->SetFont(headerFont);
 	TextTitle->SetBackgroundColour(wxColour(255, 228, 196));
+	TextHelp->SetFont(mainFont);
 	TextAsk->SetFont(mainFont);
 	TextAuthorization->SetFont(mainFont);
 	TextSuccess->SetFont(mainFont);
@@ -285,6 +303,7 @@ void PanelAuthorization::Set(wxFont headerFont, wxFont mainFont)
 	ButtonConfirm->SetFont(mainFont);
 	ButtonExit->SetFont(mainFont);
 
+	TextHelp->Hide();
 	TextAuthorization->Hide();
 	TextSuccess->Hide();
 	TextFail->Hide();
@@ -310,6 +329,7 @@ void PanelAuthorization::CreateSizer()
 
 	SubSizer2->Add(TextAsk, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 20);
 	SubSizer2->Add(SubSizer1, 0, wxALIGN_CENTER_HORIZONTAL);
+	SubSizer2->Add(TextHelp, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 20);
 	SubSizer2->Add(TextAuthorization, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 20);
 	SubSizer2->Add(InputField, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 20);
 	SubSizer2->Add(TextSuccess, 0, wxALIGN_CENTER_HORIZONTAL);
@@ -327,6 +347,7 @@ void PanelAuthorization::OnButtonYesClicked(wxCommandEvent& evt) {
 	TextAsk->Hide();
 	ButtonYes->Hide();
 	ButtonNo->Hide();
+	TextHelp->Show();
 	TextAuthorization->Show();
 	InputField->Show();
 	ButtonConfirm->Show();
@@ -537,17 +558,18 @@ void PanelSender::OnButtonExitClicked(wxCommandEvent& evt)
 	parent_->Close(true);
 }
 
-PanelReceiver::PanelReceiver(wxWindow* parent, wxImage image, wxFont headerFont, wxFont mainFont) : wxPanel(parent, wxID_ANY)
+PanelReceiver::PanelReceiver(wxWindow* parent, wxImage image, wxFont headerFont, wxFont mainFont, wxStaticText* m_statusText) : wxPanel(parent, wxID_ANY)
 {
 	parent_ = parent;
 	Create(image);
 	Set(headerFont, mainFont);
-	CreateSizer();
+	//CreateSizer(m_statusText);
 }
-void PanelReceiver::BindControl()
+void PanelReceiver::BindControl(wxScopedPtr<Client>& client)
 {
 	ButtonExit->Bind(wxEVT_BUTTON, &PanelReceiver::OnButtonExitClicked, this);
-	this->Bind(wxEVT_TIMER, &PanelReceiver::OnTimer, this, Timer->GetId());
+	//this->Bind(wxEVT_TIMER, &PanelReceiver::OnTimer, this, Timer->GetId());
+	
 }
 void PanelReceiver::Create(wxImage image)
 {
@@ -555,23 +577,24 @@ void PanelReceiver::Create(wxImage image)
 	TextTitle = new wxStaticText(this, wxID_ANY, "ROLE: RECEIVER");
 	ButtonExit = new wxButton(this, wxID_ANY, "Exit");
 	ImageDisplay = new wxStaticBitmap(this, wxID_ANY, wxBitmap(Image));
-	TextWaiting = new wxStaticText(this, wxID_ANY, "WAITING FOR COMMAND");
-	TextProcessing = new wxStaticText(this, wxID_ANY, "CURRENT PROCESSING:");
-	TextFeature = new wxStaticText(this, wxID_ANY, "FEATURE");
-	Timer = new wxTimer(this, wxID_ANY);
-	Timer->Start(2000);
+
+	//TextWaiting = new wxStaticText(this, wxID_ANY, "WAITING FOR COMMAND");
+	//TextProcessing = new wxStaticText(this, wxID_ANY, "CURRENT PROCESSING:");
+	//TextFeature = new wxStaticText(this, wxID_ANY, "FEATURE");
+	//Timer = new wxTimer(this, wxID_ANY);
+	//Timer->Start(2000);
 }
 void PanelReceiver::Set(wxFont headerFont, wxFont mainFont)
 {
 	TextTitle->SetFont(headerFont);
-	TextWaiting->SetFont(headerFont);
-	TextProcessing->SetFont(headerFont);
-	TextFeature->SetFont(headerFont);
+	//TextWaiting->SetFont(headerFont);
+	//TextProcessing->SetFont(headerFont);
+	//TextFeature->SetFont(headerFont);
 	ButtonExit->SetFont(mainFont);
-	TextProcessing->Hide();
-	TextFeature->Hide();
+	//TextProcessing->Hide();
+	//TextFeature->Hide();
 }
-void PanelReceiver::CreateSizer()
+void PanelReceiver::CreateSizer(wxStaticText* m_statusText)
 {
 	MainSizer = new wxBoxSizer(wxVERTICAL);
 	SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
@@ -582,9 +605,10 @@ void PanelReceiver::CreateSizer()
 	SubSizer1->Add(ImageDisplay);
 
 	MainSizer->Add(SubSizer1);
-	MainSizer->Add(TextWaiting, 1, wxALIGN_CENTER | wxTOP | wxBOTTOM, 40);
-	MainSizer->Add(TextProcessing, 1, wxALIGN_CENTER);
-	MainSizer->Add(TextFeature, 1, wxALIGN_CENTER);
+	MainSizer->Add(m_statusText, 1, wxALIGN_CENTER | wxTOP | wxBOTTOM, 40);
+	//MainSizer->Add(TextWaiting, 1, wxALIGN_CENTER | wxTOP | wxBOTTOM, 40);
+	//MainSizer->Add(TextProcessing, 1, wxALIGN_CENTER);
+	//MainSizer->Add(TextFeature, 1, wxALIGN_CENTER);
 	MainSizer->AddSpacer(30);
 	MainSizer->Add(ButtonExit, 0, wxALIGN_CENTER | wxBOTTOM, 30);
 	this->SetSizer(MainSizer);
@@ -595,7 +619,7 @@ bool PanelReceiver::OnEventListened()
 }
 void PanelReceiver::OnButtonExitClicked(wxCommandEvent& evt)
 {
-	Timer->Stop();
+	//Timer->Stop();
 	parent_->Close(true);
 }
 void PanelReceiver::OnTimer(wxTimerEvent& event)
@@ -606,14 +630,14 @@ void PanelReceiver::UpdateStatusText()
 {
 	bool commandReceived = OnEventListened();
 	if (commandReceived) {
-		TextWaiting->Show();
-		TextProcessing->Hide();
-		TextFeature->Hide();
+		//TextWaiting->Show();
+		//TextProcessing->Hide();
+		//TextFeature->Hide();
 	}
 	else {
-		TextWaiting->Hide();
-		TextProcessing->Show();
-		TextFeature->Show();
+		//TextWaiting->Hide();
+		//TextProcessing->Show();
+		//TextFeature->Show();
 	}
 	this->Layout();
 }

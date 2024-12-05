@@ -36,7 +36,7 @@ class PanelRoles : public wxPanel
 {
 public:
 	PanelRoles(wxWindow* parent, wxString description, wxFont headerFont, wxFont mainFont, wxBitmap bitmap);
-	void BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string &ip_address, int &port, std::string &target_email, wxScopedPtr<Client> &client);
+	void BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<GmailClient>& gmailClient);
 
 private:
 	wxWindow* parent_;
@@ -61,7 +61,7 @@ private:
 	void Set(wxFont headerFont, wxFont mainFont);
 	void CreateSizer();
 
-	void OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel, std::string& ip_address, int& port, std::string &target_email, wxScopedPtr<Client> &client);
+	void OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<GmailClient>& gmailClient);
 	void OnRolesChanged(wxCommandEvent& evt);
 	void OnTextCtrlChanged(wxCommandEvent& event);
 	
@@ -69,8 +69,8 @@ private:
 	bool IsIPFormat(const wxString& text);
 	bool IsPortFormat(const wxString& text);
 
-	bool CreateClient(const std::string& ip_address, int port, wxScopedPtr<Client> &client);
-	bool CreateEmailClient(const std::string& client_id, const std::string& client_secret, const std::string& redirect_url, wxScopedPtr<GmailClient> &gmailClient);
+	bool CreateClient(std::string& ip_address, int& port, wxStaticText* m_statusText, wxScopedPtr<Client> &client);
+	bool CreateEmailClient(const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<GmailClient> &gmailClient);
 };
 
 class PanelAuthorization : public wxPanel
@@ -83,6 +83,7 @@ private:
 	wxWindow* parent_;
 
 	wxStaticText* TextTitle;
+	wxStaticText* TextHelp;
 	wxStaticText* TextAsk;
 	wxButton* ButtonYes;
 	wxButton* ButtonNo;
@@ -147,8 +148,9 @@ private:
 class PanelReceiver : public wxPanel
 {
 public:
-	PanelReceiver(wxWindow* parent, wxImage image, wxFont headerFont, wxFont mainFont);
-	void BindControl();
+	PanelReceiver(wxWindow* parent, wxImage image, wxFont headerFont, wxFont mainFont, wxStaticText* m_statusText);
+	void BindControl(wxScopedPtr<Client>& client);
+	void CreateSizer(wxStaticText* m_statusText);
 
 private:
 	wxWindow* parent_;
@@ -157,20 +159,21 @@ private:
 	wxStaticText* TextTitle;
 	wxButton* ButtonExit;
 	wxStaticBitmap* ImageDisplay;
-	wxStaticText* TextWaiting;
-	wxStaticText* TextProcessing;
-	wxStaticText* TextFeature;
-	wxTimer* Timer;
+	//wxStaticText* TextWaiting;
+	//wxStaticText* TextProcessing;
+	//wxStaticText* TextFeature;
+	Client* m_client;
+	wxTextCtrl* inputMessage;
+	//wxTimer* Timer;
 
 	wxBoxSizer* MainSizer;
 	wxBoxSizer* SubSizer1;
 
 	void Create(wxImage image);
 	void Set(wxFont headerFont, wxFont mainFont);
-	void CreateSizer();
 
 	bool OnEventListened();
-	bool OnRun();
+	//bool OnRun();
 	void OnButtonExitClicked(wxCommandEvent& evt);
 	void OnTimer(wxTimerEvent& event);
 	void UpdateStatusText();

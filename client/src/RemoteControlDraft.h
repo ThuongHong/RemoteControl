@@ -12,7 +12,6 @@ public:
 	RemoteControlDraft(const wxString& title);
 private:
 	//GUI
-
 	PanelLogin* panelLogin;
 	PanelRoles* panelRoles;
 	PanelAuthorization* panelAuthorization;
@@ -21,6 +20,7 @@ private:
 
 	wxString description;
 	wxBoxSizer* sizerMain;
+	wxStaticText* m_statusText;
 
 	//Socket
 	std::string ip_address;

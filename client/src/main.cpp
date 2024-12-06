@@ -4,37 +4,37 @@
 #include "client.h"
 #include "App.h"
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     return wxEntry(argc, argv);
-}
-    //std::string ip_address;
-    //int port;
-    //std::cout << "Enter IP Address: ";
-    //std::cin >> ip_address;
-    //std::cout << "Enter Port: ";
-    //std::cin >> port;
 
-    //Client client(ip_address, port);
+    // std::string ip_address;
+    // int port;
+    // std::cout << "Enter IP Address: ";
+    // std::cin >> ip_address;
+    // std::cout << "Enter Port: ";
+    // std::cin >> port;
 
-    //std::string client_id = "YOUR_CLIENT_ID";
-    //std::string client_secret = "YOUR_CLIENT_SECRET";
-    //std::string redirect_uri = "YOUR_REDIRECT_URI";
-    //std::string access_token;
-    //std::string refresh_token;
+    // Client client(ip_address, port);
 
-    //GmailClient gmailClient(client_id, client_secret, redirect_uri);
+    // std::string client_id = "YOUR_CLIENT_ID";
+    // std::string client_secret = "YOUR_CLIENT_SECRET";
+    // std::string redirect_uri = "YOUR_REDIRECT_URI";
+    // std::string access_token;
+    // std::string refresh_token;
+
+    // GmailClient gmailClient(client_id, client_secret, redirect_uri);
 
     //// Ask the user if they want to exchange the authorization code for an access token
-    //char choice;
-    //std::cout << "Do you want to exchange authorization code for access token? (y/n): ";
-    //std::cin >> choice;
+    // char choice;
+    // std::cout << "Do you want to exchange authorization code for access token? (y/n): ";
+    // std::cin >> choice;
 
-    //if (choice == 'y' || choice == 'Y')
+    // if (choice == 'y' || choice == 'Y')
     //{
-    //    std::string authorization_code;
-    //    std::cout << "Enter your authorization code: ";
-    //    std::cin >> authorization_code;
+    //     std::string authorization_code;
+    //     std::cout << "Enter your authorization code: ";
+    //     std::cin >> authorization_code;
 
     //    // Exchange auth code for access token
     //    if (gmailClient.exchangeAuthCodeForAccessToken(authorization_code, access_token, refresh_token))
@@ -50,9 +50,9 @@ int main(int argc, char** argv)
     //    }
     //}
 
-    //client.loadAccessToken();
+    // client.loadAccessToken();
 
-    //client.initialize();
+    // client.initialize();
 
-    //return 0;
-//}
+    // return 0;
+}

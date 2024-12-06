@@ -2,8 +2,8 @@
 *
 
 # Allow source files
-!*.cpp
-!*.h
+!/src/
+!/src/**
 
 # Allow directories (needed to traverse directories)
 !*/

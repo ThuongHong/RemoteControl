@@ -19,10 +19,8 @@ set(SOURCE_FILES
     src/App.h
     src/RemoteControlDraft.cpp
     src/RemoteControlDraft.h
-    src/App.cpp
-    src/App.h
-    src/RemoteControlDraft.cpp
-    src/RemoteControlDraft.h
+    src/panels.h
+    src/panels.cpp
 )
 
 # Create executable

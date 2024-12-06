@@ -9,6 +9,7 @@
 #include <opencv2/opencv.hpp>
 #include <atomic>
 #include <thread>
+#include <filesystem>
 
 class ServerTask
 {
@@ -43,6 +44,7 @@ public:
     bool shutdownComputer();
     void startWebcam();
     void stopWebcam();
+    void listFilesInDirectory(const std::string &outputFile);
 
 private:
     ULONG_PTR gdiplusToken;

@@ -2,10 +2,12 @@
 //
 
 #include "client.h"
+#include "RemoteControlDraft.h"
 
 int main(int argc, char **argv)
 {
-
+    // return 0;
+    return wxEntry(argc, argv);
     std::string ip_address;
     int port;
     std::cout << "Enter IP Address: ";
@@ -15,9 +17,9 @@ int main(int argc, char **argv)
 
     Client client(ip_address, port);
 
-    std::string client_id = "YOUR_CLIENT_ID";
-    std::string client_secret = "YOUR_CLIENT_SECRET";
-    std::string redirect_uri = "YOUR_REDIRECT_URI";
+    std::string client_id = "926757990224-84lbea6uthpg9kjodd8i9050gr5ie5gl.apps.googleusercontent.com";
+    std::string client_secret = "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";
+    std::string redirect_uri = "http://localhost:8080";
     std::string access_token;
     std::string refresh_token;
 

@@ -1,5 +1,11 @@
 ﻿#include "gmail.h"
 
+void DisableSSLVerification(CURL *curl)
+{
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L); // Do not verify SSL peer
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L); // Do not verify SSL host
+}
+
 // Static callback function for CURL to write response data
 size_t GmailClient::WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
@@ -33,6 +39,10 @@ bool GmailClient::exchangeAuthCodeForAccessToken(const std::string &authorizatio
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+        // Disable SSL verification for debugging (not recommended for production)
+        DisableSSLVerification(curl);
+
         res = curl_easy_perform(curl);
         if (res != CURLE_OK)
         {
@@ -93,6 +103,9 @@ bool GmailClient::refreshAccessToken(const std::string &refresh_token, std::stri
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+        DisableSSLVerification(curl);
+
         res = curl_easy_perform(curl);
         if (res != CURLE_OK)
         {
@@ -177,6 +190,8 @@ void GmailClient::getMessageDetails(const std::string &access_token, const std::
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
+        DisableSSLVerification(curl);
+
         // Perform the request
         res = curl_easy_perform(curl);
         if (res != CURLE_OK)
@@ -246,6 +261,8 @@ void GmailClient::markAsRead(const std::string &accessToken, const std::string &
         headers = curl_slist_append(headers, "Content-Type: application/json");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
+        DisableSSLVerification(curl);
+
         // Perform the request
         res = curl_easy_perform(curl);
         if (res != CURLE_OK)
@@ -277,6 +294,8 @@ std::vector<std::string> GmailClient::getUnreadMessageContents(const std::string
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+        DisableSSLVerification(curl);
 
         res = curl_easy_perform(curl);
         if (res == CURLE_OK)

@@ -48,6 +48,8 @@ cmake_install.cmake
 *.swo
 
 # Ignore other temporary files
+*.3
+*.png
 *.log
 *.cache
 *.pyc

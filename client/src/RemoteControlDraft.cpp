@@ -4,7 +4,7 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	wxInitAllImageHandlers();
 
 	//Meta Data
-	wxString description("Our program allows you to manage, control computers through email. Send commands, execute tasks, and monitor system activities, all from your Gmail inbox.");
+	wxString description("Our program allows you to control computers through Gmail. Send commands, execute tasks, all from your Gmail inbox.");
 	wxFont headerFont(35, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Impact"); //Unispace, Impact
 	wxFont mainFont(11, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
 	wxFont processFont(28, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Impact");
@@ -13,6 +13,12 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	icon = icon.Scale(50, 50, wxIMAGE_QUALITY_HIGH);
 	wxBitmap bitmap(icon);
 
+	if (CreateEmailClient(client_id, client_secret, redirect_uri, gmailClient)) {
+		std::cout << "Create email client successfully!" << std::endl;
+		std::cout << "Client ID: " << gmailClient->m_client_id << std::endl;
+		std::cout << "Client secret: " << gmailClient->m_client_secret << std::endl;
+		std::cout << "Redirect URI: " << gmailClient->m_redirect_uri << std::endl;
+	}
 
 	/*Create Panel*/
 	panelLogin = new PanelLogin(this, description, image, headerFont, mainFont, bitmap);
@@ -29,12 +35,10 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	panelSender->Hide();
 	panelReceiver->Hide();
 
-	// wxWebView* webView = wxWebView::New(this, wxID_ANY, "https://mail.google.com/", wxDefaultPosition, wxSize(800, 600));
-
 	panelLogin->BindControl(panelAuthorization);
-	panelAuthorization->BindControl(panelRoles, authorization_code);
-	panelRoles->BindControl(panelSender, panelReceiver, ip_address, port, target_email, m_statusText, client, client_id, client_secret, redirect_uri, gmailClient);
-	panelSender->BindControl();
+	panelAuthorization->BindControl(panelRoles, authorization_code, access_token, refresh_token, client, gmailClient);
+	panelRoles->BindControl(panelSender, panelReceiver, ip_address, port, target_email, m_statusText, client);
+	panelSender->BindControl(filename, processID);
 	panelReceiver->BindControl(client);
 
 	panelReceiver->CreateSizer(m_statusText);
@@ -48,6 +52,13 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	sizerMain->Add(panelReceiver, 1, wxEXPAND);
 
 	this->SetSizer(sizerMain);
+}
+
+bool RemoteControlDraft::CreateEmailClient(const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<GmailClient>& gmailClient)
+{
+	gmailClient.reset(new GmailClient(client_id, client_secret, redirect_uri));
+	if (gmailClient) return true;
+	return false;
 }
 
 // Todo: OnPanelLoginButtonClicked -> Login Gmail, OnButtonExitClicked -> Close socket, OnPanelSenderButtonConfirm -> Process command (Send email), OnPanelAuthorizationEventListened -> Listen to command,

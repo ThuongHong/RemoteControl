@@ -402,3 +402,37 @@ void ServerTask::stopWebcam()
         std::cout << "Webcam is not turned on!" << std::endl;
     }
 }
+
+void ServerTask::listFilesInDirectory(const std::string &outputFile)
+{
+    std::ofstream outFile(outputFile); // Open the output file to save filenames
+    if (!outFile.is_open())
+    {
+        std::cerr << "Failed to open output file!" << std::endl;
+        return;
+    }
+
+    try
+    {
+        // Get the current working directory (default directory)
+        std::string dirPath = std::filesystem::current_path().string();
+
+        std::cout << "Listing files in directory: " << dirPath << std::endl;
+
+        // Iterate through the directory
+        for (const auto &entry : std::filesystem::directory_iterator(dirPath))
+        {
+            if (std::filesystem::is_regular_file(entry.status()))
+            {
+                // Write the file name to the output file
+                outFile << entry.path().filename().string() << std::endl;
+            }
+        }
+
+        std::cout << "Files have been listed and saved to: " << outputFile << std::endl;
+    }
+    catch (const std::filesystem::filesystem_error &e)
+    {
+        std::cerr << "Error accessing directory: " << e.what() << std::endl;
+    }
+}

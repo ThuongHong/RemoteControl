@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+﻿cmake_minimum_required(VERSION 3.24)
 
 # Project name
 project(client)
@@ -19,10 +19,8 @@ set(SOURCE_FILES
     src/App.h
     src/RemoteControlDraft.cpp
     src/RemoteControlDraft.h
-    src/App.cpp
-    src/App.h
-    src/RemoteControlDraft.cpp
-    src/RemoteControlDraft.h
+    src/panels.h
+    src/panels.cpp
 )
 
 # Create executable

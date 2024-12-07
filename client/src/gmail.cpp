@@ -6,6 +6,12 @@ void DisableSSLVerification(CURL *curl)
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L); // Do not verify SSL host
 }
 
+void DisableSSLVerification(CURL *curl)
+{
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L); // Do not verify SSL peer
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L); // Do not verify SSL host
+}
+
 // Static callback function for CURL to write response data
 size_t GmailClient::WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {

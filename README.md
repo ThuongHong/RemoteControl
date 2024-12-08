@@ -31,10 +31,10 @@ mkdir build && cd build
 ```
 * Open CMake GUI
     * **"Where is the source code"**: Select the main ```curl``` folder.
-    * **"Where to build the binaries"**: Select the the ```curl/build``` dỉrectory.
+    * **"Where to build the binaries"**: Select the the ```curl/build``` directory.
     * Click **Configure**.
     * After the first configuration, use the search box at the top to look for the following option: ```BUILD_SHARED_LIBS```: Make sure this is unchecked to disable shared library building.
-    * After setting the options, click **Configure again** if prompted to apply changes. Once configuration is complete and there are no errors, click **Generate** to create the build files.
+    * After setting the options, click **Configure again** if prompted to apply changes. Once the configuration is complete and there are no errors, click **Generate** to create the build files.
 
 * Open a terminal or command prompt, navigate to your **build** directory, and run the following command:
      ```bash

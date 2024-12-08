@@ -39,12 +39,13 @@ public:
 
     void takeScreenshot(const std::wstring &filename);
     bool terminateProcessByPID(DWORD pid);
-    bool startService(const char *serviceName);
-    bool openApplication(const char *appPath);
+    bool startService(const std::string &serviceName); // Start service
+    bool openApplication(const char *appPath);  // Start application
     bool shutdownComputer();
     void startWebcam();
     void stopWebcam();
-    void listFilesInDirectory(const std::string &outputFile);
+    void listFilesInDirectory(const std::wstring &outputFile);
+    bool removeFile(const std::wstring &filename);
 
 private:
     ULONG_PTR gdiplusToken;

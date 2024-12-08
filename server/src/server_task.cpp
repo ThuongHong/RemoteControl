@@ -60,7 +60,7 @@ std::vector<ServerTask::ProcessInfo> ServerTask::listRunningApplications()
         }
     }
 
-    std::cout << "Total running applications: " << totalApplications << std::endl;
+    std::cerr << "Total running applications: " << totalApplications << std::endl;
     return applicationList;
 }
 
@@ -68,7 +68,7 @@ void ServerTask::printRunningApplications(const std::vector<ProcessInfo> &applic
 {
     for (const auto &app : applications)
     {
-        std::cout << "Application: " << app.name << ", PID: " << app.pid << std::endl;
+        std::cerr << "Application: " << app.name << ", PID: " << app.pid << std::endl;
     }
 }
 
@@ -123,7 +123,7 @@ std::vector<ServerTask::ServiceInfo> ServerTask::listRunningServices()
         serviceList.push_back(info);
     }
 
-    std::cout << "Total running services: " << serviceCount << std::endl;
+    std::cerr << "Total running services: " << serviceCount << std::endl;
 
     CloseServiceHandle(scManager);
     return serviceList;
@@ -133,7 +133,7 @@ void ServerTask::printRunningServices(const std::vector<ServiceInfo> &services)
 {
     for (const auto &svc : services)
     {
-        std::cout << "Service: " << svc.name << ", PID: " << svc.pid << std::endl;
+        std::cerr << "Service: " << svc.name << ", PID: " << svc.pid << std::endl;
     }
 }
 
@@ -201,7 +201,7 @@ void ServerTask::saveBitmapToJpeg(HBITMAP hBitmap, const WCHAR *filename)
     }
     else
     {
-        std::wcout << L"Could not find JPEG encoder." << std::endl;
+        std::wcerr << L"Could not find JPEG encoder." << std::endl;
     }
 }
 
@@ -242,43 +242,84 @@ bool ServerTask::terminateProcessByPID(DWORD pid)
     }
     else
     {
-        std::cout << "Process with PID " << pid << " terminated successfully." << std::endl;
+        std::cerr << "Process with PID " << pid << " terminated successfully." << std::endl;
     }
 
     CloseHandle(processHandle);
     return result;
 }
 
-bool ServerTask::startService(const char *serviceName)
+bool ServerTask::startService(const std::string &serviceName)
 {
-    SC_HANDLE scManager = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
-    if (scManager == NULL)
+    try
     {
-        std::cerr << "Failed to connect to service control manager. Error: " << GetLastError() << std::endl;
-        return false;
-    }
+        // Convert service name to wide string properly
+        int size_needed = MultiByteToWideChar(CP_UTF8, 0, serviceName.c_str(), -1, NULL, 0);
+        std::wstring wServiceName(size_needed, 0);
+        MultiByteToWideChar(CP_UTF8, 0, serviceName.c_str(), -1, &wServiceName[0], size_needed);
 
-    SC_HANDLE service = OpenService(scManager, serviceName, SERVICE_START);
-    if (service == NULL)
-    {
-        std::cerr << "Failed to open service. Error: " << GetLastError() << std::endl;
-        CloseServiceHandle(scManager);
-        return false;
-    }
+        // Connect with full admin rights
+        SC_HANDLE scManager = OpenSCManagerW(NULL,
+                                             NULL,
+                                             SC_MANAGER_ALL_ACCESS | GENERIC_ALL);
+        if (!scManager)
+        {
+            DWORD error = GetLastError();
+            std::cerr << "Failed to connect to Service Control Manager. Error: " << error
+                      << " - Run as Administrator" << std::endl;
+            return false;
+        }
 
-    if (!StartService(service, 0, NULL))
-    {
-        std::cerr << "Failed to start service. Error: " << GetLastError() << std::endl;
+        // Open service with full rights
+        SC_HANDLE service = OpenServiceW(scManager,
+                                         wServiceName.c_str(),
+                                         SERVICE_ALL_ACCESS | GENERIC_ALL);
+        if (!service)
+        {
+            DWORD error = GetLastError();
+            std::cerr << "Failed to open service: " << serviceName << ". Error: " << error << std::endl;
+            CloseServiceHandle(scManager);
+            return false;
+        }
+
+        // Get current status
+        SERVICE_STATUS_PROCESS ssp;
+        DWORD bytesNeeded;
+        if (!QueryServiceStatusEx(service,
+                                  SC_STATUS_PROCESS_INFO,
+                                  (LPBYTE)&ssp,
+                                  sizeof(SERVICE_STATUS_PROCESS),
+                                  &bytesNeeded))
+        {
+            DWORD error = GetLastError();
+            std::cerr << "Failed to query service status. Error: " << error << std::endl;
+            CloseServiceHandle(service);
+            CloseServiceHandle(scManager);
+            return false;
+        }
+
+        // Start if not running
+        if (ssp.dwCurrentState != SERVICE_RUNNING)
+        {
+            if (!StartServiceW(service, 0, NULL))
+            {
+                DWORD error = GetLastError();
+                std::cerr << "Failed to start service. Error: " << error << std::endl;
+                CloseServiceHandle(service);
+                CloseServiceHandle(scManager);
+                return false;
+            }
+        }
+
         CloseServiceHandle(service);
         CloseServiceHandle(scManager);
+        return true;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error in startService: " << e.what() << std::endl;
         return false;
     }
-
-    std::cout << "Service " << serviceName << " started successfully." << std::endl;
-
-    CloseServiceHandle(service);
-    CloseServiceHandle(scManager);
-    return true;
 }
 
 bool ServerTask::openApplication(const char *appPath)
@@ -296,7 +337,7 @@ bool ServerTask::openApplication(const char *appPath)
         return false;
     }
 
-    std::cout << "Application " << appPath << " opened successfully." << std::endl;
+    std::cerr << "Application " << appPath << " opened successfully." << std::endl;
 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -380,11 +421,11 @@ void ServerTask::startWebcam()
     {                                                          // Check if the webcam thread is not running
         stopWebcamFlag = false;                                // Set flag to allow webcam to run
         webcam = std::thread(&ServerTask::webcamThread, this); // Create a new thread for the webcam
-        std::cout << "Webcam is turned on..." << std::endl;
+        std::cerr << "Webcam is turned on..." << std::endl;
     }
     else
     {
-        std::cout << "Webcam is already running!" << std::endl;
+        std::cerr << "Webcam is already running!" << std::endl;
     }
 }
 
@@ -395,15 +436,15 @@ void ServerTask::stopWebcam()
         stopWebcamFlag = true;   // Set flag to stop the webcam thread
         webcam.join();           // Wait for the thread to finish
         cv::destroyAllWindows(); // Ensure all OpenCV windows are closed
-        std::cout << "Webcam is turned off." << std::endl;
+        std::cerr << "Webcam is turned off." << std::endl;
     }
     else
     {
-        std::cout << "Webcam is not turned on!" << std::endl;
+        std::cerr << "Webcam is not turned on!" << std::endl;
     }
 }
 
-void ServerTask::listFilesInDirectory(const std::string &outputFile)
+void ServerTask::listFilesInDirectory(const std::wstring &outputFile)
 {
     std::ofstream outFile(outputFile); // Open the output file to save filenames
     if (!outFile.is_open())
@@ -417,7 +458,7 @@ void ServerTask::listFilesInDirectory(const std::string &outputFile)
         // Get the current working directory (default directory)
         std::string dirPath = std::filesystem::current_path().string();
 
-        std::cout << "Listing files in directory: " << dirPath << std::endl;
+        std::cerr << "Listing files in directory: " << dirPath << std::endl;
 
         // Iterate through the directory
         for (const auto &entry : std::filesystem::directory_iterator(dirPath))
@@ -429,10 +470,36 @@ void ServerTask::listFilesInDirectory(const std::string &outputFile)
             }
         }
 
-        std::cout << "Files have been listed and saved to: " << outputFile << std::endl;
+        std::wcerr << L"Files have been listed and saved to: " << outputFile << std::endl;
     }
     catch (const std::filesystem::filesystem_error &e)
     {
         std::cerr << "Error accessing directory: " << e.what() << std::endl;
+    }
+}
+
+bool ServerTask::removeFile(const std::wstring &filename)
+{
+    try
+    {
+        // Check if the file exists in current directory
+        if (!std::filesystem::exists(filename))
+        {
+            std::wcerr << "File " << filename << " does not exist." << std::endl;
+            return false;
+        }
+
+        // Remove the file
+        if (std::filesystem::remove(filename))
+        {
+            std::wcerr << "File " << filename << " removed successfully." << std::endl;
+            return true;
+        }
+        return false;
+    }
+    catch (const std::filesystem::filesystem_error &e)
+    {
+        std::wcerr << "Error removing file: " << filename << std::endl;
+        return false;
     }
 }

@@ -1,4 +1,10 @@
-﻿#include "gmail.h"
+#include "gmail.h"
+
+void DisableSSLVerification(CURL *curl)
+{
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L); // Do not verify SSL peer
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L); // Do not verify SSL host
+}
 
 void DisableSSLVerification(CURL *curl)
 {

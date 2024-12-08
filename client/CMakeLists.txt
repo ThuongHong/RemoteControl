@@ -68,6 +68,15 @@ find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
 target_link_libraries(client PRIVATE ${wxWidgets_LIBRARIES})
 
+# Find and link OpenCV
+find_package(OpenCV REQUIRED)
+if(OpenCV_FOUND)
+    target_include_directories(client PRIVATE ${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(client PRIVATE ${OpenCV_LIBS})
+else()
+    message(FATAL_ERROR "OpenCV not found")
+endif()
+
 # Link Windows libraries
 target_link_libraries(client PRIVATE
     Crypt32.lib

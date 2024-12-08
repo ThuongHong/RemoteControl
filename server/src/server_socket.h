@@ -6,9 +6,12 @@
 #include <string>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include "server_task.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 #include <Gdiplus.h>
+
+#define MAX_PACKET_SIZE 1400 // Maximum packet size
 
 class ServerSocket
 {

@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 
     GmailClient gmailClient(client_id, client_secret, redirect_uri);
 
-    // // Ask the user if they want to exchange the authorization code for an access token
+    // Ask the user if they want to exchange the authorization code for an access token
     // char choice;
     // std::cout << "Do you want to exchange authorization code for access token? (y/n): ";
     // std::cin >> choice;

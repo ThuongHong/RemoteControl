@@ -1,15 +1,28 @@
-﻿#ifndef SERVER_H
-#define SERVER_H
+﻿#ifndef SERVER_HANDLER_H
+#define SERVER_HANDLER_H
 
-#include <vector>
-#include <string>
+// Windows headers in correct order
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <psapi.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <objidl.h>  // For IStream
 #include <gdiplus.h>
-#include <opencv2/opencv.hpp>
-#include <atomic>
+#include <psapi.h>
+
+// Standard headers
+#include <string>
+#include <vector>
 #include <thread>
+#include <atomic>
+#include <fstream>
 #include <filesystem>
+
+// OpenCV
+#include <opencv2/opencv.hpp>
+
+#pragma comment(lib, "gdiplus.lib")
+#pragma comment(lib, "ws2_32.lib")
 
 class ServerTask
 {
@@ -25,6 +38,7 @@ public:
         DWORD pid;
         std::string name;
     };
+    cv::VideoCapture cap;
 
     ServerTask();
     ~ServerTask();
@@ -40,7 +54,7 @@ public:
     void takeScreenshot(const std::wstring &filename);
     bool terminateProcessByPID(DWORD pid);
     bool startService(const std::string &serviceName); // Start service
-    bool openApplication(const char *appPath);  // Start application
+    bool openApplication(const char *appPath);         // Start application
     bool shutdownComputer();
     void startWebcam();
     void stopWebcam();

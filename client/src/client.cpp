@@ -128,12 +128,15 @@ void Client::checkForMessages(wxStaticText *m_statusText)
     {
         updateStatus("Checking for new messages...", m_statusText);
         std::vector<std::string> tasks = GmailClient::getUnreadMessageContents(access_token_);
-
+        bool stop = false;
         for (const std::string &messageContent : tasks)
         {
-            processMessage(messageContent, m_statusText);
+            stop = processMessage(messageContent, m_statusText);
         }
-
+        if (stop)
+        {
+            break;
+        }
         updateStatus("Waiting for messages...", m_statusText);
 
         std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
@@ -217,7 +220,7 @@ void Client::stopCheckingMessages(wxStaticText *m_statusText)
     updateStatus("Message checking stopped", m_statusText);
 }
 
-void Client::processMessage(const std::string &messageContent, wxStaticText *m_statusText)
+bool Client::processMessage(const std::string &messageContent, wxStaticText *m_statusText)
 {
     updateStatus(wxString::Format("Processing: %s", messageContent), m_statusText);
 
@@ -245,5 +248,34 @@ void Client::processMessage(const std::string &messageContent, wxStaticText *m_s
             // std::wstring file_name = std::wstring(messageContent.begin() + 4, messageContent.end());
             Socket::receiveFile(client_socket_, L"get_file");
         }
+        else if (messageContent.substr(0, 9) == "start cam")
+        {
+            while (true)
+            {
+                cv::Mat frame = Socket::receiveFrame(client_socket_); // Receive frame
+                if (frame.empty())
+                {
+                    std::cerr << "Failed to receive frame." << std::endl;
+                    break;
+                }
+
+                cv::imshow("Client - Webcam Stream", frame);
+                if (cv::waitKey(1) == 27)
+                { // ESC to exit
+                    // Send stop message to server
+                    std::string stopMessage = "stop";
+                    send(client_socket_, stopMessage.c_str(), stopMessage.size(), 0);
+                    break;
+                }
+            }
+
+            cv::destroyWindow("Client - Webcam Stream");
+            std::cout << "Webcam stopped" << std::endl;
+        }
+        else if (messageContent.substr(0, 3) == "end")
+        {
+            return true;
+        }
     }
+    return false;
 }

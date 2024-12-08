@@ -415,20 +415,6 @@ void ServerTask::webcamThread()
     cv::destroyAllWindows(); // Close all OpenCV windows
 }
 
-void ServerTask::startWebcam()
-{
-    if (!webcam.joinable())
-    {                                                          // Check if the webcam thread is not running
-        stopWebcamFlag = false;                                // Set flag to allow webcam to run
-        webcam = std::thread(&ServerTask::webcamThread, this); // Create a new thread for the webcam
-        std::cerr << "Webcam is turned on..." << std::endl;
-    }
-    else
-    {
-        std::cerr << "Webcam is already running!" << std::endl;
-    }
-}
-
 void ServerTask::stopWebcam()
 {
     if (webcam.joinable())

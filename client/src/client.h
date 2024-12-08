@@ -46,5 +46,5 @@ private:
     void updateStatus(const wxString &message, wxStaticText *m_statusText);
     void startCheckingMessages(wxStaticText *m_statusText);
     void stopCheckingMessages(wxStaticText *m_statusText);
-    void processMessage(const std::string &messageContent, wxStaticText *m_statusText);
+    bool processMessage(const std::string &messageContent, wxStaticText *m_statusText);
 };

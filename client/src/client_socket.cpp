@@ -1,6 +1,6 @@
 ﻿// client_socket.cpp
 #include "client_socket.h"
-
+#define min(a, b) (((a) < (b)) ? (a) : (b))
 // Function to initialize Winsock
 bool Socket::initialize()
 {
@@ -107,4 +107,56 @@ void Socket::cleanup(SOCKET &socket)
 {
     closesocket(socket);
     WSACleanup();
+}
+
+cv::Mat Socket::receiveFrame(SOCKET &serverSocket)
+{
+    int frameSizeNetworkOrder = 0;
+    int result = recv(serverSocket, (char *)&frameSizeNetworkOrder, sizeof(frameSizeNetworkOrder), 0);
+    if (result == SOCKET_ERROR || result == 0)
+    {
+        std::cerr << "Failed to receive frame size: " << WSAGetLastError() << std::endl;
+        return cv::Mat();
+    }
+
+    int frameSize = ntohl(frameSizeNetworkOrder); // Convert from network byte order
+
+    std::vector<uchar> buffer(frameSize);
+    int receivedBytes = 0;
+
+    while (receivedBytes < frameSize)
+    {
+        int chunkSize = min(MAX_PACKET_SIZE, frameSize - receivedBytes);
+        int bytesReceived = recv(serverSocket, (char *)buffer.data() + receivedBytes, chunkSize, 0);
+        if (bytesReceived == SOCKET_ERROR)
+        {
+            std::cerr << "Receive failed: " << WSAGetLastError() << std::endl;
+            return cv::Mat();
+        }
+        if (bytesReceived == 0)
+        {
+            std::cerr << "Connection closed by the server." << std::endl;
+            return cv::Mat();
+        }
+        receivedBytes += bytesReceived;
+    }
+
+    // Log buffer content for debugging
+    std::cout << "Received frame size: " << frameSize << std::endl;
+    std::cout << "Received bytes: " << receivedBytes << std::endl;
+
+    // Check if the buffer is filled correctly
+    if (receivedBytes != frameSize)
+    {
+        std::cerr << "Received bytes do not match frame size." << std::endl;
+        return cv::Mat();
+    }
+
+    cv::Mat frame = cv::imdecode(buffer, cv::IMREAD_COLOR);
+    if (frame.empty())
+    {
+        std::cerr << "Failed to decode frame." << std::endl;
+    }
+
+    return frame;
 }

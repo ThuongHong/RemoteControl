@@ -160,3 +160,25 @@ void ServerSocket::cleanup()
         WSACleanup();
     }
 }
+
+void sendFrame(SOCKET clientSock, const cv::Mat &frame)
+{
+    std::vector<uchar> buffer;
+    cv::imencode(".jpg", frame, buffer); // Compress the frame
+
+    int totalSize = buffer.size();
+    send(clientSock, (char *)&totalSize, sizeof(int), 0); // Send frame size first
+
+    int sentBytes = 0;
+    while (sentBytes < totalSize)
+    {
+        int chunkSize = std::min(MAX_PACKET_SIZE, totalSize - sentBytes);
+        int bytesSent = send(clientSock, (char *)buffer.data() + sentBytes, chunkSize, 0);
+        if (bytesSent == SOCKET_ERROR)
+        {
+            std::cerr << "Send failed: " << WSAGetLastError() << std::endl;
+            break;
+        }
+        sentBytes += bytesSent;
+    }
+}

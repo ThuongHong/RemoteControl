@@ -4,11 +4,13 @@ project(server)
 
 # Add source to this project's executable.
 set(SOURCE_FILES
-    src/server_task.cpp
-    src/server_task.h
-    src/server_socket.cpp
-    src/server_socket.h
+    # src/server_task.cpp
+    # src/server_task.h
+    # src/server_socket.cpp
+    # src/server_socket.h
     src/server.cpp
+    src/server_handler.cpp
+    src/server_handler.h
 )
 
 # Add an executable target first
@@ -36,10 +38,11 @@ endif()
 
 # Add Windows-specific libraries
 if(WIN32)
+    add_definitions(-DWIN32_LEAN_AND_MEAN)
     target_link_libraries(server PRIVATE
-        ws2_32 # Windows Sockets
-        gdi32 # GDI
-        user32 # User Interface
-        advapi32 # Advanced Windows APIs
+        ws2_32
+        gdi32
+        user32
+        advapi32
     )
 endif()

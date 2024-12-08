@@ -8,19 +8,21 @@ set(CMAKE_CXX_STANDARD 20)
 
 # Source files for the executable
 set(SOURCE_FILES
-    src/client_socket.cpp
-    src/client_socket.h
+    # src/client_socket.cpp
+    # src/client_socket.h
     src/gmail.h
     src/gmail.cpp
     src/client.h
     src/client.cpp
     src/main.cpp
-    src/App.cpp
-    src/App.h
-    src/RemoteControlDraft.cpp
-    src/RemoteControlDraft.h
-    src/panels.h
-    src/panels.cpp
+    src/base64.h
+    src/base64.cpp
+    # src/App.cpp
+    # src/App.h
+    # src/RemoteControlDraft.cpp
+    # src/RemoteControlDraft.h
+    # src/panels.h
+    # src/panels.cpp
 )
 
 # Create executable

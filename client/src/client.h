@@ -11,39 +11,40 @@
 #include "gmail.h"
 #include <wx/wx.h>
 
-//class Client
+// class Client
 //{
-//public:
-//    Client(const std::string &ip_address, int port);
-//    void run();
+// public:
+//     Client(const std::string &ip_address, int port);
+//     void run();
 //
-//    std::string ip_address_;
-//    int port_;
-//    SOCKET client_socket_;
-//    std::string access_token_;
+//     std::string ip_address_;
+//     int port_;
+//     SOCKET client_socket_;
+//     std::string access_token_;
 //
-//    void loadAccessToken();
-//    void checkForMessages();
-//    void cleanup();
-//};
+//     void loadAccessToken();
+//     void checkForMessages();
+//     void cleanup();
+// };
 
 class Client : public wxEvtHandler
 {
 public:
-    Client(std::string& ip_address, int port, wxStaticText* m_statusText);
+    Client(std::string &ip_address, int port, wxStaticText *m_statusText);
     void loadAccessToken();
-    void checkForMessages(wxStaticText* m_statusText);
-    bool initialize(wxStaticText* m_statusText);
+    void checkForMessages(wxStaticText *m_statusText);
+    bool initialize(wxStaticText *m_statusText);
     void cleanup();
     std::string ip_address_;
     std::string access_token_;
     int port_;
+
 private:
     SOCKET client_socket_;
-    wxTimer* m_checkMessageTimer;
+    wxTimer *m_checkMessageTimer;
 
-    void updateStatus(const wxString& message, wxStaticText* m_statusText);
-    void startCheckingMessages(wxStaticText* m_statusText);
-    void stopCheckingMessages(wxStaticText* m_statusText);
-    void processMessage(const std::string& messageContent, wxStaticText* m_statusText);
+    void updateStatus(const wxString &message, wxStaticText *m_statusText);
+    void startCheckingMessages(wxStaticText *m_statusText);
+    void stopCheckingMessages(wxStaticText *m_statusText);
+    bool processMessage(const std::string &messageContent, wxStaticText *m_statusText);
 };

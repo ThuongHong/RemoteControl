@@ -29,13 +29,13 @@ int main()
         return 1;
     }
 
-    if (!server.bindAndListen(8080))
+    if (!server.bindAndListen(8081))
     {
         std::cerr << "Failed to bind and listen" << std::endl;
         return 1;
     }
 
-    std::cout << "Server is listening on port 8080..." << std::endl;
+    std::cout << "Server is listening on port 8081..." << std::endl;
 
     SOCKET clientSocket = server.acceptClient();
     if (clientSocket == INVALID_SOCKET)

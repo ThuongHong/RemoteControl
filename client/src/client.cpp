@@ -209,24 +209,64 @@ bool Client::connectToServer(const char *ipAddress, int port)
     return connect(server_socket_, (sockaddr *)&serverAddress, sizeof(serverAddress)) == 0;
 }
 
-bool Client::receiveFile(const std::wstring &savePath)
+bool Client::receiveFile(const std::wstring &filename)
 {
-    std::ofstream outputFile(savePath, std::ios::binary);
-    if (!outputFile.is_open())
+    // First receive file size
+    uint64_t fileSize = 0;
+    if (recv(server_socket_, (char *)&fileSize, sizeof(fileSize), 0) <= 0)
     {
-        std::cerr << "Failed to open file for writing: " << savePath << std::endl;
+        std::cerr << "Failed to receive file size" << std::endl;
         return false;
     }
 
-    char buffer[MAX_PACKET_SIZE];
-    int bytesRead;
-    while ((bytesRead = recv(server_socket_, buffer, MAX_PACKET_SIZE, 0)) > 0)
+    // Validate file size
+    if (fileSize > MAX_FILE_SIZE)
     {
-        outputFile.write(buffer, bytesRead);
+        std::cerr << "File too large: " << fileSize << " bytes" << std::endl;
+        return false;
     }
 
-    outputFile.close();
-    return bytesRead == 0;
+    // Open file for writing
+    std::ofstream file(filename, std::ios::binary);
+    if (!file)
+    {
+        std::cerr << "Failed to create file: " << std::endl;
+        return false;
+    }
+
+    // Receive file in chunks
+    std::vector<char> buffer(MAX_BUFFER_SIZE);
+    uint64_t totalReceived = 0;
+    int percentComplete = 0;
+
+    while (totalReceived < fileSize)
+    {
+        size_t remaining = fileSize - totalReceived;
+        size_t chunkSize = (remaining < MAX_BUFFER_SIZE) ? remaining : MAX_BUFFER_SIZE;
+
+        int bytesReceived = recv(server_socket_, buffer.data(), chunkSize, 0);
+        if (bytesReceived <= 0)
+        {
+            std::cerr << "Connection error while receiving file" << std::endl;
+            file.close();
+            return false;
+        }
+
+        file.write(buffer.data(), bytesReceived);
+        totalReceived += bytesReceived;
+
+        // Show progress
+        int newPercent = (int)((totalReceived * 100) / fileSize);
+        if (newPercent > percentComplete)
+        {
+            percentComplete = newPercent;
+            std::cout << "\rReceiving file: " << percentComplete << "%" << std::flush;
+        }
+    }
+
+    std::cout << "\nFile received successfully" << std::endl;
+    file.close();
+    return true;
 }
 
 void Client::cleanupSocket()

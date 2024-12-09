@@ -90,9 +90,9 @@ bool ServerHandler::sendMessage(SOCKET clientSocket, const std::string &message)
 bool ServerHandler::sendFile(SOCKET clientSocket, const std::wstring &filename)
 {
     std::ifstream file(filename, std::ios::binary);
-    if (!file)
+    if (!file.is_open())
     {
-        std::cerr << "Cannot open file" << std::endl;
+        std::cerr << "Failed to open file: " << std::string(filename.begin(), filename.end()) << std::endl;
         return false;
     }
 
@@ -101,17 +101,41 @@ bool ServerHandler::sendFile(SOCKET clientSocket, const std::wstring &filename)
     size_t fileSize = file.tellg();
     file.seekg(0, std::ios::beg);
 
-    // Send file size
-    send(clientSocket, (char *)&fileSize, sizeof(fileSize), 0);
-
-    // Send file content
-    char buffer[1024];
-    while (!file.eof())
+    // Send file size first
+    size_t fileSizeNetworkOrder = htonl(fileSize);
+    if (send(clientSocket, reinterpret_cast<char *>(&fileSizeNetworkOrder), sizeof(fileSizeNetworkOrder), 0) == SOCKET_ERROR)
     {
-        file.read(buffer, sizeof(buffer));
-        send(clientSocket, buffer, file.gcount(), 0);
+        std::cerr << "Error sending file size" << std::endl;
+        file.close();
+        return false;
     }
 
+    // Send file data in chunks
+    const size_t chunkSize = MAX_PACKET_SIZE;
+    std::vector<char> buffer(chunkSize);
+    size_t totalSent = 0;
+
+    while (totalSent < fileSize)
+    {
+        file.read(buffer.data(), chunkSize);
+        size_t bytesToSend = file.gcount();
+
+        int bytesSent = send(clientSocket, buffer.data(), bytesToSend, 0);
+        if (bytesSent == SOCKET_ERROR)
+        {
+            std::cerr << "Error sending file data" << std::endl;
+            file.close();
+            return false;
+        }
+
+        totalSent += bytesSent;
+
+        // Show progress
+        int percentComplete = static_cast<int>((totalSent * 100) / fileSize);
+        std::cout << "\rSending file: " << percentComplete << "%" << std::flush;
+    }
+
+    std::cout << "\nFile sent successfully" << std::endl;
     file.close();
     return true;
 }

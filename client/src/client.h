@@ -15,7 +15,11 @@
 #include <wx/wx.h>
 
 #pragma comment(lib, "Ws2_32.lib") // Link Winsock library
-#define MAX_PACKET_SIZE 1400       // Maximum packet size
+
+// Constants for buffer management
+const size_t MAX_PACKET_SIZE = 1400;            // Maximum packet size
+const size_t MAX_BUFFER_SIZE = 8192;            // 8KB chunks
+const size_t MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB limit
 
 class Client : public wxEvtHandler
 {

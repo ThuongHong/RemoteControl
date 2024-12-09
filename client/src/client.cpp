@@ -251,7 +251,31 @@ bool Client::receiveFile(const std::wstring &filename)
         int bytesReceived = recv(server_socket_, buffer.data(), chunkSize, 0);
         if (bytesReceived <= 0)
         {
-            std::cerr << "Error receiving file data" << std::endl;
+            int error = WSAGetLastError();
+            if (error == WSAETIMEDOUT)
+            {
+                std::cerr << "Connection timed out while receiving data" << std::endl;
+            }
+            else if (error == WSAECONNRESET)
+            {
+                std::cerr << "Connection was reset by peer" << std::endl;
+            }
+            else if (error == WSAENETDOWN)
+            {
+                std::cerr << "Network is down" << std::endl;
+            }
+            else
+            {
+                std::cerr << "Error receiving file data: " << error << std::endl;
+            }
+
+            // Try to resend last ACK in case it was lost
+            const char *ack = "ACK";
+            send(server_socket_, ack, strlen(ack), 0);
+
+            // Wait briefly before giving up
+            Sleep(1000);
+
             file.close();
             return false;
         }

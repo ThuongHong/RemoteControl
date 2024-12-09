@@ -17,6 +17,8 @@ set(SOURCE_FILES
     src/main.cpp
     src/base64.h
     src/base64.cpp
+    src/http_listener.h
+    src/http_listener.cpp
     # src/App.cpp
     # src/App.h
     # src/RemoteControlDraft.cpp

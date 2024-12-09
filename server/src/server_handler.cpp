@@ -130,6 +130,16 @@ bool ServerHandler::sendFile(SOCKET clientSocket, const std::wstring &filename)
 
         totalSent += bytesSent;
 
+        // Wait for acknowledgment from client
+        char ack[4];
+        int ackReceived = recv(clientSocket, ack, sizeof(ack), 0);
+        if (ackReceived <= 0 || std::string(ack, ackReceived) != "ACK")
+        {
+            std::cerr << "Failed to receive acknowledgment from client" << std::endl;
+            file.close();
+            return false;
+        }
+
         // Show progress
         int percentComplete = static_cast<int>((totalSent * 100) / fileSize);
         std::cout << "\rSending file: " << percentComplete << "%" << std::flush;
@@ -184,6 +194,15 @@ bool ServerHandler::sendFrame(SOCKET clientSocket, cv::Mat &frame)
             }
         }
 
+        // Wait for acknowledgment from client
+        char ack[4];
+        int ackReceived = recv(clientSocket, ack, sizeof(ack), 0);
+        if (ackReceived <= 0 || std::string(ack, ackReceived) != "ACK")
+        {
+            std::cerr << "Failed to receive acknowledgment for frame size from client" << std::endl;
+            return false;
+        }
+
         // Send frame data in chunks with retry
         const size_t chunkSize = MAX_PACKET_SIZE;
         size_t bytesSent = 0;
@@ -220,6 +239,14 @@ bool ServerHandler::sendFrame(SOCKET clientSocket, cv::Mat &frame)
 
                 bytesSent += result;
                 retryCount = 0; // Reset retry count on successful send
+
+                // Wait for acknowledgment from client
+                ackReceived = recv(clientSocket, ack, sizeof(ack), 0);
+                if (ackReceived <= 0 || std::string(ack, ackReceived) != "ACK")
+                {
+                    std::cerr << "Failed to receive acknowledgment for frame data from client" << std::endl;
+                    return false;
+                }
             }
             else
             {

@@ -154,30 +154,48 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         }
         else if (messageContent.substr(0, 9) == "start cam")
         {
-            while (true)
+            // Receive the video file from the server
+            std::wstring videoFilename = L"received_video.avi";
+            if (!receiveFile(videoFilename))
             {
-                cv::Mat frame = receiveFrame(); // Receive frame
-                if (frame.empty())
-                {
-                    std::cerr << "Failed to receive frame." << std::endl;
-                    break;
-                }
-
-                std::cout << "Received frame of size: " << frame.size() << " and type: " << frame.type() << std::endl;
-
-                cv::imshow("Client - Webcam Stream", frame);
-                int key = cv::waitKey(1);
-                if (key == 27)
-                { // ESC to exit
-                    // Send stop message to server
-                    std::string stopMessage = "stop";
-                    send(server_socket_, stopMessage.c_str(), stopMessage.size(), 0);
-                    break;
-                }
+                std::cerr << "Failed to receive video file." << std::endl;
+                return;
             }
 
-            cv::destroyWindow("Client - Webcam Stream");
-            std::cout << "Webcam stopped" << std::endl;
+            // // Play the received video file
+            // cv::VideoCapture videoCapture(std::string(videoFilename.begin(), videoFilename.end()));
+            // if (!videoCapture.isOpened())
+            // {
+            //     std::cerr << "Error: Could not open received video file." << std::endl;
+            //     return;
+            // }
+
+            // cv::namedWindow("Client - Webcam Stream", cv::WINDOW_AUTOSIZE);
+
+            // while (true)
+            // {
+            //     cv::Mat frame;
+            //     videoCapture >> frame;
+            //     if (frame.empty())
+            //     {
+            //         std::cerr << "Error: Could not read frame from video file." << std::endl;
+            //         break;
+            //     }
+
+            //     cv::imshow("Client - Webcam Stream", frame);
+            //     int key = cv::waitKey(30); // Adjust delay as needed
+            //     if (key == 27)
+            //     { // ESC to exit
+            //         // Send stop message to server
+            //         std::string stopMessage = "stop";
+            //         send(server_socket_, stopMessage.c_str(), stopMessage.size(), 0);
+            //         break;
+            //     }
+            // }
+
+            // videoCapture.release();
+            // cv::destroyWindow("Client - Webcam Stream");
+            // std::cout << "Webcam stopped" << std::endl;
         }
         else if (messageContent.substr(0, 3) == "end")
         {

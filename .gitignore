@@ -1,0 +1,9 @@
+# Ignore everything
+*
+
+# Allow source files
+!/src/
+!/src/**
+
+# Allow directories (needed to traverse directories)
+!*/

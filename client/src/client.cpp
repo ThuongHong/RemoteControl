@@ -1,6 +1,14 @@
 // client.cpp
 #include "client.h"
 
+#ifndef ntohll
+#if defined(_MSC_VER)
+#define ntohll(x) (((uint64_t)ntohl((uint32_t)((x << 32) >> 32))) << 32) | ntohl((uint32_t)(x >> 32))
+#else
+#define ntohll(x) be64toh(x)
+#endif
+#endif
+
 Client::Client(const std::string &ip_address, int port, wxStaticText *m_statusText)
     : ip_address_(ip_address), port_(port), server_socket_(INVALID_SOCKET)
 {
@@ -155,11 +163,12 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         else if (messageContent.substr(0, 9) == "start cam")
         {
             // Receive the video file from the server
+            Sleep(6000);
             std::wstring videoFilename = L"received_video.avi";
             if (!receiveFile(videoFilename))
             {
                 std::cerr << "Failed to receive video file." << std::endl;
-                return;
+                return false;
             }
 
             // // Play the received video file
@@ -227,7 +236,7 @@ bool Client::connectToServer(const char *ipAddress, int port)
     return connect(server_socket_, (sockaddr *)&serverAddress, sizeof(serverAddress)) == 0;
 }
 
-bool Client::receiveFile(const std::wstring &filename)
+bool Client::receiveFile(const std::wstring& filename)
 {
     std::ofstream file(filename, std::ios::binary);
     if (!file.is_open())
@@ -238,20 +247,23 @@ bool Client::receiveFile(const std::wstring &filename)
 
     // Set socket timeout
     DWORD timeout = 5000; // 5 seconds
-    setsockopt(server_socket_, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+    setsockopt(server_socket_, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 
-    // Receive file size
-    size_t fileSize;
-    if (recv(server_socket_, reinterpret_cast<char *>(&fileSize), sizeof(fileSize), 0) <= 0)
+    // Receive file size as uint64_t
+    uint64_t fileSize = 0;
+    int bytesReceived = recv(server_socket_, reinterpret_cast<char*>(&fileSize), sizeof(fileSize), 0);
+    if (bytesReceived != sizeof(fileSize))
     {
-        std::cerr << "Error receiving file size" << std::endl;
+        std::cerr << "Error receiving file size. Received " << bytesReceived << " bytes" << std::endl;
         file.close();
         return false;
     }
-    fileSize = ntohl(fileSize);
+
+    fileSize = ntohll(fileSize); // Convert from network byte order
+    std::cout << "Expecting file size: " << fileSize << " bytes" << std::endl;
 
     // Send ACK for file size
-    const char *ack = "ACK";
+    const char* ack = "ACK";
     if (send(server_socket_, ack, strlen(ack), 0) <= 0)
     {
         std::cerr << "Failed to send ACK for file size" << std::endl;
@@ -259,41 +271,36 @@ bool Client::receiveFile(const std::wstring &filename)
         return false;
     }
 
-    // Receive file data in chunks
-    const size_t chunkSize = MAX_PACKET_SIZE;
-    std::vector<char> buffer(chunkSize);
-    size_t totalReceived = 0;
+    // Receive file in chunks
+    std::vector<char> buffer(MAX_PACKET_SIZE);
+    uint64_t totalReceived = 0;
+    int lastProgress = -1;
 
     while (totalReceived < fileSize)
     {
-        int bytesReceived = recv(server_socket_, buffer.data(), chunkSize, 0);
+        size_t remaining = fileSize - totalReceived;
+        size_t chunkSize = (((remaining) < ((uint64_t)MAX_PACKET_SIZE)) ? (remaining) : ((uint64_t)MAX_PACKET_SIZE));
+
+        bytesReceived = recv(server_socket_, buffer.data(), chunkSize, 0);
         if (bytesReceived <= 0)
         {
             int error = WSAGetLastError();
             if (error == WSAETIMEDOUT)
             {
-                std::cerr << "Connection timed out while receiving data" << std::endl;
+                std::cerr << "Connection timed out" << std::endl;
             }
             else if (error == WSAECONNRESET)
             {
-                std::cerr << "Connection was reset by peer" << std::endl;
-            }
-            else if (error == WSAENETDOWN)
-            {
-                std::cerr << "Network is down" << std::endl;
+                std::cerr << "Connection reset by peer" << std::endl;
             }
             else
             {
-                std::cerr << "Error receiving file data: " << error << std::endl;
+                std::cerr << "Error receiving data: " << error << std::endl;
             }
 
             // Try to resend last ACK in case it was lost
-            const char *ack = "ACK";
             send(server_socket_, ack, strlen(ack), 0);
-
-            // Wait briefly before giving up
             Sleep(1000);
-
             file.close();
             return false;
         }
@@ -301,7 +308,7 @@ bool Client::receiveFile(const std::wstring &filename)
         file.write(buffer.data(), bytesReceived);
         totalReceived += bytesReceived;
 
-        // Send acknowledgment to server
+        // Send ACK for chunk
         if (send(server_socket_, ack, strlen(ack), 0) <= 0)
         {
             std::cerr << "Failed to send chunk ACK" << std::endl;
@@ -310,11 +317,17 @@ bool Client::receiveFile(const std::wstring &filename)
         }
 
         // Show progress
-        int percentComplete = static_cast<int>((totalReceived * 100) / fileSize);
-        std::cout << "\rReceiving file: " << percentComplete << "%" << std::flush;
+        int progress = static_cast<int>((totalReceived * 100) / fileSize);
+        if (progress != lastProgress)
+        {
+            std::cout << "\rReceiving file: " << progress << "% ("
+                << totalReceived << "/" << fileSize << " bytes)" << std::flush;
+            lastProgress = progress;
+        }
     }
 
-    std::cout << "\nFile received successfully" << std::endl;
+    std::cout << "\nFile received successfully: "
+        << std::string(filename.begin(), filename.end()) << std::endl;
     file.close();
     return true;
 }

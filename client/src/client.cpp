@@ -1,6 +1,14 @@
 // client.cpp
 #include "client.h"
 
+#ifndef ntohll
+#if defined(_MSC_VER)
+#define ntohll(x) (((uint64_t)ntohl((uint32_t)((x << 32) >> 32))) << 32) | ntohl((uint32_t)(x >> 32))
+#else
+#define ntohll(x) be64toh(x)
+#endif
+#endif
+
 Client::Client(const std::string &ip_address, int port, wxStaticText *m_statusText)
     : ip_address_(ip_address), port_(port), server_socket_(INVALID_SOCKET)
 {
@@ -154,30 +162,49 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         }
         else if (messageContent.substr(0, 9) == "start cam")
         {
-            while (true)
+            // Receive the video file from the server
+            Sleep(6000);
+            std::wstring videoFilename = L"received_video.avi";
+            if (!receiveFile(videoFilename))
             {
-                cv::Mat frame = receiveFrame(); // Receive frame
-                if (frame.empty())
-                {
-                    std::cerr << "Failed to receive frame." << std::endl;
-                    break;
-                }
-
-                std::cout << "Received frame of size: " << frame.size() << " and type: " << frame.type() << std::endl;
-
-                cv::imshow("Client - Webcam Stream", frame);
-                int key = cv::waitKey(1);
-                if (key == 27)
-                { // ESC to exit
-                    // Send stop message to server
-                    std::string stopMessage = "stop";
-                    send(server_socket_, stopMessage.c_str(), stopMessage.size(), 0);
-                    break;
-                }
+                std::cerr << "Failed to receive video file." << std::endl;
+                return false;
             }
 
-            cv::destroyWindow("Client - Webcam Stream");
-            std::cout << "Webcam stopped" << std::endl;
+            // // Play the received video file
+            // cv::VideoCapture videoCapture(std::string(videoFilename.begin(), videoFilename.end()));
+            // if (!videoCapture.isOpened())
+            // {
+            //     std::cerr << "Error: Could not open received video file." << std::endl;
+            //     return;
+            // }
+
+            // cv::namedWindow("Client - Webcam Stream", cv::WINDOW_AUTOSIZE);
+
+            // while (true)
+            // {
+            //     cv::Mat frame;
+            //     videoCapture >> frame;
+            //     if (frame.empty())
+            //     {
+            //         std::cerr << "Error: Could not read frame from video file." << std::endl;
+            //         break;
+            //     }
+
+            //     cv::imshow("Client - Webcam Stream", frame);
+            //     int key = cv::waitKey(30); // Adjust delay as needed
+            //     if (key == 27)
+            //     { // ESC to exit
+            //         // Send stop message to server
+            //         std::string stopMessage = "stop";
+            //         send(server_socket_, stopMessage.c_str(), stopMessage.size(), 0);
+            //         break;
+            //     }
+            // }
+
+            // videoCapture.release();
+            // cv::destroyWindow("Client - Webcam Stream");
+            // std::cout << "Webcam stopped" << std::endl;
         }
         else if (messageContent.substr(0, 3) == "end")
         {
@@ -209,24 +236,100 @@ bool Client::connectToServer(const char *ipAddress, int port)
     return connect(server_socket_, (sockaddr *)&serverAddress, sizeof(serverAddress)) == 0;
 }
 
-bool Client::receiveFile(const std::wstring &savePath)
+bool Client::receiveFile(const std::wstring& filename)
 {
-    std::ofstream outputFile(savePath, std::ios::binary);
-    if (!outputFile.is_open())
+    std::ofstream file(filename, std::ios::binary);
+    if (!file.is_open())
     {
-        std::cerr << "Failed to open file for writing: " << savePath << std::endl;
+        std::cerr << "Failed to open file: " << std::string(filename.begin(), filename.end()) << std::endl;
         return false;
     }
 
-    char buffer[MAX_PACKET_SIZE];
-    int bytesRead;
-    while ((bytesRead = recv(server_socket_, buffer, MAX_PACKET_SIZE, 0)) > 0)
+    // Set socket timeout
+    DWORD timeout = 5000; // 5 seconds
+    setsockopt(server_socket_, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
+
+    // Receive file size as uint64_t
+    uint64_t fileSize = 0;
+    int bytesReceived = recv(server_socket_, reinterpret_cast<char*>(&fileSize), sizeof(fileSize), 0);
+    if (bytesReceived != sizeof(fileSize))
     {
-        outputFile.write(buffer, bytesRead);
+        std::cerr << "Error receiving file size. Received " << bytesReceived << " bytes" << std::endl;
+        file.close();
+        return false;
     }
 
-    outputFile.close();
-    return bytesRead == 0;
+    fileSize = ntohll(fileSize); // Convert from network byte order
+    std::cout << "Expecting file size: " << fileSize << " bytes" << std::endl;
+
+    // Send ACK for file size
+    const char* ack = "ACK";
+    if (send(server_socket_, ack, strlen(ack), 0) <= 0)
+    {
+        std::cerr << "Failed to send ACK for file size" << std::endl;
+        file.close();
+        return false;
+    }
+
+    // Receive file in chunks
+    std::vector<char> buffer(MAX_PACKET_SIZE);
+    uint64_t totalReceived = 0;
+    int lastProgress = -1;
+
+    while (totalReceived < fileSize)
+    {
+        size_t remaining = fileSize - totalReceived;
+        size_t chunkSize = (((remaining) < ((uint64_t)MAX_PACKET_SIZE)) ? (remaining) : ((uint64_t)MAX_PACKET_SIZE));
+
+        bytesReceived = recv(server_socket_, buffer.data(), chunkSize, 0);
+        if (bytesReceived <= 0)
+        {
+            int error = WSAGetLastError();
+            if (error == WSAETIMEDOUT)
+            {
+                std::cerr << "Connection timed out" << std::endl;
+            }
+            else if (error == WSAECONNRESET)
+            {
+                std::cerr << "Connection reset by peer" << std::endl;
+            }
+            else
+            {
+                std::cerr << "Error receiving data: " << error << std::endl;
+            }
+
+            // Try to resend last ACK in case it was lost
+            send(server_socket_, ack, strlen(ack), 0);
+            Sleep(1000);
+            file.close();
+            return false;
+        }
+
+        file.write(buffer.data(), bytesReceived);
+        totalReceived += bytesReceived;
+
+        // Send ACK for chunk
+        if (send(server_socket_, ack, strlen(ack), 0) <= 0)
+        {
+            std::cerr << "Failed to send chunk ACK" << std::endl;
+            file.close();
+            return false;
+        }
+
+        // Show progress
+        int progress = static_cast<int>((totalReceived * 100) / fileSize);
+        if (progress != lastProgress)
+        {
+            std::cout << "\rReceiving file: " << progress << "% ("
+                << totalReceived << "/" << fileSize << " bytes)" << std::flush;
+            lastProgress = progress;
+        }
+    }
+
+    std::cout << "\nFile received successfully: "
+        << std::string(filename.begin(), filename.end()) << std::endl;
+    file.close();
+    return true;
 }
 
 void Client::cleanupSocket()
@@ -242,51 +345,68 @@ bool Client::sendString(const std::string &message)
 
 cv::Mat Client::receiveFrame()
 {
-    int frameSizeNetworkOrder = 0;
-    int result = recv(server_socket_, (char *)&frameSizeNetworkOrder, sizeof(frameSizeNetworkOrder), 0);
-    if (result == SOCKET_ERROR || result == 0)
+    // Receive frame size
+    int frameSizeNetworkOrder;
+    if (recv(server_socket_, reinterpret_cast<char *>(&frameSizeNetworkOrder), sizeof(frameSizeNetworkOrder), 0) <= 0)
     {
-        std::cerr << "Failed to receive frame size: " << WSAGetLastError() << std::endl;
+        std::cerr << "Error receiving frame size" << std::endl;
+        return cv::Mat();
+    }
+    int frameSize = ntohl(frameSizeNetworkOrder);
+
+    // Send ACK for frame size
+    const char *ack = "ACK";
+    if (send(server_socket_, ack, strlen(ack), 0) <= 0)
+    {
+        std::cerr << "Failed to send ACK for frame size" << std::endl;
         return cv::Mat();
     }
 
-    int frameSize = ntohl(frameSizeNetworkOrder); // Convert from network byte order
-
+    // Receive frame data in chunks
     std::vector<uchar> buffer(frameSize);
-    int receivedBytes = 0;
+    size_t totalReceived = 0;
 
-    while (receivedBytes < frameSize)
+    while (totalReceived < frameSize)
     {
-        int chunkSize = ((MAX_PACKET_SIZE < (frameSize - receivedBytes)) ? MAX_PACKET_SIZE : (frameSize - receivedBytes));
-        int bytesReceived = recv(server_socket_, (char *)buffer.data() + receivedBytes, chunkSize, 0);
-        if (bytesReceived == SOCKET_ERROR)
+        int chunkSize = min(MAX_PACKET_SIZE, frameSize - totalReceived);
+        int bytesReceived = recv(server_socket_, reinterpret_cast<char *>(buffer.data() + totalReceived), chunkSize, 0);
+
+        if (bytesReceived <= 0)
         {
-            std::cerr << "Receive failed: " << WSAGetLastError() << std::endl;
+            int error = WSAGetLastError();
+            if (error == WSAETIMEDOUT)
+            {
+                std::cerr << "Connection timed out while receiving frame" << std::endl;
+            }
+            else if (error == WSAECONNRESET)
+            {
+                std::cerr << "Connection was reset by peer" << std::endl;
+            }
+            else
+            {
+                std::cerr << "Error receiving frame data: " << error << std::endl;
+            }
+
+            // Try to resend last ACK
+            send(server_socket_, ack, strlen(ack), 0);
             return cv::Mat();
         }
-        if (bytesReceived == 0)
+
+        totalReceived += bytesReceived;
+
+        // Send acknowledgment for chunk
+        if (send(server_socket_, ack, strlen(ack), 0) <= 0)
         {
-            std::cerr << "Connection closed by the server." << std::endl;
+            std::cerr << "Failed to send chunk ACK" << std::endl;
             return cv::Mat();
         }
-        receivedBytes += bytesReceived;
     }
 
-    // Log buffer content for debugging
-    std::cout << "Received frame size: " << frameSize << std::endl;
-    std::cout << "Received bytes: " << receivedBytes << std::endl;
-
-    // Check if the buffer is filled correctly
-    if (receivedBytes != frameSize)
-    {
-        std::cerr << "Received bytes do not match frame size." << std::endl;
-        return cv::Mat();
-    }
-
+    // Decode frame
     cv::Mat frame = cv::imdecode(buffer, cv::IMREAD_COLOR);
     if (frame.empty())
     {
-        std::cerr << "Failed to decode frame." << std::endl;
+        std::cerr << "Failed to decode frame" << std::endl;
     }
 
     return frame;

@@ -3,7 +3,6 @@
 #include <wx/timer.h>
 #include <wx/webview.h>
 #include "client.h"
-#include "client_socket.h"
 #include <memory>
 #include <regex>
 

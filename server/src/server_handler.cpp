@@ -423,8 +423,6 @@ void ServerHandler::startWebcam(SOCKET clientSocket)
         return;
     }
 
-    // cv::namedWindow("Server - Webcam", cv::WINDOW_AUTOSIZE);
-
     // Set socket to non-blocking mode
     u_long mode = 1;
     ioctlsocket(clientSocket, FIONBIO, &mode);
@@ -442,6 +440,7 @@ void ServerHandler::startWebcam(SOCKET clientSocket)
                 break;
             }
         }
+
         // Capture and process frame
         cv::Mat frame;
         cap >> frame;
@@ -451,14 +450,16 @@ void ServerHandler::startWebcam(SOCKET clientSocket)
             break;
         }
 
+        // Resize the frame to a smaller resolution
+        cv::Mat resizedFrame;
+        cv::resize(frame, resizedFrame, cv::Size(frame.cols / 2, frame.rows / 2));
+
         // Send frame to client
-        if (!sendFrame(clientSocket, frame))
+        if (!sendFrame(clientSocket, resizedFrame))
         {
             std::cerr << "Failed to send frame to client." << std::endl;
             break;
         }
-
-        // cv::imshow("Server - Webcam", frame);
     }
 
     // Reset socket to blocking mode
@@ -467,7 +468,6 @@ void ServerHandler::startWebcam(SOCKET clientSocket)
 
     // Cleanup
     cap.release();
-    // cv::destroyWindow("Server - Webcam");
     std::cout << "Webcam stopped" << std::endl;
 }
 

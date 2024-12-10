@@ -333,25 +333,35 @@ cv::Mat Client::receiveFrame()
 
     // Receive frame data in chunks
     std::vector<uchar> buffer(frameSize);
-    int receivedBytes = 0;
+    size_t totalReceived = 0;
 
-    while (receivedBytes < frameSize)
+    while (totalReceived < frameSize)
     {
-        int chunkSize = min(MAX_PACKET_SIZE, frameSize - receivedBytes);
-        int bytesReceived = recv(server_socket_, reinterpret_cast<char *>(buffer.data() + receivedBytes), chunkSize, 0);
+        int chunkSize = min(MAX_PACKET_SIZE, frameSize - totalReceived);
+        int bytesReceived = recv(server_socket_, reinterpret_cast<char *>(buffer.data() + totalReceived), chunkSize, 0);
 
-        if (bytesReceived == SOCKET_ERROR)
+        if (bytesReceived <= 0)
         {
-            std::cerr << "Receive failed: " << WSAGetLastError() << std::endl;
+            int error = WSAGetLastError();
+            if (error == WSAETIMEDOUT)
+            {
+                std::cerr << "Connection timed out while receiving frame" << std::endl;
+            }
+            else if (error == WSAECONNRESET)
+            {
+                std::cerr << "Connection was reset by peer" << std::endl;
+            }
+            else
+            {
+                std::cerr << "Error receiving frame data: " << error << std::endl;
+            }
+
+            // Try to resend last ACK
+            send(server_socket_, ack, strlen(ack), 0);
             return cv::Mat();
         }
-        if (bytesReceived == 0)
-        {
-            std::cerr << "Connection closed by the server." << std::endl;
-            return cv::Mat();
-        }
 
-        receivedBytes += bytesReceived;
+        totalReceived += bytesReceived;
 
         // Send acknowledgment for chunk
         if (send(server_socket_, ack, strlen(ack), 0) <= 0)

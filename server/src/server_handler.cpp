@@ -1,6 +1,8 @@
 // server_handler.cpp
 
 #include "server_handler.h"
+#include <locale>
+#include <codecvt>
 
 // Constructor
 ServerHandler::ServerHandler() : serverSocket(INVALID_SOCKET),
@@ -87,6 +89,7 @@ bool ServerHandler::sendMessage(SOCKET clientSocket, const std::string &message)
     return true;
 }
 
+// In ServerHandler::sendFile
 bool ServerHandler::sendFile(SOCKET clientSocket, const std::wstring &filename)
 {
     std::ifstream file(filename, std::ios::binary);
@@ -98,14 +101,40 @@ bool ServerHandler::sendFile(SOCKET clientSocket, const std::wstring &filename)
 
     // Get file size
     file.seekg(0, std::ios::end);
-    size_t fileSize = file.tellg();
+    uint64_t fileSize = file.tellg(); // Changed to uint64_t
     file.seekg(0, std::ios::beg);
 
-    // Send file size first
-    size_t fileSizeNetworkOrder = htonl(fileSize);
-    if (send(clientSocket, reinterpret_cast<char *>(&fileSizeNetworkOrder), sizeof(fileSizeNetworkOrder), 0) == SOCKET_ERROR)
+    std::cout << "Sending file size: " << fileSize << " bytes" << std::endl;
+
+    // Convert to network byte order
+    uint64_t fileSizeNetwork = htonll(fileSize); // Use htonll for 64-bit
+    if (send(clientSocket, reinterpret_cast<char *>(&fileSizeNetwork), sizeof(fileSizeNetwork), 0) != sizeof(fileSizeNetwork))
     {
         std::cerr << "Error sending file size" << std::endl;
+        file.close();
+        return false;
+    }
+
+    // Wait for initial acknowledgment
+    char ack[4];
+    int retryCount = 0;
+    const int maxRetries = 5;
+    const int retryDelay = 1000;
+
+    while (retryCount < maxRetries)
+    {
+        int ackReceived = recv(clientSocket, ack, sizeof(ack), 0);
+        if (ackReceived > 0 && std::string(ack, ackReceived) == "ACK")
+        {
+            break;
+        }
+        Sleep(retryDelay);
+        retryCount++;
+    }
+
+    if (retryCount >= maxRetries)
+    {
+        std::cerr << "Failed to receive initial acknowledgment" << std::endl;
         file.close();
         return false;
     }
@@ -113,42 +142,145 @@ bool ServerHandler::sendFile(SOCKET clientSocket, const std::wstring &filename)
     // Send file data in chunks
     const size_t chunkSize = MAX_PACKET_SIZE;
     std::vector<char> buffer(chunkSize);
-    size_t totalSent = 0;
+    uint64_t totalSent = 0;
 
     while (totalSent < fileSize)
     {
-        file.read(buffer.data(), chunkSize);
-        size_t bytesToSend = file.gcount();
+        size_t remaining = fileSize - totalSent;
+        size_t bytesToSend = std::min(remaining, chunkSize);
 
-        int bytesSent = send(clientSocket, buffer.data(), bytesToSend, 0);
-        if (bytesSent == SOCKET_ERROR)
+        file.read(buffer.data(), bytesToSend);
+        size_t actualRead = file.gcount();
+
+        retryCount = 0;
+        bool chunkSent = false;
+
+        while (retryCount < maxRetries && !chunkSent)
         {
-            std::cerr << "Error sending file data" << std::endl;
+            int bytesSent = send(clientSocket, buffer.data(), actualRead, 0);
+            if (bytesSent > 0)
+            {
+                totalSent += bytesSent;
+                chunkSent = true;
+
+                // Wait for acknowledgment
+                retryCount = 0;
+                bool ackReceived = false;
+
+                while (retryCount < maxRetries && !ackReceived)
+                {
+                    int result = recv(clientSocket, ack, sizeof(ack), 0);
+                    if (result > 0 && std::string(ack, result) == "ACK")
+                    {
+                        ackReceived = true;
+                    }
+                    else
+                    {
+                        Sleep(retryDelay);
+                        retryCount++;
+                    }
+                }
+
+                if (!ackReceived)
+                {
+                    std::cerr << "Failed to receive chunk acknowledgment" << std::endl;
+                    file.close();
+                    return false;
+                }
+
+                // Show progress
+                int percentComplete = static_cast<int>((totalSent * 100) / fileSize);
+                std::cout << "\rSending file: " << percentComplete << "% ("
+                          << totalSent << "/" << fileSize << " bytes)" << std::flush;
+
+                // Add delay for large files
+                if (fileSize > 1024 * 1024)
+                {
+                    Sleep(50);
+                }
+            }
+            else
+            {
+                Sleep(retryDelay);
+                retryCount++;
+            }
+        }
+
+        if (!chunkSent)
+        {
+            std::cerr << "Failed to send chunk after " << maxRetries << " retries" << std::endl;
             file.close();
             return false;
         }
-
-        totalSent += bytesSent;
-
-        // Wait for acknowledgment from client
-        char ack[4];
-        int ackReceived = recv(clientSocket, ack, sizeof(ack), 0);
-        if (ackReceived <= 0 || std::string(ack, ackReceived) != "ACK")
-        {
-            std::cerr << "Failed to receive acknowledgment from client" << std::endl;
-            file.close();
-            return false;
-        }
-
-        // Show progress
-        int percentComplete = static_cast<int>((totalSent * 100) / fileSize);
-        std::cout << "\rSending file: " << percentComplete << "%" << std::flush;
     }
 
     std::cout << "\nFile sent successfully" << std::endl;
     file.close();
     return true;
 }
+
+// bool ServerHandler::sendFile(SOCKET clientSocket, const std::wstring &filename)
+// {
+//     std::ifstream file(filename, std::ios::binary);
+//     if (!file.is_open())
+//     {
+//         std::cerr << "Failed to open file: " << std::string(filename.begin(), filename.end()) << std::endl;
+//         return false;
+//     }
+
+//     // Get file size
+//     file.seekg(0, std::ios::end);
+//     size_t fileSize = file.tellg();
+//     file.seekg(0, std::ios::beg);
+
+//     // Send file size first
+//     size_t fileSizeNetworkOrder = htonl(fileSize);
+//     if (send(clientSocket, reinterpret_cast<char *>(&fileSizeNetworkOrder), sizeof(fileSizeNetworkOrder), 0) == SOCKET_ERROR)
+//     {
+//         std::cerr << "Error sending file size" << std::endl;
+//         file.close();
+//         return false;
+//     }
+
+//     // Send file data in chunks
+//     const size_t chunkSize = MAX_PACKET_SIZE;
+//     std::vector<char> buffer(chunkSize);
+//     size_t totalSent = 0;
+
+//     while (totalSent < fileSize)
+//     {
+//         file.read(buffer.data(), chunkSize);
+//         size_t bytesToSend = file.gcount();
+
+//         int bytesSent = send(clientSocket, buffer.data(), bytesToSend, 0);
+//         if (bytesSent == SOCKET_ERROR)
+//         {
+//             std::cerr << "Error sending file data" << std::endl;
+//             file.close();
+//             return false;
+//         }
+
+//         totalSent += bytesSent;
+
+//         // Wait for acknowledgment from client
+//         char ack[4];
+//         int ackReceived = recv(clientSocket, ack, sizeof(ack), 0);
+//         if (ackReceived <= 0 || std::string(ack, ackReceived) != "ACK")
+//         {
+//             std::cerr << "Failed to receive acknowledgment from client" << std::endl;
+//             file.close();
+//             return false;
+//         }
+
+//         // Show progress
+//         int percentComplete = static_cast<int>((totalSent * 100) / fileSize);
+//         std::cout << "\rSending file: " << percentComplete << "%" << std::flush;
+//     }
+
+//     std::cout << "\nFile sent successfully" << std::endl;
+//     file.close();
+//     return true;
+// }
 
 bool ServerHandler::sendFrame(SOCKET clientSocket, cv::Mat &frame)
 {
@@ -470,9 +602,9 @@ void ServerHandler::startWebcam(SOCKET clientSocket)
         return;
     }
 
-    // Record video for 5 seconds
+    // Record video for 3 seconds
     int frameCount = 0;
-    int maxFrames = fps * 5; // 5 seconds of video
+    int maxFrames = fps * 3; // 3 seconds of video
 
     while (frameCount < maxFrames)
     {
@@ -506,15 +638,27 @@ void ServerHandler::startWebcam(SOCKET clientSocket)
     mode = 0;
     ioctlsocket(clientSocket, FIONBIO, &mode);
 
+    // Ensure the video file is properly closed before sending
+    std::ifstream file(videoFilename, std::ios::binary);
+    if (!file.is_open())
+    {
+        std::cerr << "Failed to open video file: " << videoFilename << std::endl;
+        return;
+    }
+    file.close();
+
+    // Convert std::string to std::wstring
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    std::wstring wideVideoFilename = converter.from_bytes(videoFilename);
+
     // Send the recorded video file to the client
-    if (!sendFile(clientSocket, std::wstring(videoFilename.begin(), videoFilename.end())))
+    if (!sendFile(clientSocket, wideVideoFilename))
     {
         std::cerr << "Failed to send video file to client." << std::endl;
     }
 
     std::cout << "Webcam recording stopped and video sent to client." << std::endl;
 }
-
 void ServerHandler::listFilesInDirectory(const std::wstring &outputFile)
 {
     std::wofstream file(outputFile);

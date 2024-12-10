@@ -30,9 +30,10 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	m_statusText = new wxStaticText(panelReceiver, wxID_ANY, "Initializing...");
 	m_statusText->SetFont(processFont);
 
+	panelLogin->Hide();
 	panelAuthorization->Hide();
 	panelRoles->Hide();
-	panelSender->Hide();
+	//panelSender->Hide();
 	panelReceiver->Hide();
 
 	panelLogin->BindControl(panelAuthorization);

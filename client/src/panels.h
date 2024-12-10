@@ -136,6 +136,7 @@ private:
 	wxRadioBox* OptionsLSS;
 	wxRadioBox* OptionsLGD;
 	wxButton* ButtonConfirm;
+	wxButton* ButtonClose;
 	wxButton* ButtonExit;
 	wxStaticBitmap* ImageDisplay;
 	wxTextCtrl* InputFieldProcessID;
@@ -153,6 +154,7 @@ private:
 	void OnFeaturesChanged(wxCommandEvent& evt);
 	void OnOptionsChanged(wxCommandEvent& evt);
 	void OnButtonConfirmClicked(std::string& filename, int& processID);
+	void OnButtonCloseClicked();
 	void OnButtonExitClicked(wxCommandEvent& evt);
 };
 

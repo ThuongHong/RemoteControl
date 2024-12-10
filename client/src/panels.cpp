@@ -429,11 +429,12 @@ void PanelSender::Create(wxImage image)
 	Features = new wxRadioBox(this, wxID_ANY, "Features", wxDefaultPosition, wxDefaultSize, features, 6, wxRA_SPECIFY_ROWS);
 	OptionsLSS = new wxRadioBox(this, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsLSS, 3, wxRA_SPECIFY_COLS);
 	OptionsLGD = new wxRadioBox(this, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsLGD, 3, wxRA_SPECIFY_COLS);
-	ButtonExit = new wxButton(this, wxID_ANY, "Exit");
 	ButtonConfirm = new wxButton(this, wxID_ANY, "Confirm");
+	ButtonClose = new wxButton(this, wxID_ANY, "Close");
+	ButtonExit = new wxButton(this, wxID_ANY, "Exit");
 	ImageDisplay = new wxStaticBitmap(this, wxID_ANY, wxBitmap(Image));
-	InputFieldProcessID = new wxTextCtrl(this, wxID_ANY, "Enter process ID", wxDefaultPosition, wxSize(200, -1), 0, wxTextValidator(wxFILTER_NUMERIC));
-	InputFieldFilename = new wxTextCtrl(this, wxID_ANY, "Enter file name", wxDefaultPosition, wxSize(200, -1));
+	InputFieldProcessID = new wxTextCtrl(this, wxID_ANY, "Enter process ID", wxDefaultPosition, wxSize(175, -1), 0, wxTextValidator(wxFILTER_NUMERIC));
+	InputFieldFilename = new wxTextCtrl(this, wxID_ANY, "Enter file name", wxDefaultPosition, wxSize(210, -1));
 
 }
 void PanelSender::Set(wxFont headerFont, wxFont mainFont)
@@ -445,7 +446,9 @@ void PanelSender::Set(wxFont headerFont, wxFont mainFont)
 	OptionsLGD->Hide();
 	InputFieldProcessID->Hide();
 	InputFieldFilename->Hide();
+	ButtonClose->Hide();
 	ButtonConfirm->SetFont(mainFont);
+	ButtonClose->SetFont(mainFont);
 	ButtonExit->SetFont(mainFont);
 	InputFieldFilename->SetFont(mainFont);
 	InputFieldProcessID->SetFont(mainFont);
@@ -460,14 +463,14 @@ void PanelSender::CreateSizer()
 
 	SubSizer3->Add(ButtonConfirm);
 	SubSizer3->AddSpacer(30);
-	SubSizer3->Add(ButtonExit);
+	SubSizer3->Add(ButtonClose);
 
+	SubSizer4->Add(SubSizer3, 0, wxTOP | wxBOTTOM, 10);
 	SubSizer4->Add(OptionsLSS);
 	SubSizer4->Add(OptionsLGD);
-	SubSizer4->AddSpacer(30);
-	SubSizer4->Add(InputFieldProcessID, 0, wxBOTTOM, 30);
-	SubSizer4->Add(InputFieldFilename, 0, wxBOTTOM, 30);
-	SubSizer4->Add(SubSizer3);
+	SubSizer4->AddSpacer(20);
+	SubSizer4->Add(InputFieldProcessID);
+	SubSizer4->Add(InputFieldFilename);
 
 	SubSizer1->AddSpacer(30);
 	SubSizer1->Add(TextTitle, 0, wxTOP, 25);
@@ -477,10 +480,11 @@ void PanelSender::CreateSizer()
 	SubSizer2->AddSpacer(50);
 	SubSizer2->Add(Features);
 	SubSizer2->AddSpacer(100);
-	SubSizer2->Add(SubSizer4, 0, wxALIGN_CENTER);
+	SubSizer2->Add(SubSizer4);
 
 	MainSizer->Add(SubSizer1);
 	MainSizer->Add(SubSizer2);
+	MainSizer->Add(ButtonExit, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP, 10);
 	this->SetSizer(MainSizer);
 }
 void PanelSender::OnFeaturesChanged(wxCommandEvent& evt)
@@ -497,6 +501,7 @@ void PanelSender::OnFeaturesChanged(wxCommandEvent& evt)
 		OptionsLGD->SetSelection(0);
 		OptionsLGD->Hide();
 	}
+	ButtonClose->Hide();
 
 	switch (features) {
 	case 0: case 1:
@@ -504,6 +509,9 @@ void PanelSender::OnFeaturesChanged(wxCommandEvent& evt)
 		break;
 	case 2:
 		OptionsLGD->Show();
+		break;
+	case 4:
+		ButtonClose->Show();
 		break;
 	}
 
@@ -520,11 +528,11 @@ void PanelSender::OnOptionsChanged(wxCommandEvent& evt) {
 		InputFieldProcessID->Hide();
 	}
 
-	if ((features == 0 || features == 1) && (options == 1)) {
+	if ((features == 0 || features == 1) && (options == 1 || options == 2)) {
 		InputFieldProcessID->Show();
 		InputFieldProcessID->SetValue("Enter Process ID");
 	}
-	else if (features == 2 && options == 1) {
+	else if (features == 2 && (options == 1 || options == 2)) {
 		InputFieldFilename->Show();
 		InputFieldFilename->SetValue("Enter Filename");
 	}
@@ -608,6 +616,10 @@ void PanelSender::OnButtonConfirmClicked(std::string &filename, int &processID)
 		// log out
 		break;
 	}
+}
+void PanelSender::OnButtonCloseClicked()
+{
+
 }
 void PanelSender::OnButtonExitClicked(wxCommandEvent& evt)
 {

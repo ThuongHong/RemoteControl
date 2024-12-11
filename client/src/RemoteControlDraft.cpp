@@ -13,7 +13,7 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	icon = icon.Scale(50, 50, wxIMAGE_QUALITY_HIGH);
 	wxBitmap bitmap(icon);
 
-	CreateEmailReceiver(client_id, client_secret, redirect_uri, gmailReceiver);
+	CreateOAuth2Handler(client_id, client_secret, redirect_uri, oAuth2Handler);
 
 	/*Create Panel*/
 	panelLogin = new PanelLogin(this, description, image, headerFont, mainFont, bitmap);
@@ -31,9 +31,9 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	panelSender->Hide();
 	panelReceiver->Hide();
 
-	panelLogin->BindControl(panelRoles, redirect_uri, client_id, access_token, refresh_token, gmailReceiver);
+	panelLogin->BindControl(panelRoles, redirect_uri, client_id, access_token, refresh_token, oAuth2Handler);
 	//panelAuthorization->BindControl(panelRoles, authorization_code, access_token, refresh_token, client, gmailClient);
-	panelRoles->BindControl(panelSender, panelReceiver, ip_address, port, target_email, m_statusText, client, access_token, gmailSender);
+	panelRoles->BindControl(panelSender, panelReceiver, ip_address, port, target_email, m_statusText, client, access_token, gmailSender, tasks, gmailReceiver);
 	panelSender->BindControl(file_name, app_svc_name, processID, target_email, gmailSender);
 	panelReceiver->BindControl(client);
 
@@ -50,11 +50,11 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	this->SetSizer(sizerMain);
 }
 
-bool RemoteControlDraft::CreateEmailReceiver(const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<GmailReceiver>& gmailReceiver)
+bool RemoteControlDraft::CreateOAuth2Handler(const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<OAuth2Handler>& oAuth2Handler)
 {
-	gmailReceiver.reset(new GmailReceiver(client_id, client_secret, redirect_uri));
-	if (gmailReceiver) return true;
+	oAuth2Handler.reset(new OAuth2Handler(client_id, client_secret, redirect_uri));
+	if (oAuth2Handler) return true;
 	return false;
 }
 
-// Todo: OnPanelLoginButtonClicked -> Login Gmail, OnButtonExitClicked -> Close socket, OnPanelSenderButtonConfirm -> Process command (Send email), OnPanelAuthorizationEventListened -> Listen to command,
+// Todo: OnButtonExitClicked -> Close socket, OnPanelAuthorizationEventListened -> Listen to command,

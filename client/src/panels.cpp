@@ -56,13 +56,13 @@ void PanelLogin::CreateSizer()
 
 	this->SetSizer(MainSizer);
 }
-void PanelLogin::BindControl(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<GmailReceiver> &gmailReceiver) {
-	ButtonLogin->Bind(wxEVT_BUTTON, [this, desPanel, redirect_uri, client_id, &access_token, &refresh_token, &gmailReceiver](wxCommandEvent&) {
-		OnButtonClicked(desPanel, redirect_uri, client_id, access_token, refresh_token, gmailReceiver);
+void PanelLogin::BindControl(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<OAuth2Handler> &oAuth2Handler) {
+	ButtonLogin->Bind(wxEVT_BUTTON, [this, desPanel, redirect_uri, client_id, &access_token, &refresh_token, &oAuth2Handler](wxCommandEvent&) {
+		OnButtonClicked(desPanel, redirect_uri, client_id, access_token, refresh_token, oAuth2Handler);
 	});
 }
 
-void PanelLogin::OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<GmailReceiver> &gmailReceiver)
+void PanelLogin::OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<OAuth2Handler> &oAuth2Handler)
 {
 	if (curl_global_init(CURL_GLOBAL_DEFAULT) != 0)
 	{
@@ -99,9 +99,9 @@ void PanelLogin::OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, st
 		// Exchange authorization code for tokens
 		/*std::string access_token;*/
 		std::string refresh_token;
-		if (gmailReceiver->exchangeAuthCodeForAccessToken(authorization_code, access_token, refresh_token))
+		if (oAuth2Handler->exchangeAuthCodeForAccessToken(authorization_code, access_token, refresh_token))
 		{
-			gmailReceiver->saveAccessTokenToFile(access_token);
+			oAuth2Handler->saveAccessTokenToFile(access_token);
 			std::cout << "Access token: " << access_token << std::endl;
 			wxMessageBox("Access token exchanged and saved successfully!");
 		}
@@ -201,30 +201,37 @@ void PanelRoles::CreateSizer()
 
 	this->SetSizer(MainSizer);
 }
-void PanelRoles::BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::string &access_token, wxScopedPtr<GmailSender>& gmailSender)
+void PanelRoles::BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::string &access_token, wxScopedPtr<GmailSender>& gmailSender, std::vector<std::string> &tasks, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
 	Roles->Bind(wxEVT_RADIOBOX, &PanelRoles::OnRolesChanged, this);
-	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &target_email, m_statusText, &client, &access_token, &gmailSender](wxCommandEvent&) {
-		OnButtonClicked(desPanel1, desPanel2, ip_address, port, target_email, m_statusText, client, access_token, gmailSender);
+	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &target_email, m_statusText, &client, &access_token, &gmailSender, &tasks, &gmailReceiver](wxCommandEvent&) {
+		OnButtonClicked(desPanel1, desPanel2, ip_address, port, target_email, m_statusText, client, access_token, gmailSender, tasks, gmailReceiver);
 	});
 
 	InputFieldEmail->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
 	InputFieldIP->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
 	InputFieldPort->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
 }
-bool PanelRoles::CreateClient(std::string& ip_address, int& port, wxStaticText* m_statusText, wxScopedPtr<Client>& client)
+bool PanelRoles::CreateClient(std::string& ip_address, int& port, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::vector<std::string> &tasks)
 {
-	client.reset(new Client(ip_address, port, m_statusText));
+	client.reset(new Client(ip_address, port, m_statusText, tasks));
 	if (client) return true;
 	return false;
 }
 bool PanelRoles::CreateEmailSender(const std::string& access_token, wxScopedPtr<GmailSender>& gmailSender)
 {
-	gmailSender.reset(new GmailSender(access_token));
+	gmailSender.reset(new GmailSender());
+	gmailSender->setAccessToken(access_token);
 	if (gmailSender) return true;
 	return false;
 }
-void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string &access_token, wxScopedPtr<GmailSender> &gmailSender)
+bool PanelRoles::CreateEmailReceiver(const std::string& access_token, wxScopedPtr<GmailReceiver>& gmailReceiver)
+{
+	gmailReceiver.reset(new GmailReceiver());
+	gmailReceiver->setAccessToken(access_token);
+	return false;
+}
+void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string &access_token, wxScopedPtr<GmailSender> &gmailSender, std::vector<std::string> &tasks, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
 	int selection = Roles->GetSelection();
 	switch (selection) { 
@@ -232,9 +239,7 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 		target_email = InputFieldEmail->GetValue().ToStdString();
 		std::cout << target_email << std::endl;
 
-		if (CreateEmailSender(access_token, gmailSender)) {
-			std::cout << "Create gmail sender successfully!" << std::endl;
-		}
+		if (CreateEmailSender(access_token, gmailSender)) std::cout << "Create gmail sender successfully!" << std::endl;
 		gmailSender->setTo(target_email);
 
 		this->Hide();
@@ -250,12 +255,22 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 		ip_address = InputFieldIP->GetValue().ToStdString();
 		port = std::stoi(InputFieldPort->GetValue().ToStdString());
 
-		if (CreateClient(ip_address, port, m_statusText, client)) {
+		if (CreateClient(ip_address, port, m_statusText, client, tasks)) {
 			std::cout << "Create client successfully!" << std::endl;
 			std::cout << "Client IP: " << client->ip_address_ << std::endl;
 			std::cout << "Client port: " << client->port_ << std::endl;
 		}
-		client->initialize(m_statusText);
+
+		if (CreateEmailReceiver(access_token, gmailReceiver)) std::cout << "Create gmail receiver successfully!" << std::endl;
+
+		if (client->initialize(m_statusText)) {
+			client->BindControl(m_statusText, gmailReceiver);
+			client->startCheckingMessages(m_statusText);
+			std::cout << "Initailize client successfully!" << std::endl;
+		}
+		else {
+			std::cout << "Error" << std::endl;
+		}
 		break;
 	}
 	parent_->Layout();
@@ -328,112 +343,112 @@ bool PanelRoles::IsPortFormat(const wxString& text)
 	return portNum >= 0 && portNum <= 65535;
 }
 
-PanelAuthorization::PanelAuthorization(wxWindow* parent, wxFont headerFont, wxFont mainFont) : wxPanel(parent, wxID_ANY)
-{
-	parent_ = parent;
-	Create();
-	Set(headerFont, mainFont);
-	CreateSizer();
-}
-void PanelAuthorization::BindControl(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client> &client, wxScopedPtr<GmailReceiver> &gmailReceiver)
-{
-	//ButtonYes->Bind(wxEVT_BUTTON, &PanelAuthorization::OnButtonYesClicked, this);
-	//ButtonNo->Bind(wxEVT_BUTTON, &PanelAuthorization::OnButtonNoClicked, this);
-	ButtonExit->Bind(wxEVT_BUTTON, &PanelAuthorization::OnButtonExitClicked, this);
-	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel, &authorization_code, &access_token, &refresh_token, &client, &gmailReceiver](wxCommandEvent&) {
-		OnButtonConfirmClicked(desPanel, authorization_code, access_token, refresh_token, client, gmailReceiver);
-	});
-	this->Bind(wxEVT_TIMER, &PanelAuthorization::OnClose, this, Timer->GetId());
-}
-void PanelAuthorization::Create()
-{
-	TextTitle = new wxStaticText(this, wxID_ANY, "PC REMOTE CONTROL", wxDefaultPosition, wxSize(600, -1), wxALIGN_CENTER);
-	TextHelp = new wxStaticText(this, wxID_ANY, "After logging in, please copy the authorization code from the URL and paste it here");
-	TextAuthorization = new wxStaticText(this, wxID_ANY, "Enter your authorization code:");
-	TextSuccess = new wxStaticText(this, wxID_ANY, "Access token exchanged and saved successfully!");
-	TextFail = new wxStaticText(this, wxID_ANY, "Failed to exchange authorization code for access token.");
-	ButtonConfirm = new wxButton(this, wxID_ANY, "Confirm");
-	ButtonExit = new wxButton(this, wxID_ANY, "Exit");
-	InputField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(300, -1));
-	Timer = new wxTimer(this);
-}
-void PanelAuthorization::Set(wxFont headerFont, wxFont mainFont)
-{
-	TextTitle->SetFont(headerFont);
-	TextTitle->SetBackgroundColour(wxColour(187, 189, 228));
-	TextHelp->SetFont(mainFont);
-	//TextAsk->SetFont(mainFont);
-	TextAuthorization->SetFont(mainFont);
-	TextSuccess->SetFont(mainFont);
-	TextFail->SetFont(mainFont);
-	//ButtonYes->SetFont(mainFont);
-	//ButtonNo->SetFont(mainFont);
-	ButtonConfirm->SetFont(mainFont);
-	ButtonExit->SetFont(mainFont);
-
-	//TextHelp->Hide();
-	//TextAuthorization->Hide();
-	TextSuccess->Hide();
-	TextFail->Hide();
-	//InputField->Hide();
-	//ButtonConfirm->Hide();
-	//ButtonExit->Hide();
-	//
-	//this->Bind(wxEVT_TIMER, &RemoteControlDraft::OnPanelAuthorizationClose, this);
-}
-void PanelAuthorization::CreateSizer()
-{
-	MainSizer = new wxBoxSizer(wxVERTICAL);
-	SubSizer1 = new wxBoxSizer(wxVERTICAL);
-	SubSizer2 = new wxBoxSizer(wxHORIZONTAL);
-	SubSizer3 = new wxBoxSizer(wxHORIZONTAL);
-
-	SubSizer3->Add(ButtonConfirm, 0, wxRIGHT, 30);
-	SubSizer3->Add(ButtonExit);
-
-	SubSizer1->Add(TextHelp, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 20);
-	SubSizer1->Add(TextAuthorization, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 20);
-	SubSizer1->Add(InputField, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 20);
-	SubSizer1->Add(TextSuccess, 0, wxALIGN_CENTER_HORIZONTAL);
-	SubSizer1->Add(TextFail, 0, wxALIGN_CENTER_HORIZONTAL);
-	SubSizer1->Add(SubSizer3, 0, wxALIGN_CENTER_HORIZONTAL);
-
-	SubSizer2->Add(SubSizer1, 1, wxALIGN_CENTER_VERTICAL);
-
-	MainSizer->Add(TextTitle, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM | wxTOP, 10);
-	MainSizer->Add(SubSizer2, 1, wxALIGN_CENTER_HORIZONTAL);
-
-	this->SetSizer(MainSizer);
-}
-void PanelAuthorization::OnButtonExitClicked(wxCommandEvent& evt)
-{
-	//Close socket
-	Timer->Stop();
-	parent_->Close(true);
-}
-void PanelAuthorization::OnButtonConfirmClicked(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client>& client, wxScopedPtr<GmailReceiver>& gmailReceiver) {
-	authorization_code = InputField->GetValue();
-	std::cout << authorization_code << std::endl;
-	if (gmailReceiver->exchangeAuthCodeForAccessToken(authorization_code, access_token, refresh_token))
-	{
-		// Save access token to file
-		gmailReceiver->saveAccessTokenToFile(access_token);
-		std::cout << "Access token exchanged and saved successfully!" << std::endl;
-		client->loadAccessToken();
-	}
-	else
-	{
-		std::cerr << "Failed to exchange authorization code for access token." << std::endl;
-	}
-	this->Hide();
-	desPanel->Show();
-	parent_->Layout();
-}
-void PanelAuthorization::OnClose(wxTimerEvent& evt) {
-	//Close socket
-	Timer->Stop();
-	parent_->Close(true);
-}
+//PanelAuthorization::PanelAuthorization(wxWindow* parent, wxFont headerFont, wxFont mainFont) : wxPanel(parent, wxID_ANY)
+//{
+//	parent_ = parent;
+//	Create();
+//	Set(headerFont, mainFont);
+//	CreateSizer();
+//}
+//void PanelAuthorization::BindControl(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client> &client, wxScopedPtr<GmailReceiver> &gmailReceiver)
+//{
+//	//ButtonYes->Bind(wxEVT_BUTTON, &PanelAuthorization::OnButtonYesClicked, this);
+//	//ButtonNo->Bind(wxEVT_BUTTON, &PanelAuthorization::OnButtonNoClicked, this);
+//	ButtonExit->Bind(wxEVT_BUTTON, &PanelAuthorization::OnButtonExitClicked, this);
+//	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel, &authorization_code, &access_token, &refresh_token, &client, &gmailReceiver](wxCommandEvent&) {
+//		OnButtonConfirmClicked(desPanel, authorization_code, access_token, refresh_token, client, gmailReceiver);
+//	});
+//	this->Bind(wxEVT_TIMER, &PanelAuthorization::OnClose, this, Timer->GetId());
+//}
+//void PanelAuthorization::Create()
+//{
+//	TextTitle = new wxStaticText(this, wxID_ANY, "PC REMOTE CONTROL", wxDefaultPosition, wxSize(600, -1), wxALIGN_CENTER);
+//	TextHelp = new wxStaticText(this, wxID_ANY, "After logging in, please copy the authorization code from the URL and paste it here");
+//	TextAuthorization = new wxStaticText(this, wxID_ANY, "Enter your authorization code:");
+//	TextSuccess = new wxStaticText(this, wxID_ANY, "Access token exchanged and saved successfully!");
+//	TextFail = new wxStaticText(this, wxID_ANY, "Failed to exchange authorization code for access token.");
+//	ButtonConfirm = new wxButton(this, wxID_ANY, "Confirm");
+//	ButtonExit = new wxButton(this, wxID_ANY, "Exit");
+//	InputField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(300, -1));
+//	Timer = new wxTimer(this);
+//}
+//void PanelAuthorization::Set(wxFont headerFont, wxFont mainFont)
+//{
+//	TextTitle->SetFont(headerFont);
+//	TextTitle->SetBackgroundColour(wxColour(187, 189, 228));
+//	TextHelp->SetFont(mainFont);
+//	//TextAsk->SetFont(mainFont);
+//	TextAuthorization->SetFont(mainFont);
+//	TextSuccess->SetFont(mainFont);
+//	TextFail->SetFont(mainFont);
+//	//ButtonYes->SetFont(mainFont);
+//	//ButtonNo->SetFont(mainFont);
+//	ButtonConfirm->SetFont(mainFont);
+//	ButtonExit->SetFont(mainFont);
+//
+//	//TextHelp->Hide();
+//	//TextAuthorization->Hide();
+//	TextSuccess->Hide();
+//	TextFail->Hide();
+//	//InputField->Hide();
+//	//ButtonConfirm->Hide();
+//	//ButtonExit->Hide();
+//	//
+//	//this->Bind(wxEVT_TIMER, &RemoteControlDraft::OnPanelAuthorizationClose, this);
+//}
+//void PanelAuthorization::CreateSizer()
+//{
+//	MainSizer = new wxBoxSizer(wxVERTICAL);
+//	SubSizer1 = new wxBoxSizer(wxVERTICAL);
+//	SubSizer2 = new wxBoxSizer(wxHORIZONTAL);
+//	SubSizer3 = new wxBoxSizer(wxHORIZONTAL);
+//
+//	SubSizer3->Add(ButtonConfirm, 0, wxRIGHT, 30);
+//	SubSizer3->Add(ButtonExit);
+//
+//	SubSizer1->Add(TextHelp, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 20);
+//	SubSizer1->Add(TextAuthorization, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 20);
+//	SubSizer1->Add(InputField, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 20);
+//	SubSizer1->Add(TextSuccess, 0, wxALIGN_CENTER_HORIZONTAL);
+//	SubSizer1->Add(TextFail, 0, wxALIGN_CENTER_HORIZONTAL);
+//	SubSizer1->Add(SubSizer3, 0, wxALIGN_CENTER_HORIZONTAL);
+//
+//	SubSizer2->Add(SubSizer1, 1, wxALIGN_CENTER_VERTICAL);
+//
+//	MainSizer->Add(TextTitle, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM | wxTOP, 10);
+//	MainSizer->Add(SubSizer2, 1, wxALIGN_CENTER_HORIZONTAL);
+//
+//	this->SetSizer(MainSizer);
+//}
+//void PanelAuthorization::OnButtonExitClicked(wxCommandEvent& evt)
+//{
+//	//Close socket
+//	Timer->Stop();
+//	parent_->Close(true);
+//}
+//void PanelAuthorization::OnButtonConfirmClicked(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client>& client, wxScopedPtr<GmailReceiver>& gmailReceiver) {
+//	authorization_code = InputField->GetValue();
+//	std::cout << authorization_code << std::endl;
+//	if (gmailReceiver->exchangeAuthCodeForAccessToken(authorization_code, access_token, refresh_token))
+//	{
+//		// Save access token to file
+//		gmailReceiver->saveAccessTokenToFile(access_token);
+//		std::cout << "Access token exchanged and saved successfully!" << std::endl;
+//		client->loadAccessToken();
+//	}
+//	else
+//	{
+//		std::cerr << "Failed to exchange authorization code for access token." << std::endl;
+//	}
+//	this->Hide();
+//	desPanel->Show();
+//	parent_->Layout();
+//}
+//void PanelAuthorization::OnClose(wxTimerEvent& evt) {
+//	//Close socket
+//	Timer->Stop();
+//	parent_->Close(true);
+//}
 
 PanelSender::PanelSender(wxWindow* parent, wxImage image, wxFont headerFont, wxFont mainFont) : wxPanel(parent, wxID_ANY)
 {

@@ -12,7 +12,7 @@ class PanelLogin : public wxPanel
 {
 public:
 	PanelLogin(wxWindow* parent, wxString description, wxImage image, wxFont headerFont, wxFont mainFont, wxBitmap bitmap);
-	void BindControl(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string& access_token, std::string& refresh_token, wxScopedPtr<GmailReceiver>& gmailReceiver);
+	void BindControl(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string& access_token, std::string& refresh_token, wxScopedPtr<OAuth2Handler>& oAuth2Handler);
 
 private:
 	wxWindow* parent_;
@@ -35,14 +35,14 @@ private:
 	void Create(wxString description, wxImage image);
 	void Set(wxFont headerFont, wxFont mainFont, wxBitmap bitmap);
 	void CreateSizer();
-	void OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<GmailReceiver> &gmailReceiver);
+	void OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<OAuth2Handler> &oAuth2Handler);
 };
 
 class PanelRoles : public wxPanel
 {
 public:
 	PanelRoles(wxWindow* parent, wxString description, wxFont headerFont, wxFont mainFont, wxBitmap bitmap);
-	void BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::string &access_token, wxScopedPtr<GmailSender>& gmailSender);
+	void BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::string &access_token, wxScopedPtr<GmailSender>& gmailSender, std::vector<std::string> &tasks, wxScopedPtr<GmailReceiver> &gmailReceiver);
 
 private:
 	wxWindow* parent_;
@@ -72,7 +72,7 @@ private:
 	void Set(wxFont headerFont, wxFont mainFont);
 	void CreateSizer();
 
-	void OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string &access_token, wxScopedPtr<GmailSender> &gmailSender);
+	void OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string &access_token, wxScopedPtr<GmailSender> &gmailSender, std::vector<std::string> &tasks, wxScopedPtr<GmailReceiver> &gmailReceiver);
 	void OnRolesChanged(wxCommandEvent& evt);
 	void OnTextCtrlChanged(wxCommandEvent& event);
 	
@@ -80,8 +80,9 @@ private:
 	bool IsIPFormat(const wxString& text);
 	bool IsPortFormat(const wxString& text);
 
-	bool CreateClient(std::string& ip_address, int& port, wxStaticText* m_statusText, wxScopedPtr<Client> &client);
+	bool CreateClient(std::string& ip_address, int& port, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::vector<std::string> &tasks);
 	bool CreateEmailSender(const std::string& access_token, wxScopedPtr<GmailSender>& gmailSender);
+	bool CreateEmailReceiver(const std::string& access_token, wxScopedPtr<GmailReceiver>& gmailReceiver);
 };
 
 class PanelAuthorization : public wxPanel

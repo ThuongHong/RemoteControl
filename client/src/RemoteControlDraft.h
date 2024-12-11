@@ -40,8 +40,10 @@ private:
 	std::string app_svc_name;
 	int processID;
 	wxScopedPtr<Client> client;
-	wxScopedPtr<GmailReceiver> gmailReceiver;
+	wxScopedPtr<OAuth2Handler> oAuth2Handler;
+	std::vector<std::string> tasks;
 	wxScopedPtr<GmailSender> gmailSender;
+	wxScopedPtr<GmailReceiver> gmailReceiver;
 
-	bool CreateEmailReceiver(const std::string &client_id, const std::string &client_secret, const std::string &redirect_uri, wxScopedPtr<GmailReceiver> &gmailReceiver);
+	bool CreateOAuth2Handler(const std::string &client_id, const std::string &client_secret, const std::string &redirect_uri, wxScopedPtr<OAuth2Handler> &oAuth2Handler);
 };

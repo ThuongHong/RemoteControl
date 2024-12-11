@@ -24,14 +24,17 @@ const size_t MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB limit
 class Client : public wxEvtHandler
 {
 public:
-    Client(const std::string &ip_address, int port, wxStaticText *m_statusText);
-    void checkForMessages(wxStaticText *m_statusText);
+    Client(const std::string &ip_address, int port, wxStaticText *m_statusText, std::vector<std::string> &tasks);
+    //void checkForMessages(wxStaticText *m_statusText);
+    void checkForMessage(wxStaticText* m_statusText, wxScopedPtr<GmailReceiver> &gmailReceiver);
     bool initialize(wxStaticText *m_statusText);
     void cleanup();
+    void BindControl(wxStaticText* m_statusText, wxScopedPtr<GmailReceiver> &gmailReceiver);
+    void startCheckingMessages(wxStaticText *m_statusText);
     std::string ip_address_;
     int port_;
 
-    GmailReceiver m_gmailReceiver;
+    //GmailReceiver m_gmailReceiver;
     // GmailSender m_gmailSender;
     // void loadAccessToken();
     // std::string access_token_;
@@ -41,7 +44,6 @@ private:
     wxTimer *m_checkMessageTimer;
 
     void updateStatus(const wxString &message, wxStaticText *m_statusText);
-    void startCheckingMessages(wxStaticText *m_statusText);
     void stopCheckingMessages(wxStaticText *m_statusText);
     bool processMessage(const std::string &messageContent, wxStaticText *m_statusText);
 

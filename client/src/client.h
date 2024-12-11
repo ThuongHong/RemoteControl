@@ -25,13 +25,16 @@ class Client : public wxEvtHandler
 {
 public:
     Client(const std::string &ip_address, int port, wxStaticText *m_statusText);
-    void loadAccessToken();
     void checkForMessages(wxStaticText *m_statusText);
     bool initialize(wxStaticText *m_statusText);
     void cleanup();
     std::string ip_address_;
-    std::string access_token_;
     int port_;
+
+    GmailReceiver m_gmailReceiver;
+    // GmailSender m_gmailSender;
+    // void loadAccessToken();
+    // std::string access_token_;
 
 private:
     SOCKET server_socket_;

@@ -372,7 +372,7 @@ std::string GmailSender::createMimeMessage() const
 
 bool GmailSender::send()
 {
-    if (m_to.empty() || m_subject.empty() || m_body.empty())
+    if (m_to.empty() ||m_body.empty())
     {
         m_last_error = "To, subject and body must not be empty";
         return false;

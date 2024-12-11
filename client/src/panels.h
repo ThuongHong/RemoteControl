@@ -42,7 +42,7 @@ class PanelRoles : public wxPanel
 {
 public:
 	PanelRoles(wxWindow* parent, wxString description, wxFont headerFont, wxFont mainFont, wxBitmap bitmap);
-	void BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::string access_token, wxScopedPtr<GmailSender>& gmailSender);
+	void BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::string &access_token, wxScopedPtr<GmailSender>& gmailSender);
 
 private:
 	wxWindow* parent_;
@@ -72,7 +72,7 @@ private:
 	void Set(wxFont headerFont, wxFont mainFont);
 	void CreateSizer();
 
-	void OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string access_token, wxScopedPtr<GmailSender> &gmailSender);
+	void OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string &access_token, wxScopedPtr<GmailSender> &gmailSender);
 	void OnRolesChanged(wxCommandEvent& evt);
 	void OnTextCtrlChanged(wxCommandEvent& event);
 	

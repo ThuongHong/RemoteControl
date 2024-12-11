@@ -201,10 +201,10 @@ void PanelRoles::CreateSizer()
 
 	this->SetSizer(MainSizer);
 }
-void PanelRoles::BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::string access_token, wxScopedPtr<GmailSender>& gmailSender)
+void PanelRoles::BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::string &access_token, wxScopedPtr<GmailSender>& gmailSender)
 {
 	Roles->Bind(wxEVT_RADIOBOX, &PanelRoles::OnRolesChanged, this);
-	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &target_email, m_statusText, &client, access_token, &gmailSender](wxCommandEvent&) {
+	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &target_email, m_statusText, &client, &access_token, &gmailSender](wxCommandEvent&) {
 		OnButtonClicked(desPanel1, desPanel2, ip_address, port, target_email, m_statusText, client, access_token, gmailSender);
 	});
 
@@ -224,7 +224,7 @@ bool PanelRoles::CreateEmailSender(const std::string& access_token, wxScopedPtr<
 	if (gmailSender) return true;
 	return false;
 }
-void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string access_token, wxScopedPtr<GmailSender> &gmailSender)
+void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string &access_token, wxScopedPtr<GmailSender> &gmailSender)
 {
 	int selection = Roles->GetSelection();
 	switch (selection) { 
@@ -698,12 +698,16 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 		break;
 	}
 
+	//gmailSender->setSubject("Remote Control");
 	gmailSender->setBody(body);
 	std::cout << "Target email: " << gmailSender->m_to << std::endl;
 	std::cout << "Subject: " << gmailSender->m_subject << std::endl;
 	std::cout << "Body: " << gmailSender->m_body << std::endl;
 	std::cout << "Access token: " << gmailSender->m_access_token << std::endl << std::endl;
-	gmailSender->send();
+	if (gmailSender->send()) {
+		std::cout << "Sent successfully";
+	}
+	else std::cout << "Error";
 }
 void PanelSender::OnButtonCloseClicked()
 {

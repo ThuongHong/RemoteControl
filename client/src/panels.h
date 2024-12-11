@@ -5,12 +5,14 @@
 #include "client.h"
 #include <memory>
 #include <regex>
+#include "http_listener.h"
+#include <curl/curl.h>
 
 class PanelLogin : public wxPanel
 {
 public:
 	PanelLogin(wxWindow* parent, wxString description, wxImage image, wxFont headerFont, wxFont mainFont, wxBitmap bitmap);
-	void BindControl(wxPanel* desPanel);
+	void BindControl(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string& access_token, std::string& refresh_token, wxScopedPtr<GmailReceiver>& gmailReceiver);
 
 private:
 	wxWindow* parent_;
@@ -33,14 +35,14 @@ private:
 	void Create(wxString description, wxImage image);
 	void Set(wxFont headerFont, wxFont mainFont, wxBitmap bitmap);
 	void CreateSizer();
-	void OnButtonClicked(wxPanel* desPanel);
+	void OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<GmailReceiver> &gmailReceiver);
 };
 
 class PanelRoles : public wxPanel
 {
 public:
 	PanelRoles(wxWindow* parent, wxString description, wxFont headerFont, wxFont mainFont, wxBitmap bitmap);
-	void BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client);
+	void BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::string access_token, wxScopedPtr<GmailSender>& gmailSender);
 
 private:
 	wxWindow* parent_;
@@ -70,7 +72,7 @@ private:
 	void Set(wxFont headerFont, wxFont mainFont);
 	void CreateSizer();
 
-	void OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client);
+	void OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string access_token, wxScopedPtr<GmailSender> &gmailSender);
 	void OnRolesChanged(wxCommandEvent& evt);
 	void OnTextCtrlChanged(wxCommandEvent& event);
 	
@@ -79,13 +81,14 @@ private:
 	bool IsPortFormat(const wxString& text);
 
 	bool CreateClient(std::string& ip_address, int& port, wxStaticText* m_statusText, wxScopedPtr<Client> &client);
+	bool CreateEmailSender(const std::string& access_token, wxScopedPtr<GmailSender>& gmailSender);
 };
 
 class PanelAuthorization : public wxPanel
 {
 public:
 	PanelAuthorization(wxWindow* parent, wxFont headerFont, wxFont mainFont);
-	void BindControl(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client> &client, wxScopedPtr<GmailClient> &gmailClient);
+	void BindControl(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client> &client, wxScopedPtr<GmailReceiver> &gmailReceiver);
 
 private:
 	wxWindow* parent_;
@@ -116,7 +119,7 @@ private:
 	/*void OnButtonYesClicked(wxCommandEvent& evt);
 	void OnButtonNoClicked(wxCommandEvent& evt);*/
 	void OnButtonExitClicked(wxCommandEvent& evt);
-	void OnButtonConfirmClicked(wxPanel* desPanel, std::string& authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client>& client, wxScopedPtr<GmailClient>& gmailClient);
+	void OnButtonConfirmClicked(wxPanel* desPanel, std::string& authorization_code, std::string& access_token, std::string &refresh_token, wxScopedPtr<Client>& client, wxScopedPtr<GmailReceiver>& gmailReceiver);
 	void OnClose(wxTimerEvent& evt);
 };
 
@@ -124,7 +127,7 @@ class PanelSender : public wxPanel
 {
 public:
 	PanelSender(wxWindow* parent, wxImage image, wxFont headerFont, wxFont mainFont);
-	void BindControl(std::string &filename, int &processID);
+	void BindControl(std::string& file_name, std::string& app_svc_name, int& processID, std::string target_email, wxScopedPtr<GmailSender>& gmailSender);
 
 private:
 	wxWindow* parent_;
@@ -139,7 +142,8 @@ private:
 	wxButton* ButtonExit;
 	wxStaticBitmap* ImageDisplay;
 	wxTextCtrl* InputFieldProcessID;
-	wxTextCtrl* InputFieldFilename;
+	wxTextCtrl* InputFieldAppSvcName;
+	wxTextCtrl* InputFieldFileName;
 
 	wxBoxSizer* MainSizer;
 	wxBoxSizer* SubSizer1;
@@ -152,7 +156,7 @@ private:
 	void CreateSizer();
 	void OnFeaturesChanged(wxCommandEvent& evt);
 	void OnOptionsChanged(wxCommandEvent& evt);
-	void OnButtonConfirmClicked(std::string& filename, int& processID);
+	void OnButtonConfirmClicked(std::string& file_name, std::string& app_svc_name, int& processID, std::string target_email, wxScopedPtr<GmailSender>& gmailSender);
 	void OnButtonCloseClicked();
 	void OnButtonExitClicked(wxCommandEvent& evt);
 };

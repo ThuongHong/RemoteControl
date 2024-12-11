@@ -21,8 +21,9 @@ bool killProcessOnPort(int port)
     return false;
 }
 
-int main()
+int main(int argc, char** argv)
 {
+    return wxEntry(argc, argv);
     // Initialize CURL
     if (curl_global_init(CURL_GLOBAL_DEFAULT) != 0)
     {

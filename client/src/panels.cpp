@@ -56,20 +56,68 @@ void PanelLogin::CreateSizer()
 
 	this->SetSizer(MainSizer);
 }
-void PanelLogin::BindControl(wxPanel* desPanel) {
-	ButtonLogin->Bind(wxEVT_BUTTON, [=](wxCommandEvent&) {
-		OnButtonClicked(desPanel);
+void PanelLogin::BindControl(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<GmailReceiver> &gmailReceiver) {
+	ButtonLogin->Bind(wxEVT_BUTTON, [this, desPanel, redirect_uri, client_id, &access_token, &refresh_token, &gmailReceiver](wxCommandEvent&) {
+		OnButtonClicked(desPanel, redirect_uri, client_id, access_token, refresh_token, gmailReceiver);
 	});
 }
-void PanelLogin::OnButtonClicked(wxPanel* desPanel)
+
+void PanelLogin::OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
-	this->Hide();
-	wxString link = "https://l.facebook.com/l.php?u=https%3A%2F%2Faccounts.google.com%2Fo%2Foauth2%2Fv2%2Fauth%3Fscope%3Dhttps%253A%252F%252Fwww.googleapis.com%252Fauth%252Fgmail.modify%26access_type%3Doffline%26include_granted_scopes%3Dtrue%26response_type%3Dcode%26redirect_uri%3Dhttps%253A%252F%252Flocalhost%253A8080%26client_id%3D926757990224-84lbea6uthpg9kjodd8i9050gr5ie5gl.apps.googleusercontent.com%26fbclid%3DIwZXh0bgNhZW0CMTAAAR2Ak-TaHNHNEaoQpuU6apZ0_IPJzj2vPrVZ-vELnmeF43BLx1kRbEio2Mw_aem_cN_t-tyrgL6o58xU4vee2Q&h=AT2_ywUjEGJ0RgPl73WXYDYoGSmfqhs4jw9LuafTJFWP0kCHb-8QVvfex1tTmOR-WU-R7yMSRQx8vQG50E-svZbkIOcIz3aByPpxNSXR3cuQ8lDt2luPtG_51z8TPUtUE5sCDw";
-	if (!wxLaunchDefaultBrowser(link))
+	if (curl_global_init(CURL_GLOBAL_DEFAULT) != 0)
 	{
-		wxMessageBox("Failed to open the browser.", "Error", wxICON_ERROR);
+		wxMessageBox("Failed to initialize CURL", "Error", wxOK | wxICON_ERROR);
 	}
 
+	wxString auth_url =
+		"https://accounts.google.com/o/oauth2/v2/auth?"
+		"scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.modify"
+		"&access_type=offline"
+		"&include_granted_scopes=true"
+		"&response_type=code"
+		"&redirect_uri=" +
+		redirect_uri +
+		"&client_id=" + client_id;
+
+	if (!wxLaunchDefaultBrowser(auth_url))
+	{
+		wxMessageBox("Failed to open the browser.", "Error", wxOK | wxICON_ERROR);
+		curl_global_cleanup();
+	}
+
+	try
+	{
+		HttpListener listener(8080);
+		std::string authorization_code = listener.waitForAuthorizationCode();
+
+		if (authorization_code.empty())
+		{
+			wxMessageBox("Failed to get authorization code", "Error", wxOK | wxICON_ERROR);
+			curl_global_cleanup();
+		}
+
+		// Exchange authorization code for tokens
+		/*std::string access_token;*/
+		std::string refresh_token;
+		if (gmailReceiver->exchangeAuthCodeForAccessToken(authorization_code, access_token, refresh_token))
+		{
+			gmailReceiver->saveAccessTokenToFile(access_token);
+			std::cout << "Access token: " << access_token << std::endl;
+			wxMessageBox("Access token exchanged and saved successfully!");
+		}
+		else
+		{
+			wxMessageBox("Failed to exchange authorization code for access token.", "Error", wxOK | wxICON_ERROR);
+			curl_global_cleanup();
+		}
+	}
+	catch (const std::exception& e)
+	{
+		wxMessageBox(wxString::Format("HTTP Listener error: %s", e.what()), "Error", wxOK | wxICON_ERROR);
+		curl_global_cleanup();
+	}
+
+	this->Hide();
 	desPanel->Show();
 	desPanel->Layout();
 	parent_->Layout();
@@ -153,16 +201,12 @@ void PanelRoles::CreateSizer()
 
 	this->SetSizer(MainSizer);
 }
-void PanelRoles::BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client)
+void PanelRoles::BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::string access_token, wxScopedPtr<GmailSender>& gmailSender)
 {
 	Roles->Bind(wxEVT_RADIOBOX, &PanelRoles::OnRolesChanged, this);
-	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &target_email, m_statusText, &client](wxCommandEvent&) {
-		OnButtonClicked(desPanel1, desPanel2, ip_address, port, target_email, m_statusText, client);
+	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &target_email, m_statusText, &client, access_token, &gmailSender](wxCommandEvent&) {
+		OnButtonClicked(desPanel1, desPanel2, ip_address, port, target_email, m_statusText, client, access_token, gmailSender);
 	});
-
-
-	//const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<GmailClient>& gmailClient
-
 
 	InputFieldEmail->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
 	InputFieldIP->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
@@ -174,13 +218,25 @@ bool PanelRoles::CreateClient(std::string& ip_address, int& port, wxStaticText* 
 	if (client) return true;
 	return false;
 }
-void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client)
+bool PanelRoles::CreateEmailSender(const std::string& access_token, wxScopedPtr<GmailSender>& gmailSender)
+{
+	gmailSender.reset(new GmailSender(access_token));
+	if (gmailSender) return true;
+	return false;
+}
+void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string access_token, wxScopedPtr<GmailSender> &gmailSender)
 {
 	int selection = Roles->GetSelection();
 	switch (selection) { 
 	case 0: // To SENDER PANEL
 		target_email = InputFieldEmail->GetValue().ToStdString();
 		std::cout << target_email << std::endl;
+
+		if (CreateEmailSender(access_token, gmailSender)) {
+			std::cout << "Create gmail sender successfully!" << std::endl;
+		}
+		gmailSender->setTo(target_email);
+
 		this->Hide();
 		desPanel1->Show();
 		desPanel1->Layout();
@@ -190,8 +246,10 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 		this->Hide();
 		desPanel2->Show();
 		desPanel2->Layout();
+
 		ip_address = InputFieldIP->GetValue().ToStdString();
 		port = std::stoi(InputFieldPort->GetValue().ToStdString());
+
 		if (CreateClient(ip_address, port, m_statusText, client)) {
 			std::cout << "Create client successfully!" << std::endl;
 			std::cout << "Client IP: " << client->ip_address_ << std::endl;
@@ -277,13 +335,13 @@ PanelAuthorization::PanelAuthorization(wxWindow* parent, wxFont headerFont, wxFo
 	Set(headerFont, mainFont);
 	CreateSizer();
 }
-void PanelAuthorization::BindControl(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client> &client, wxScopedPtr<GmailClient> &gmailClient)
+void PanelAuthorization::BindControl(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client> &client, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
 	//ButtonYes->Bind(wxEVT_BUTTON, &PanelAuthorization::OnButtonYesClicked, this);
 	//ButtonNo->Bind(wxEVT_BUTTON, &PanelAuthorization::OnButtonNoClicked, this);
 	ButtonExit->Bind(wxEVT_BUTTON, &PanelAuthorization::OnButtonExitClicked, this);
-	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel, &authorization_code, &access_token, &refresh_token, &client, &gmailClient](wxCommandEvent&) {
-		OnButtonConfirmClicked(desPanel, authorization_code, access_token, refresh_token, client, gmailClient);
+	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel, &authorization_code, &access_token, &refresh_token, &client, &gmailReceiver](wxCommandEvent&) {
+		OnButtonConfirmClicked(desPanel, authorization_code, access_token, refresh_token, client, gmailReceiver);
 	});
 	this->Bind(wxEVT_TIMER, &PanelAuthorization::OnClose, this, Timer->GetId());
 }
@@ -291,12 +349,9 @@ void PanelAuthorization::Create()
 {
 	TextTitle = new wxStaticText(this, wxID_ANY, "PC REMOTE CONTROL", wxDefaultPosition, wxSize(600, -1), wxALIGN_CENTER);
 	TextHelp = new wxStaticText(this, wxID_ANY, "After logging in, please copy the authorization code from the URL and paste it here");
-	//TextAsk = new wxStaticText(this, wxID_ANY, "Do you want to exchange authorization code for access token?");
 	TextAuthorization = new wxStaticText(this, wxID_ANY, "Enter your authorization code:");
 	TextSuccess = new wxStaticText(this, wxID_ANY, "Access token exchanged and saved successfully!");
 	TextFail = new wxStaticText(this, wxID_ANY, "Failed to exchange authorization code for access token.");
-	//ButtonYes = new wxButton(this, wxID_ANY, "Yes");
-	//ButtonNo = new wxButton(this, wxID_ANY, "No");
 	ButtonConfirm = new wxButton(this, wxID_ANY, "Confirm");
 	ButtonExit = new wxButton(this, wxID_ANY, "Exit");
 	InputField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(300, -1));
@@ -350,39 +405,19 @@ void PanelAuthorization::CreateSizer()
 
 	this->SetSizer(MainSizer);
 }
-//void PanelAuthorization::OnButtonYesClicked(wxCommandEvent& evt) {
-//	TextAsk->Hide();
-//	ButtonYes->Hide();
-//	ButtonNo->Hide();
-//	TextHelp->Show();
-//	TextAuthorization->Show();
-//	InputField->Show();
-//	ButtonConfirm->Show();
-//	ButtonExit->Show();
-//	this->Layout();
-//}
-//void PanelAuthorization::OnButtonNoClicked(wxCommandEvent& evt) {
-//	TextAsk->Hide();
-//	ButtonYes->Hide();
-//	ButtonNo->Hide();
-//	ButtonExit->Hide();
-//	TextFail->Show();
-//	this->Layout();
-//	Timer->Start(1500, wxTIMER_ONE_SHOT);
-//}
 void PanelAuthorization::OnButtonExitClicked(wxCommandEvent& evt)
 {
 	//Close socket
 	Timer->Stop();
 	parent_->Close(true);
 }
-void PanelAuthorization::OnButtonConfirmClicked(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client>& client, wxScopedPtr<GmailClient>& gmailClient) {
+void PanelAuthorization::OnButtonConfirmClicked(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client>& client, wxScopedPtr<GmailReceiver>& gmailReceiver) {
 	authorization_code = InputField->GetValue();
 	std::cout << authorization_code << std::endl;
-	if (gmailClient->exchangeAuthCodeForAccessToken(authorization_code, access_token, refresh_token))
+	if (gmailReceiver->exchangeAuthCodeForAccessToken(authorization_code, access_token, refresh_token))
 	{
 		// Save access token to file
-		gmailClient->saveAccessTokenToFile(access_token);
+		gmailReceiver->saveAccessTokenToFile(access_token);
 		std::cout << "Access token exchanged and saved successfully!" << std::endl;
 		client->loadAccessToken();
 	}
@@ -407,14 +442,14 @@ PanelSender::PanelSender(wxWindow* parent, wxImage image, wxFont headerFont, wxF
 	Set(headerFont, mainFont);
 	CreateSizer();
 }
-void PanelSender::BindControl(std::string &filename, int &processID)
+void PanelSender::BindControl(std::string &file_name, std::string &app_svc_name, int &processID, std::string target_email, wxScopedPtr<GmailSender>& gmailSender)
 {
 	Features->Bind(wxEVT_RADIOBOX, &PanelSender::OnFeaturesChanged, this);
 	OptionsLSS->Bind(wxEVT_RADIOBOX, &PanelSender::OnOptionsChanged, this);
 	OptionsLGD->Bind(wxEVT_RADIOBOX, &PanelSender::OnOptionsChanged, this);
 	ButtonExit->Bind(wxEVT_BUTTON, &PanelSender::OnButtonExitClicked, this);
-	ButtonConfirm->Bind(wxEVT_BUTTON, [this, &filename, &processID](wxCommandEvent&) {
-		OnButtonConfirmClicked(filename, processID);
+	ButtonConfirm->Bind(wxEVT_BUTTON, [this, &file_name, &app_svc_name, &processID, target_email, &gmailSender](wxCommandEvent&) {
+		OnButtonConfirmClicked(file_name, app_svc_name, processID, target_email, gmailSender);
 		});
 
 }
@@ -434,7 +469,8 @@ void PanelSender::Create(wxImage image)
 	ButtonExit = new wxButton(this, wxID_ANY, "Exit");
 	ImageDisplay = new wxStaticBitmap(this, wxID_ANY, wxBitmap(Image));
 	InputFieldProcessID = new wxTextCtrl(this, wxID_ANY, "Enter process ID", wxDefaultPosition, wxSize(175, -1), 0, wxTextValidator(wxFILTER_NUMERIC));
-	InputFieldFilename = new wxTextCtrl(this, wxID_ANY, "Enter file name", wxDefaultPosition, wxSize(210, -1));
+	InputFieldAppSvcName = new wxTextCtrl(this, wxID_ANY, "Enter application name", wxDefaultPosition, wxSize(175, -1));
+	InputFieldFileName = new wxTextCtrl(this, wxID_ANY, "Enter file name", wxDefaultPosition, wxSize(210, -1));
 
 }
 void PanelSender::Set(wxFont headerFont, wxFont mainFont)
@@ -445,12 +481,14 @@ void PanelSender::Set(wxFont headerFont, wxFont mainFont)
 	OptionsLGD->SetFont(mainFont);
 	OptionsLGD->Hide();
 	InputFieldProcessID->Hide();
-	InputFieldFilename->Hide();
+	InputFieldAppSvcName->Hide();
+	InputFieldFileName->Hide();
 	ButtonClose->Hide();
 	ButtonConfirm->SetFont(mainFont);
 	ButtonClose->SetFont(mainFont);
 	ButtonExit->SetFont(mainFont);
-	InputFieldFilename->SetFont(mainFont);
+	InputFieldFileName->SetFont(mainFont);
+	InputFieldAppSvcName->SetFont(mainFont);
 	InputFieldProcessID->SetFont(mainFont);
 }
 void PanelSender::CreateSizer()
@@ -470,7 +508,8 @@ void PanelSender::CreateSizer()
 	SubSizer4->Add(OptionsLGD);
 	SubSizer4->AddSpacer(20);
 	SubSizer4->Add(InputFieldProcessID);
-	SubSizer4->Add(InputFieldFilename);
+	SubSizer4->Add(InputFieldAppSvcName);
+	SubSizer4->Add(InputFieldFileName);
 
 	SubSizer1->AddSpacer(30);
 	SubSizer1->Add(TextTitle, 0, wxTOP, 25);
@@ -491,7 +530,8 @@ void PanelSender::OnFeaturesChanged(wxCommandEvent& evt)
 {
 	int features = evt.GetInt();
 
-	InputFieldFilename->Hide();
+	InputFieldFileName->Hide();
+	InputFieldAppSvcName->Hide();
 	InputFieldProcessID->Hide();
 	if (OptionsLSS->IsShown()) {
 		OptionsLSS->SetSelection(0);
@@ -521,101 +561,149 @@ void PanelSender::OnOptionsChanged(wxCommandEvent& evt) {
 	int features = Features->GetSelection();
 	int options = evt.GetInt();
 
-	if (InputFieldFilename->IsShown()) {
-		InputFieldFilename->Hide();
+	InputFieldFileName->Hide();
+	InputFieldAppSvcName->Hide();
+	InputFieldProcessID->Hide();
+
+	if (features == 0) {
+		if (options == 1) {
+			InputFieldAppSvcName->Show();
+			InputFieldAppSvcName->SetValue("Enter Application Name");
+		}
+		else if (options == 2) {
+			InputFieldProcessID->Show();
+			InputFieldProcessID->SetValue("Enter Process ID");
+		}
 	}
-	else if (InputFieldProcessID->IsShown()) {
-		InputFieldProcessID->Hide();
+	else if (features == 1) {
+		if (options == 1) {
+			InputFieldAppSvcName->Show();
+			InputFieldAppSvcName->SetValue("Enter Service Name");
+		}
+		else if (options == 2) {
+			InputFieldProcessID->Show();
+			InputFieldProcessID->SetValue("Enter Process ID");
+		}
+	}
+	else if (features == 2) {
+		if (options == 1 || options == 2) {
+			InputFieldFileName->Show();
+			InputFieldFileName->SetValue("Enter File Name");
+		}
 	}
 
-	if ((features == 0 || features == 1) && (options == 1 || options == 2)) {
+	/*if ((features == 0 || features == 1) && (options == 1 || options == 2)) {
 		InputFieldProcessID->Show();
 		InputFieldProcessID->SetValue("Enter Process ID");
 	}
 	else if (features == 2 && (options == 1 || options == 2)) {
-		InputFieldFilename->Show();
-		InputFieldFilename->SetValue("Enter Filename");
-	}
+		InputFieldFileName->Show();
+		InputFieldFileName->SetValue("Enter File Name");
+	}*/
+
 	this->Layout();
 }
-void PanelSender::OnButtonConfirmClicked(std::string &filename, int &processID)
+void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &app_svc_name, int &processID, std::string target_email, wxScopedPtr<GmailSender>& gmailSender)
 {
 	// Get the seletion from features and options
-	int selection1 = Features->GetSelection();
-	int selection2 = OptionsLSS->GetSelection();
-	int selection3 = OptionsLGD->GetSelection();
-	filename = InputFieldFilename->GetValue().ToStdString();
+	int featureSelection = Features->GetSelection();
+	int optionSelection = -1;
+	if (OptionsLSS->IsShown()) {
+		optionSelection = OptionsLSS->GetSelection();
+	}
+	else if (OptionsLGD->IsShown()) {
+		optionSelection = OptionsLGD->GetSelection();
+	}
+	file_name = InputFieldFileName->GetValue().ToStdString();
+	app_svc_name = InputFieldAppSvcName->GetValue().ToStdString();
 	processID = wxAtoi(InputFieldProcessID->GetValue());
 
+	std::string feature = Features->GetString(featureSelection).ToStdString();
 	std::string option = "";
-	std::string feature = Features->GetString(selection1).ToStdString();
 	if (OptionsLSS->IsShown())
-		option = OptionsLSS->GetString(selection2).ToStdString();
+		option = OptionsLSS->GetString(optionSelection).ToStdString();
 	else if (OptionsLGD->IsShown())
-		option = OptionsLGD->GetString(selection3).ToStdString();
+		option = OptionsLGD->GetString(optionSelection).ToStdString();
 	else option = "";
 
 	// Show the value of vars to check if corrected
 	std::cout << "Feature: " << feature << std::endl;
 	std::cout << "Option: " << option << std::endl;
 	std::cout << "Process ID: " << processID << std::endl;
-	std::cout << "File name: " << filename << std::endl;
+	std::cout << "File name: " << file_name << std::endl;
 	std::cout << std::endl;
 
 	// Send email
-	switch (selection1) {
+	std::string body;
+	switch (featureSelection) {
 	case 0:
-		if (selection2 == 0) {
+		if (optionSelection == 0) {
 			// list app
+			body = "list app";
 			break;
 		}
-		else if (selection2 == 1) {
+		else if (optionSelection == 1) {
 			// start app
+			body = "start app " + app_svc_name;
 			break;
 		}
-		else if (selection2 == 2) {
+		else if (optionSelection == 2) {
 			// stop app
+			body = "kill " + processID;
 			break;
 		}
 	case 1:
-		if (selection2 == 0) {
+		if (optionSelection == 0) {
 			// list service
+			body = "list service";
 			break;
 		}
-		else if (selection2 == 1) {
+		else if (optionSelection == 1) {
 			// start service
+			body = "start service " + app_svc_name;
 			break;
 		}
-		else if (selection2 == 2) {
+		else if (optionSelection == 2) {
 			// stop service
+			std::string body = "kill " + processID;
 			break;
 		}
 	case 2:
-		if (selection3 == 0) {
+		if (optionSelection == 0) {
 			// list file
+			body = "list file";
 			break;
 		}
-		else if (selection3 == 1) {
+		else if (optionSelection == 1) {
 			// get file
+			body = "get " + file_name;
 			break;
 		}
-		else if (selection3 == 2) {
+		else if (optionSelection == 2) {
 			// delete file
+			body = "remove " + file_name;
 			break;
 		}
 	case 3:
 		// capture screen
+		body = "take screenshot";
 		break;
 	case 4:
 		// webcam
+		body = "start cam";
 		break;
 	case 5:
 		// shut down
-		break;
-	case 6:
-		// log out
+		std::string body = "shut down";
 		break;
 	}
+
+	gmailSender->setBody(body);
+	std::cout << "Target email: " << gmailSender->m_to << std::endl;
+	std::cout << "Subject: " << gmailSender->m_subject << std::endl;
+	std::cout << "Body: " << gmailSender->m_body << std::endl;
+	std::cout << "Access token: " << gmailSender->m_access_token << std::endl << std::endl;
+	gmailSender->send();
 }
 void PanelSender::OnButtonCloseClicked()
 {

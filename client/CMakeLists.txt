@@ -19,12 +19,12 @@ set(SOURCE_FILES
     src/base64.cpp
     src/http_listener.h
     src/http_listener.cpp
-    # src/App.cpp
-    # src/App.h
-    # src/RemoteControlDraft.cpp
-    # src/RemoteControlDraft.h
-    # src/panels.h
-    # src/panels.cpp
+    src/App.cpp
+    src/App.h
+    src/RemoteControlDraft.cpp
+    src/RemoteControlDraft.h
+    src/panels.h
+    src/panels.cpp
 )
 
 # Create executable

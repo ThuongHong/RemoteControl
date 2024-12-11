@@ -5,6 +5,7 @@
 #include <memory>
 #include "client.h"
 #include "panels.h"
+#include "gmail.h"
 
 class RemoteControlDraft : public wxFrame
 {
@@ -28,17 +29,19 @@ private:
 	std::string ip_address;
 	int port;
 
-	std::string client_id = "YOUR_CLIENT_ID";
-	std::string client_secret = "YOUR_CLIENT_SECRET";
-	std::string redirect_uri = "YOUR_REDIRECT_URI";
+	std::string client_id = "926757990224-84lbea6uthpg9kjodd8i9050gr5ie5gl.apps.googleusercontent.com";
+	std::string client_secret = "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";
+	std::string redirect_uri = "http://localhost:8080";
 	std::string target_email;
-	std::string access_token;
+	std::string access_token="1233323";
 	std::string refresh_token;
 	std::string authorization_code;
-	std::string filename;
+	std::string file_name;
+	std::string app_svc_name;
 	int processID;
 	wxScopedPtr<Client> client;
-	wxScopedPtr<GmailClient> gmailClient;
+	wxScopedPtr<GmailReceiver> gmailReceiver;
+	wxScopedPtr<GmailSender> gmailSender;
 
-	bool CreateEmailClient(const std::string &client_id, const std::string &client_secret, const std::string &redirect_uri, wxScopedPtr<GmailClient> &gmailClient);
+	bool CreateEmailReceiver(const std::string &client_id, const std::string &client_secret, const std::string &redirect_uri, wxScopedPtr<GmailReceiver> &gmailReceiver);
 };

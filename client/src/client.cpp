@@ -17,19 +17,19 @@ Client::Client(const std::string &ip_address, int port, wxStaticText *m_statusTe
          { checkForMessages(m_statusText); });
 }
 
-void Client::loadAccessToken()
-{
-    std::ifstream token_file("access_token.txt");
-    if (token_file.is_open())
-    {
-        std::getline(token_file, access_token_);
-        token_file.close();
-    }
-    else
-    {
-        std::cerr << "Unable to open access token file." << std::endl;
-    }
-}
+// void Client::loadAccessToken()
+// {
+//     std::ifstream token_file("access_token.txt");
+//     if (token_file.is_open())
+//     {
+//         std::getline(token_file, access_token_);
+//         token_file.close();
+//     }
+//     else
+//     {
+//         std::cerr << "Unable to open access token file." << std::endl;
+//     }
+// }
 
 void Client::checkForMessages(wxStaticText *m_statusText)
 {
@@ -41,7 +41,7 @@ void Client::checkForMessages(wxStaticText *m_statusText)
         std::vector<std::string> tasks;
         try
         {
-            tasks = GmailReceiver::getUnreadMessageContents(access_token_);
+            tasks = m_gmailReceiver.getUnreadMessageContents();
         }
         catch (const std::exception &e)
         {
@@ -92,7 +92,6 @@ bool Client::initialize(wxStaticText *m_statusText)
     }
     if (connectToServer(ip_address_.c_str(), port_))
     {
-        loadAccessToken();
         checkForMessages(m_statusText);
     }
     else
@@ -236,7 +235,7 @@ bool Client::connectToServer(const char *ipAddress, int port)
     return connect(server_socket_, (sockaddr *)&serverAddress, sizeof(serverAddress)) == 0;
 }
 
-bool Client::receiveFile(const std::wstring& filename)
+bool Client::receiveFile(const std::wstring &filename)
 {
     std::ofstream file(filename, std::ios::binary);
     if (!file.is_open())
@@ -247,11 +246,11 @@ bool Client::receiveFile(const std::wstring& filename)
 
     // Set socket timeout
     DWORD timeout = 5000; // 5 seconds
-    setsockopt(server_socket_, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
+    setsockopt(server_socket_, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
 
     // Receive file size as uint64_t
     uint64_t fileSize = 0;
-    int bytesReceived = recv(server_socket_, reinterpret_cast<char*>(&fileSize), sizeof(fileSize), 0);
+    int bytesReceived = recv(server_socket_, reinterpret_cast<char *>(&fileSize), sizeof(fileSize), 0);
     if (bytesReceived != sizeof(fileSize))
     {
         std::cerr << "Error receiving file size. Received " << bytesReceived << " bytes" << std::endl;
@@ -263,7 +262,7 @@ bool Client::receiveFile(const std::wstring& filename)
     std::cout << "Expecting file size: " << fileSize << " bytes" << std::endl;
 
     // Send ACK for file size
-    const char* ack = "ACK";
+    const char *ack = "ACK";
     if (send(server_socket_, ack, strlen(ack), 0) <= 0)
     {
         std::cerr << "Failed to send ACK for file size" << std::endl;
@@ -321,13 +320,13 @@ bool Client::receiveFile(const std::wstring& filename)
         if (progress != lastProgress)
         {
             std::cout << "\rReceiving file: " << progress << "% ("
-                << totalReceived << "/" << fileSize << " bytes)" << std::flush;
+                      << totalReceived << "/" << fileSize << " bytes)" << std::flush;
             lastProgress = progress;
         }
     }
 
     std::cout << "\nFile received successfully: "
-        << std::string(filename.begin(), filename.end()) << std::endl;
+              << std::string(filename.begin(), filename.end()) << std::endl;
     file.close();
     return true;
 }

@@ -35,12 +35,13 @@ public:
     {
         DWORD pid;
         std::string name;
+        size_t memoryUsage;
     };
-
     struct ServiceInfo
     {
         DWORD pid;
         std::string name;
+        size_t memoryUsage;
     };
 
     ServerHandler();

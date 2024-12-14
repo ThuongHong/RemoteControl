@@ -6,7 +6,7 @@
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <objidl.h>  // For IStream
+#include <objidl.h> // For IStream
 #include <gdiplus.h>
 #include <psapi.h>
 
@@ -31,6 +31,7 @@ public:
     {
         DWORD pid;
         std::string name;
+        size_t memoryUsage;
     };
 
     struct ServiceInfo

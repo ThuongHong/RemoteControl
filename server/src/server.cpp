@@ -35,7 +35,7 @@ int main()
         return 1;
     }
 
-    std::cout << "Server is listening on port 8081..." << std::endl;
+    std::cout << "Waiting for client connection on port 8081..." << std::endl;
 
     SOCKET clientSocket = server.acceptClient();
     if (clientSocket == INVALID_SOCKET)
@@ -45,34 +45,47 @@ int main()
         return 1;
     }
 
-    std::cout << "Client connected!" << std::endl;
+    // Get client IP address
+    sockaddr_in clientAddr;
+    int addrLen = sizeof(clientAddr);
+    if (getpeername(clientSocket, (sockaddr *)&clientAddr, &addrLen) == 0)
+    {
+        char clientIP[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &clientAddr.sin_addr, clientIP, INET_ADDRSTRLEN);
+        std::cout << "Client " << clientIP << " connected!" << std::endl;
+    }
+    else
+    {
+        std::cerr << "Failed to get client IP address" << std::endl;
+    }
 
+    // Main server loop
     while (true)
     {
         std::string receivedMessage = server.receiveMessage(clientSocket);
         if (receivedMessage.empty())
             continue;
 
+        std::cout << "\n-------------------------------------\n"
+                  << std::endl;
         std::cout << "Received message: " << receivedMessage << std::endl;
 
         if (receivedMessage.substr(0, 8) == "list app")
         {
-            std::cout << "Listing running applications:\n";
             std::vector<ServerHandler::ProcessInfo> applications = server.listRunningApplications();
             server.saveApplicationsToFile(applications, "applications_list.txt");
             if (server.sendFile(clientSocket, L"applications_list.txt"))
             {
-                std::cout << "File sent to client!" << std::endl;
+                std::cerr << "File sent to client!" << std::endl;
             }
         }
         else if (receivedMessage.substr(0, 12) == "list service")
         {
-            std::cout << "\nListing running services:\n";
             std::vector<ServerHandler::ServiceInfo> services = server.listRunningServices();
             server.saveServicesToFile(services, "services_list.txt");
             if (server.sendFile(clientSocket, L"services_list.txt"))
             {
-                std::cout << "File sent to client!" << std::endl;
+                std::cerr << "File sent to client!" << std::endl;
             }
         }
         else if (receivedMessage.substr(0, 15) == "take screenshot")
@@ -82,7 +95,7 @@ int main()
             std::wcerr << L"Screenshot saved as " << filename << std::endl;
             if (server.sendFile(clientSocket, filename))
             {
-                std::cout << "File sent to client!" << std::endl;
+                std::cerr << "File sent to client!" << std::endl;
             }
         }
         else if (receivedMessage.substr(0, 8) == "shutdown")
@@ -96,7 +109,7 @@ int main()
             server.listFilesInDirectory(filename);
             if (server.sendFile(clientSocket, filename))
             {
-                std::cout << "File sent to client!" << std::endl;
+                std::cerr << "File sent to client!" << std::endl;
             }
         }
         else if (receivedMessage.substr(0, 3) == "get")
@@ -105,11 +118,7 @@ int main()
             filename = trimWString(filename);
             if (server.sendFile(clientSocket, filename))
             {
-                std::cout << "File sent to client!" << std::endl;
-            }
-            else
-            {
-                std::cerr << "Failed to send file to client." << std::endl;
+                std::cerr << "File sent to client!" << std::endl;
             }
         }
         else if (receivedMessage.substr(0, 6) == "remove")
@@ -121,10 +130,6 @@ int main()
             {
                 std::cout << "File successfully removed" << std::endl;
             }
-            else
-            {
-                std::cerr << "Failed to remove file" << std::endl;
-            }
         }
         else if (receivedMessage.substr(0, 4) == "kill")
         {
@@ -133,49 +138,21 @@ int main()
             {
                 std::cout << "Process terminated successfully" << std::endl;
             }
-            else
-            {
-                std::cerr << "Failed to terminate process" << std::endl;
-            }
         }
         else if (receivedMessage.substr(0, 9) == "start app")
         {
             std::string appName = trimString(std::string(receivedMessage.begin() + 10, receivedMessage.end()));
-            char system32Path[MAX_PATH];
-            GetSystemDirectoryA(system32Path, MAX_PATH);
 
-            std::string fullPath = std::string(system32Path) + "\\" + appName;
-            if (server.openApplication(fullPath.c_str()))
-            {
+            if (server.openApplication(appName.c_str()))
                 std::cout << "Application " << appName << " started successfully" << std::endl;
-            }
-            else
-            {
-                char windowsPath[MAX_PATH];
-                GetWindowsDirectoryA(windowsPath, MAX_PATH);
-                fullPath = std::string(windowsPath) + "\\" + appName;
-
-                if (server.openApplication(fullPath.c_str()))
-                {
-                    std::cout << "Application " << appName << " started successfully" << std::endl;
-                }
-                else
-                {
-                    std::cerr << "Failed to start " << appName << std::endl;
-                }
-            }
         }
+
         else if (receivedMessage.substr(0, 13) == "start service")
         {
             std::string serviceName = trimString(std::string(receivedMessage.begin() + 14, receivedMessage.end()));
+
             if (server.startService(serviceName))
-            {
                 std::cout << "Service " << serviceName << " started successfully" << std::endl;
-            }
-            else
-            {
-                std::cerr << "Failed to start service " << serviceName << std::endl;
-            }
         }
         else if (receivedMessage.substr(0, 9) == "start cam")
         {

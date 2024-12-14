@@ -29,61 +29,62 @@ Client::Client(const std::string &ip_address, int port, wxStaticText *m_statusTe
 //     }
 // }
 
-//void Client::checkForMessages(wxStaticText *m_statusText)
+// void Client::checkForMessages(wxStaticText *m_statusText)
 //{
-//    const int interval_seconds = 3; // Polling interval
-//    while (true)
-//    {
-//        updateStatus("Checking for new messages...", m_statusText);
+//     const int interval_seconds = 3; // Polling interval
+//     while (true)
+//     {
+//         updateStatus("Checking for new messages...", m_statusText);
 //
-//        std::vector<std::string> tasks;
-//        try
-//        {
-//            tasks = m_gmailReceiver.getUnreadMessageContents();
-//        }
-//        catch (const std::exception &e)
-//        {
-//            // std::cerr << "Error retrieving messages: " << e.what() << std::endl;
-//            updateStatus("Error retrieving messages", m_statusText);
-//            break;
-//        }
+//         std::vector<std::string> tasks;
+//         try
+//         {
+//             tasks = m_gmailReceiver.getUnreadMessageContents();
+//         }
+//         catch (const std::exception &e)
+//         {
+//             // std::cerr << "Error retrieving messages: " << e.what() << std::endl;
+//             updateStatus("Error retrieving messages", m_statusText);
+//             break;
+//         }
 //
-//        // if (tasks.empty())
-//        // {
-//        //     std::cout << "No new messages found." << std::endl;
-//        // }
+//         // if (tasks.empty())
+//         // {
+//         //     std::cout << "No new messages found." << std::endl;
+//         // }
 //
-//        bool stop = false;
-//        for (const std::string &messageContent : tasks)
-//        {
-//            stop = processMessage(messageContent, m_statusText);
-//            if (stop)
-//            {
-//                break;
-//            }
-//        }
+//         bool stop = false;
+//         for (const std::string &messageContent : tasks)
+//         {
+//             stop = processMessage(messageContent, m_statusText);
+//             if (stop)
+//             {
+//                 break;
+//             }
+//         }
 //
-//        if (stop)
-//        {
-//            break;
-//        }
+//         if (stop)
+//         {
+//             break;
+//         }
 //
-//        updateStatus("Waiting for messages...", m_statusText);
-//        std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
-//    }
-//}
-void Client::BindControl(wxStaticText* m_statusText, wxScopedPtr<GmailReceiver> &gmailReceiver) {
-    Bind(wxEVT_TIMER, [this, m_statusText, &gmailReceiver](wxTimerEvent&)
-        { checkForMessage(m_statusText, gmailReceiver); });
+//         updateStatus("Waiting for messages...", m_statusText);
+//         std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
+//     }
+// }
+void Client::BindControl(wxStaticText *m_statusText, wxScopedPtr<GmailReceiver> &gmailReceiver)
+{
+    Bind(wxEVT_TIMER, [this, m_statusText, &gmailReceiver](wxTimerEvent &)
+         { checkForMessage(m_statusText, gmailReceiver); });
 }
 
-void Client::checkForMessage(wxStaticText* m_statusText, wxScopedPtr<GmailReceiver> &gmailReceiver)
+void Client::checkForMessage(wxStaticText *m_statusText, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
     updateStatus("Checking for new messages...", m_statusText);
     std::vector<std::string> tasks = gmailReceiver->getUnreadMessageContents();
 
     bool stop = false;
-    for (const std::string& messageContent : tasks)
+    for (const std::string &messageContent : tasks)
     {
         stop = processMessage(messageContent, m_statusText);
         if (stop)
@@ -95,49 +96,49 @@ void Client::checkForMessage(wxStaticText* m_statusText, wxScopedPtr<GmailReceiv
     updateStatus("Waiting for messages...", m_statusText);
 }
 
-//void Client::checkForMessages(wxStaticText* m_statusText)
+// void Client::checkForMessages(wxStaticText* m_statusText)
 //{
-//    const int interval_seconds = 3; // Polling interval
-//    while (true)
-//    {
-//        updateStatus("Checking for new messages...", m_statusText);
+//     const int interval_seconds = 3; // Polling interval
+//     while (true)
+//     {
+//         updateStatus("Checking for new messages...", m_statusText);
 //
-//        std::vector<std::string> tasks;
-//        try
-//        {
-//            tasks = m_gmailReceiver.getUnreadMessageContents();
-//        }
-//        catch (const std::exception& e)
-//        {
-//            // std::cerr << "Error retrieving messages: " << e.what() << std::endl;
-//            updateStatus("Error retrieving messages", m_statusText);
-//            break;
-//        }
+//         std::vector<std::string> tasks;
+//         try
+//         {
+//             tasks = m_gmailReceiver.getUnreadMessageContents();
+//         }
+//         catch (const std::exception& e)
+//         {
+//             // std::cerr << "Error retrieving messages: " << e.what() << std::endl;
+//             updateStatus("Error retrieving messages", m_statusText);
+//             break;
+//         }
 //
-//        // if (tasks.empty())
-//        // {
-//        //     std::cout << "No new messages found." << std::endl;
-//        // }
+//         // if (tasks.empty())
+//         // {
+//         //     std::cout << "No new messages found." << std::endl;
+//         // }
 //
-//        bool stop = false;
-//        for (const std::string& messageContent : tasks)
-//        {
-//            stop = processMessage(messageContent, m_statusText);
-//            if (stop)
-//            {
-//                break;
-//            }
-//        }
+//         bool stop = false;
+//         for (const std::string& messageContent : tasks)
+//         {
+//             stop = processMessage(messageContent, m_statusText);
+//             if (stop)
+//             {
+//                 break;
+//             }
+//         }
 //
-//        if (stop)
-//        {
-//            break;
-//        }
+//         if (stop)
+//         {
+//             break;
+//         }
 //
-//        updateStatus("Waiting for messages...", m_statusText);
-//        std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
-//    }
-//}
+//         updateStatus("Waiting for messages...", m_statusText);
+//         std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
+//     }
+// }
 
 bool Client::initialize(wxStaticText *m_statusText)
 {
@@ -156,7 +157,7 @@ bool Client::initialize(wxStaticText *m_statusText)
     }
     if (connectToServer(ip_address_.c_str(), port_))
     {
-        //checkForMessage(m_statusText, tasks);
+        // checkForMessage(m_statusText, tasks);
     }
     else
     {
@@ -196,6 +197,17 @@ void Client::stopCheckingMessages(wxStaticText *m_statusText)
     updateStatus("Message checking stopped", m_statusText);
 }
 
+bool Client::openFile(const std::wstring &filename)
+{
+    HINSTANCE result = ShellExecute(NULL, L"open", filename.c_str(), NULL, NULL, SW_SHOWNORMAL);
+    if ((int)result <= 32)
+    {
+        std::cerr << "Failed to open file: " << std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(filename) << std::endl;
+        return false;
+    }
+    return true;
+}
+
 bool Client::processMessage(const std::string &messageContent, wxStaticText *m_statusText)
 {
     updateStatus(wxString::Format("Processing: %s", messageContent), m_statusText);
@@ -205,69 +217,52 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         std::cout << "Sent successfully!\n";
         if (messageContent.substr(0, 8) == "list app")
         {
-            receiveFile(L"apps_list.txt");
+            if (receiveFile(L"apps_list.txt"))
+            {
+                openFile(L"apps_list.txt");
+            }
         }
         else if (messageContent.substr(0, 12) == "list service")
         {
-            receiveFile(L"services_list.txt");
+            if (receiveFile(L"services_list.txt"))
+            {
+                openFile(L"services_list.txt");
+            }
         }
         else if (messageContent.substr(0, 15) == "take screenshot")
         {
-            receiveFile(L"screenshot.jpeg");
+            if (receiveFile(L"screenshot.jpeg"))
+            {
+                openFile(L"screenshot.jpeg");
+            }
         }
         else if (messageContent.substr(0, 10) == "list files")
         {
-            receiveFile(L"files_list.txt");
+            if (receiveFile(L"files_list.txt"))
+            {
+                openFile(L"files_list.txt");
+            }
         }
         else if (messageContent.substr(0, 3) == "get")
         {
-            receiveFile(L"get_file");
+            if (receiveFile(L"get_file"))
+            {
+                openFile(L"get_file");
+            }
         }
         else if (messageContent.substr(0, 9) == "start cam")
         {
-            // Receive the video file from the server
             Sleep(6000);
             std::wstring videoFilename = L"received_video.avi";
-            if (!receiveFile(videoFilename))
+            if (receiveFile(videoFilename))
+            {
+                openFile(videoFilename);
+            }
+            else
             {
                 std::cerr << "Failed to receive video file." << std::endl;
                 return false;
             }
-
-            // // Play the received video file
-            // cv::VideoCapture videoCapture(std::string(videoFilename.begin(), videoFilename.end()));
-            // if (!videoCapture.isOpened())
-            // {
-            //     std::cerr << "Error: Could not open received video file." << std::endl;
-            //     return;
-            // }
-
-            // cv::namedWindow("Client - Webcam Stream", cv::WINDOW_AUTOSIZE);
-
-            // while (true)
-            // {
-            //     cv::Mat frame;
-            //     videoCapture >> frame;
-            //     if (frame.empty())
-            //     {
-            //         std::cerr << "Error: Could not read frame from video file." << std::endl;
-            //         break;
-            //     }
-
-            //     cv::imshow("Client - Webcam Stream", frame);
-            //     int key = cv::waitKey(30); // Adjust delay as needed
-            //     if (key == 27)
-            //     { // ESC to exit
-            //         // Send stop message to server
-            //         std::string stopMessage = "stop";
-            //         send(server_socket_, stopMessage.c_str(), stopMessage.size(), 0);
-            //         break;
-            //     }
-            // }
-
-            // videoCapture.release();
-            // cv::destroyWindow("Client - Webcam Stream");
-            // std::cout << "Webcam stopped" << std::endl;
         }
         else if (messageContent.substr(0, 3) == "end")
         {

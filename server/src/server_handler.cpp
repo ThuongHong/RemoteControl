@@ -3,6 +3,7 @@
 #include "server_handler.h"
 #include <locale>
 #include <codecvt>
+#include <Shellapi.h>
 
 // Constructor
 ServerHandler::ServerHandler() : serverSocket(INVALID_SOCKET),
@@ -456,7 +457,6 @@ void ServerHandler::cleanup()
     }
 }
 
-// Process Methods
 std::vector<ServerHandler::ProcessInfo> ServerHandler::listRunningApplications()
 {
     std::vector<ProcessInfo> applications;
@@ -475,10 +475,21 @@ std::vector<ServerHandler::ProcessInfo> ServerHandler::listRunningApplications()
                 {
                     char processName[MAX_PATH] = "<unknown>";
                     HMODULE hMod;
+                    PROCESS_MEMORY_COUNTERS pmc;
+
                     if (EnumProcessModules(hProcess, &hMod, sizeof(hMod), &cbNeeded))
                     {
                         GetModuleBaseNameA(hProcess, hMod, processName, sizeof(processName));
-                        ProcessInfo info = {processes[i], processName};
+                        ProcessInfo info;
+                        info.pid = processes[i];
+                        info.name = processName;
+
+                        // Get memory info
+                        if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc)))
+                        {
+                            info.memoryUsage = pmc.WorkingSetSize / 1024; // Convert to KB
+                        }
+
                         applications.push_back(info);
                     }
                     CloseHandle(hProcess);
@@ -486,10 +497,17 @@ std::vector<ServerHandler::ProcessInfo> ServerHandler::listRunningApplications()
             }
         }
     }
+
+    // Sort by process name
+    std::sort(applications.begin(), applications.end(),
+              [](const ProcessInfo &a, const ProcessInfo &b)
+              {
+                  return a.name < b.name;
+              });
+
     return applications;
 }
 
-// Service Methods
 std::vector<ServerHandler::ServiceInfo> ServerHandler::listRunningServices()
 {
     std::vector<ServiceInfo> serviceList;
@@ -511,13 +529,34 @@ std::vector<ServerHandler::ServiceInfo> ServerHandler::listRunningServices()
     if (EnumServicesStatusEx(scManager, SC_ENUM_PROCESS_INFO, SERVICE_WIN32, SERVICE_STATE_ALL,
                              buffer.data(), bytesNeeded, &bytesNeeded, &servicesReturned, NULL, NULL))
     {
+
         for (DWORD i = 0; i < servicesReturned; i++)
         {
             ServiceInfo info;
             info.name = services[i].lpServiceName;
             info.pid = services[i].ServiceStatusProcess.dwProcessId;
+
+            // Get service status
+            std::string status;
+            switch (services[i].ServiceStatusProcess.dwCurrentState)
+            {
+            case SERVICE_RUNNING:
+                status = "Running";
+                break;
+            case SERVICE_STOPPED:
+                status = "Stopped";
+                break;
+            case SERVICE_PAUSED:
+                status = "Paused";
+                break;
+            default:
+                status = "Unknown";
+            }
+
             serviceList.push_back(info);
         }
+
+        std::cout << std::setfill('-') << std::setw(100) << "-" << std::endl;
     }
 
     CloseServiceHandle(scManager);
@@ -558,21 +597,55 @@ bool ServerHandler::startService(const std::string &serviceName)
 
 bool ServerHandler::openApplication(const char *appPath)
 {
-    STARTUPINFOA si;
-    PROCESS_INFORMATION pi;
-    ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
-    ZeroMemory(&pi, sizeof(pi));
+    // Get current directory
+    char currentDir[MAX_PATH];
+    GetCurrentDirectoryA(MAX_PATH, currentDir);
+    std::cout << "Current directory: " << currentDir << std::endl;
 
-    if (!CreateProcessA(appPath, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    // Search paths
+    std::vector<std::string> searchPaths = {
+        std::string(currentDir) + "\\", // Current directory
+        "C:\\Windows\\System32\\",      // System32
+    };
+
+    // Try each path
+    for (const auto &basePath : searchPaths)
     {
-        std::cerr << "Failed to open application: " << appPath << std::endl;
-        return false;
+        std::string fullPath = basePath + appPath;
+        std::cout << "Trying path: " << fullPath << std::endl;
+
+        if (GetFileAttributesA(fullPath.c_str()) != INVALID_FILE_ATTRIBUTES)
+        {
+            HINSTANCE result = ShellExecuteA(NULL, "open", fullPath.c_str(),
+                                             NULL, NULL, SW_SHOWNORMAL);
+            if ((intptr_t)result > 32)
+            {
+                std::cout << "Successfully opened: " << fullPath << std::endl;
+                return true;
+            }
+        }
+
+        // Try with .exe extension if no extension provided
+        if (strstr(appPath, ".") == nullptr)
+        {
+            std::string exePath = fullPath + ".exe";
+            std::cout << "Trying executable: " << exePath << std::endl;
+
+            if (GetFileAttributesA(exePath.c_str()) != INVALID_FILE_ATTRIBUTES)
+            {
+                HINSTANCE result = ShellExecuteA(NULL, "open", exePath.c_str(),
+                                                 NULL, NULL, SW_SHOWNORMAL);
+                if ((intptr_t)result > 32)
+                {
+                    std::cout << "Successfully opened: " << exePath << std::endl;
+                    return true;
+                }
+            }
+        }
     }
 
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-    return true;
+    std::cerr << "Failed to open: " << appPath << std::endl;
+    return false;
 }
 
 void ServerHandler::startWebcam(SOCKET clientSocket)
@@ -693,7 +766,6 @@ bool ServerHandler::removeFile(const std::wstring &filename)
     }
 }
 
-// server_handler.cpp
 void ServerHandler::saveApplicationsToFile(const std::vector<ProcessInfo> &applications, const std::string &filename)
 {
     std::ofstream file(filename);
@@ -703,12 +775,50 @@ void ServerHandler::saveApplicationsToFile(const std::vector<ProcessInfo> &appli
         return;
     }
 
-    file << "List of running applications:\n";
-    for (const auto &app : applications)
+    time_t now = time(0);
+    char *dt = ctime(&now);
+
+    // Write header
+    file << "===== Running Applications Report =====" << std::endl;
+    file << "Generated: " << dt;
+    file << "Total Applications: " << applications.size() << std::endl;
+    file << std::string(80, '=') << std::endl;
+
+    // Column headers
+    file << std::left
+         << std::setw(8) << "PID"
+         << std::setw(40) << "Application Name"
+         << std::setw(15) << "Memory (KB)"
+         << std::endl;
+    file << std::string(80, '-') << std::endl;
+
+    // Sort by memory usage
+    auto sortedApps = applications;
+    std::sort(sortedApps.begin(), sortedApps.end(),
+              [](const ProcessInfo &a, const ProcessInfo &b)
+              {
+                  return a.memoryUsage > b.memoryUsage;
+              });
+
+    // Write process information
+    size_t totalMemory = 0;
+    for (const auto &app : sortedApps)
     {
-        file << "PID: " << app.pid << ", Name: " << app.name << "\n";
+        file << std::left
+             << std::setw(8) << app.pid
+             << std::setw(40) << app.name
+             << std::setw(15) << app.memoryUsage
+             << std::endl;
+        totalMemory += app.memoryUsage;
     }
+
+    // Write summary
+    file << std::string(80, '-') << std::endl;
+    file << "Total Memory Usage: " << (totalMemory / 1024) << " MB" << std::endl;
+    file << std::string(80, '=') << std::endl;
+
     file.close();
+    std::cout << "Applications saved to: " << filename << std::endl;
 }
 
 void ServerHandler::saveServicesToFile(const std::vector<ServiceInfo> &services, const std::string &filename)
@@ -720,12 +830,56 @@ void ServerHandler::saveServicesToFile(const std::vector<ServiceInfo> &services,
         return;
     }
 
-    file << "List of running services:\n";
+    time_t now = time(0);
+    char *dt = ctime(&now);
+
+    // Write header
+    file << "===== Windows Services Report =====" << std::endl;
+    file << "Generated: " << dt;
+    file << "Total Services: " << services.size() << std::endl;
+    file << std::string(100, '=') << std::endl;
+
+    // Column headers
+    file << std::left
+         << std::setw(8) << "Status"
+         << std::setw(40) << "Service Name"
+         << std::setw(8) << "PID"
+         << std::setw(30) << "State"
+         << std::endl;
+    file << std::string(100, '-') << std::endl;
+
+    // Count statistics
+    int runningCount = 0, stoppedCount = 0;
+
+    // Write service information
     for (const auto &svc : services)
     {
-        file << "PID: " << svc.pid << ", Name: " << svc.name << "\n";
+        std::string status = (svc.pid > 0) ? "Running" : "Stopped";
+        std::string statusIcon = (svc.pid > 0) ? "✓" : "×";
+
+        if (svc.pid > 0)
+            runningCount++;
+        else
+            stoppedCount++;
+
+        file << std::left
+             << std::setw(8) << statusIcon
+             << std::setw(40) << svc.name
+             << std::setw(8) << (svc.pid ? std::to_string(svc.pid) : "N/A")
+             << std::setw(30) << status
+             << std::endl;
     }
+
+    // Write summary
+    file << std::string(100, '-') << std::endl;
+    file << "Summary:" << std::endl;
+    file << "- Running: " << runningCount << std::endl;
+    file << "- Stopped: " << stoppedCount << std::endl;
+    file << "- Total: " << services.size() << std::endl;
+    file << std::string(100, '=') << std::endl;
+
     file.close();
+    std::cout << "Services saved to: " << filename << std::endl;
 }
 
 void ServerHandler::takeScreenshot(const std::wstring &filename)

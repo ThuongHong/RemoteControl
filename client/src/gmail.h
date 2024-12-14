@@ -34,6 +34,7 @@ public:
     void markAsRead(const std::string &message_id);
     std::string getMessageContent(const std::string &message_id);
     std::vector<std::string> getUnreadMessageContents();
+    std::vector<std::string> getUnreadMessageContentsFromSender(const std::string &sender_email); 
 
 private:
     std::string m_access_token;
@@ -54,6 +55,7 @@ public:
     std::string m_to;
     std::string m_subject;
     std::string m_body;
+
 private:
     std::string m_last_error;
     std::string createMimeMessage() const;

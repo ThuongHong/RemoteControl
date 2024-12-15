@@ -648,8 +648,14 @@ bool ServerHandler::openApplication(const char *appPath)
     return false;
 }
 
-void ServerHandler::startWebcam(SOCKET clientSocket)
+void ServerHandler::startWebcam()
 {
+    if (cap.isOpened())
+    {
+        std::cout << "Webcam is already running" << std::endl;
+        return;
+    }
+
     cap.open(0);
     if (!cap.isOpened())
     {
@@ -657,27 +663,51 @@ void ServerHandler::startWebcam(SOCKET clientSocket)
         return;
     }
 
+    std::cout << "Webcam started successfully" << std::endl;
+}
+
+void ServerHandler::stopWebcam()
+{
+    if (!cap.isOpened())
+    {
+        std::cout << "Webcam is not running" << std::endl;
+        return;
+    }
+
+    cap.release();
+    cv::destroyAllWindows();
+    std::cout << "Webcam stopped successfully" << std::endl;
+}
+
+bool ServerHandler::recordWebcam()
+{
+    if (!cap.isOpened())
+    {
+        std::cerr << "Error: Webcam is not running. Call startWebcam first." << std::endl;
+        return false;
+    }
+
     // Set socket to non-blocking mode
     u_long mode = 1;
-    ioctlsocket(clientSocket, FIONBIO, &mode);
+    ioctlsocket(clientSock, FIONBIO, &mode);
 
     // Define video writer
     cv::VideoWriter videoWriter;
     int frameWidth = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH));
     int frameHeight = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
-    int fps = 20; // Frames per second
-    std::string videoFilename = "recorded_video.avi";
+    int fps = 20;
+    std::string videoFilename = "recorded_cam.avi";
     videoWriter.open(videoFilename, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), fps, cv::Size(frameWidth, frameHeight));
 
     if (!videoWriter.isOpened())
     {
         std::cerr << "Error: Could not open video writer." << std::endl;
-        return;
+        return false;
     }
 
     // Record video for 3 seconds
     int frameCount = 0;
-    int maxFrames = fps * 3; // 3 seconds of video
+    int maxFrames = fps * 3;
 
     while (frameCount < maxFrames)
     {
@@ -686,52 +716,48 @@ void ServerHandler::startWebcam(SOCKET clientSocket)
         if (frame.empty())
         {
             std::cerr << "Error: Could not capture frame." << std::endl;
-            break;
+            return false;
         }
 
-        // Write frame to video file
         videoWriter.write(frame);
         frameCount++;
 
-        // Show frame locally (optional)
-        cv::imshow("Server - Webcam", frame);
+        cv::imshow("Server - Recording", frame);
         char key = (char)cv::waitKey(1);
         if (key == 27)
-        { // ESC to exit early
-            break;
-        }
+            return false;
     }
 
-    // Cleanup
-    cap.release();
     videoWriter.release();
-    cv::destroyWindow("Server - Webcam");
-
-    // Reset socket to blocking mode
-    mode = 0;
-    ioctlsocket(clientSocket, FIONBIO, &mode);
-
-    // Ensure the video file is properly closed before sending
-    std::ifstream file(videoFilename, std::ios::binary);
-    if (!file.is_open())
-    {
-        std::cerr << "Failed to open video file: " << videoFilename << std::endl;
-        return;
-    }
-    file.close();
-
-    // Convert std::string to std::wstring
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    std::wstring wideVideoFilename = converter.from_bytes(videoFilename);
-
-    // Send the recorded video file to the client
-    if (!sendFile(clientSocket, wideVideoFilename))
-    {
-        std::cerr << "Failed to send video file to client." << std::endl;
-    }
-
-    std::cout << "Webcam recording stopped and video sent to client." << std::endl;
+    cv::destroyWindow("Server - Recording");
+    std::cout << "Video recorded successfully" << std::endl;
+    
+    return true;
 }
+
+bool ServerHandler::takeWebcamShot()
+{
+    if (!cap.isOpened())
+    {
+        std::cerr << "Error: Webcam is not running. Call startWebcam first." << std::endl;
+        return false;
+    }
+
+    cv::Mat frame;
+    cap >> frame;
+
+    if (frame.empty())
+    {
+        std::cerr << "Error: Could not capture frame." << std::endl;
+        return false;
+    }
+
+    std::string filename = "captured_cam.jpg";
+    cv::imwrite(filename, frame);
+    std::cout << "Webcam photo saved as: " << filename << std::endl;
+    return true;
+}
+
 void ServerHandler::listFilesInDirectory(const std::wstring &outputFile)
 {
     std::wofstream file(outputFile);

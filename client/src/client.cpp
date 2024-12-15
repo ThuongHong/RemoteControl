@@ -214,7 +214,9 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
 
     if (sendString(messageContent))
     {
-        std::cout << "Sent successfully!\n";
+        std::cout << "\n-----------------------------------\n";
+        std::cout << "\nSent successfully!\n";
+
         if (messageContent.substr(0, 8) == "list app")
         {
             if (receiveFile(L"apps_list.txt"))
@@ -245,15 +247,17 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         }
         else if (messageContent.substr(0, 3) == "get")
         {
-            if (receiveFile(L"get_file"))
+            std::string filename = messageContent.substr(4);
+            std::wstring wfilename(filename.begin(), filename.end());
+            if (receiveFile(wfilename))
             {
-                openFile(L"get_file");
+                openFile(wfilename);
             }
         }
-        else if (messageContent.substr(0, 9) == "start cam")
+        else if (messageContent.substr(0, 10) == "record cam")
         {
             Sleep(6000);
-            std::wstring videoFilename = L"received_video.avi";
+            std::wstring videoFilename = L"recorded_webcam.avi";
             if (receiveFile(videoFilename))
             {
                 openFile(videoFilename);
@@ -264,6 +268,15 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
                 return false;
             }
         }
+        else if (messageContent.substr(0, 11) == "capture cam")
+        {
+            std::wstring imageFilename = L"captured_webcam.jpg";
+            if (receiveFile(imageFilename))
+            {
+                openFile(imageFilename);
+            }
+        }
+
         else if (messageContent.substr(0, 3) == "end")
         {
             return true;

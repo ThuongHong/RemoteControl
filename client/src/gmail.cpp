@@ -320,10 +320,6 @@ std::vector<std::string> GmailReceiver::getUnreadMessageContents()
             }
         }
     }
-    else
-    {
-        std::cerr << "No messages found in the response." << std::endl;
-    }
 
     return message_contents;
 }
@@ -386,10 +382,6 @@ std::vector<std::string> GmailReceiver::getUnreadMessageContentsFromSender(const
                 }
             }
         }
-    }
-    else
-    {
-        std::cerr << "No messages found in the response." << std::endl;
     }
 
     return message_contents;

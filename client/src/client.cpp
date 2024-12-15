@@ -13,6 +13,7 @@ Client::Client(const std::string &ip_address, int port, wxStaticText *m_statusTe
     : ip_address_(ip_address), port_(port), server_socket_(INVALID_SOCKET)
 {
     m_checkMessageTimer = new wxTimer(this);
+    m_checkMessageTimer->Start(3000);
 }
 
 // void Client::loadAccessToken()
@@ -91,8 +92,6 @@ void Client::checkForMessage(wxStaticText* m_statusText, wxScopedPtr<GmailReceiv
             break;
         }
     }
-
-    updateStatus("Waiting for messages...", m_statusText);
 }
 
 //void Client::checkForMessages(wxStaticText* m_statusText)
@@ -184,17 +183,17 @@ void Client::updateStatus(const wxString &message, wxStaticText *m_statusText)
     }
 }
 
-void Client::startCheckingMessages(wxStaticText *m_statusText)
-{
-    updateStatus("Waiting for message...", m_statusText);
-    m_checkMessageTimer->Start(3000);
-}
-
-void Client::stopCheckingMessages(wxStaticText *m_statusText)
-{
-    m_checkMessageTimer->Stop();
-    updateStatus("Message checking stopped", m_statusText);
-}
+//void Client::startCheckingMessages(wxStaticText *m_statusText)
+//{
+//    updateStatus("Waiting for message...", m_statusText);
+//    m_checkMessageTimer->Start(3000);
+//}
+//
+//void Client::stopCheckingMessages(wxStaticText *m_statusText)
+//{
+//    m_checkMessageTimer->Stop();
+//    updateStatus("Message checking stopped", m_statusText);
+//}
 
 bool Client::processMessage(const std::string &messageContent, wxStaticText *m_statusText)
 {

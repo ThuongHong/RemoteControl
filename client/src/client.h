@@ -30,7 +30,7 @@ public:
     bool initialize(wxStaticText *m_statusText);
     void cleanup();
     void BindControl(wxStaticText* m_statusText, wxScopedPtr<GmailReceiver> &gmailReceiver);
-    void startCheckingMessages(wxStaticText *m_statusText);
+    //void startCheckingMessages(wxStaticText *m_statusText);
     std::string ip_address_;
     int port_;
 
@@ -44,7 +44,7 @@ private:
     wxTimer *m_checkMessageTimer;
 
     void updateStatus(const wxString &message, wxStaticText *m_statusText);
-    void stopCheckingMessages(wxStaticText *m_statusText);
+    //void stopCheckingMessages(wxStaticText *m_statusText);
     bool processMessage(const std::string &messageContent, wxStaticText *m_statusText);
 
     // Socket-related methods

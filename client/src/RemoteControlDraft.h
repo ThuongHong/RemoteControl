@@ -16,7 +16,7 @@ private:
 	// GUI
 	PanelLogin *panelLogin;
 	PanelRoles *panelRoles;
-	PanelAuthorization *panelAuthorization;
+	// PanelAuthorization *panelAuthorization;
 	PanelSender *panelSender;
 	PanelReceiver *panelReceiver;
 
@@ -32,8 +32,9 @@ private:
 	std::string client_id = "926757990224-84lbea6uthpg9kjodd8i9050gr5ie5gl.apps.googleusercontent.com";
 	std::string client_secret = "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";
 	std::string redirect_uri = "http://localhost:8080";
-	std::string target_email;
-	std::string access_token="1233323";
+	std::string receive_email;
+	std::string send_email;
+	std::string access_token;
 	std::string refresh_token;
 	std::string authorization_code;
 	std::string file_name;

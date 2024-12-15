@@ -176,7 +176,7 @@ void PanelRoles::CreateSizer()
 	SubSizer4 = new wxBoxSizer(wxVERTICAL);
 
 	SubSizer2->Add(TextEmail, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 5);
-	SubSizer2->Add(InputFieldEmail, 0, wxEXPAND);
+	SubSizer2->Add(InputFieldEmail, 0, wxEXPAND | wxBOTTOM, 5);
 	SubSizer2->Add(TextIP, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 5);
 	SubSizer2->Add(InputFieldIP, 0, wxEXPAND | wxBOTTOM, 5);
 	SubSizer2->Add(TextPort, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 5);
@@ -201,11 +201,11 @@ void PanelRoles::CreateSizer()
 
 	this->SetSizer(MainSizer);
 }
-void PanelRoles::BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::string &access_token, wxScopedPtr<GmailSender>& gmailSender, std::vector<std::string> &tasks, wxScopedPtr<GmailReceiver> &gmailReceiver)
+void PanelRoles::BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &receive_email, std::string &send_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::string &access_token, wxScopedPtr<GmailSender>& gmailSender, std::vector<std::string> &tasks, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
 	Roles->Bind(wxEVT_RADIOBOX, &PanelRoles::OnRolesChanged, this);
-	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &target_email, m_statusText, &client, &access_token, &gmailSender, &tasks, &gmailReceiver](wxCommandEvent&) {
-		OnButtonClicked(desPanel1, desPanel2, ip_address, port, target_email, m_statusText, client, access_token, gmailSender, tasks, gmailReceiver);
+	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &receive_email, &send_email, m_statusText, &client, &access_token, &gmailSender, &tasks, &gmailReceiver](wxCommandEvent&) {
+		OnButtonClicked(desPanel1, desPanel2, ip_address, port, receive_email, send_email, m_statusText, client, access_token, gmailSender, tasks, gmailReceiver);
 	});
 
 	InputFieldEmail->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
@@ -231,16 +231,16 @@ bool PanelRoles::CreateEmailReceiver(const std::string& access_token, wxScopedPt
 	gmailReceiver->setAccessToken(access_token);
 	return false;
 }
-void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &target_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string &access_token, wxScopedPtr<GmailSender> &gmailSender, std::vector<std::string> &tasks, wxScopedPtr<GmailReceiver> &gmailReceiver)
+void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &receive_email, std::string &send_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string &access_token, wxScopedPtr<GmailSender> &gmailSender, std::vector<std::string> &tasks, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
 	int selection = Roles->GetSelection();
 	switch (selection) { 
 	case 0: // To SENDER PANEL
-		target_email = InputFieldEmail->GetValue().ToStdString();
-		std::cout << target_email << std::endl;
+		receive_email = InputFieldEmail->GetValue().ToStdString();
+		/*std::cout << receive_email << std::endl;*/
 
 		if (CreateEmailSender(access_token, gmailSender)) std::cout << "Create gmail sender successfully!" << std::endl;
-		gmailSender->setTo(target_email);
+		gmailSender->setTo(receive_email);
 
 		this->Hide();
 		desPanel1->Show();
@@ -252,6 +252,7 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 		desPanel2->Show();
 		desPanel2->Layout();
 
+		send_email = InputFieldEmail->GetValue().ToStdString();
 		ip_address = InputFieldIP->GetValue().ToStdString();
 		port = std::stoi(InputFieldPort->GetValue().ToStdString());
 
@@ -265,23 +266,22 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 
 		if (client->initialize(m_statusText)) {
 			client->BindControl(m_statusText, gmailReceiver);
-			client->startCheckingMessages(m_statusText);
-			std::cout << "Initailize client successfully!" << std::endl;
+			std::cout << "Initialize client successfully!" << std::endl;
 		}
 		else {
-			std::cout << "Error" << std::endl;
+			std::cout << "Error initialize client" << std::endl;
 		}
 		break;
 	}
+	std::cout << "Receive email: " << receive_email << std::endl;
+	std::cout << "Send email: " << send_email << std::endl;
 	parent_->Layout();
 }
 void PanelRoles::OnRolesChanged(wxCommandEvent& evt)
 {
 	int selection = evt.GetInt();
-	TextEmail->Hide();
 	TextIP->Hide();
 	TextPort->Hide();
-	InputFieldEmail->Hide();
 	InputFieldIP->Hide();
 	InputFieldPort->Hide();
 
@@ -290,13 +290,13 @@ void PanelRoles::OnRolesChanged(wxCommandEvent& evt)
 	InputFieldPort->Clear();
 	switch (selection) {
 	case 0:
-		TextEmail->Show();
-		InputFieldEmail->Show();
+		TextEmail->SetLabel("Receiver Email");
 		break;
 	case 1:
+		TextEmail->SetLabel("Sender Email");
 		TextIP->Show();
-		TextPort->Show();
 		InputFieldIP->Show();
+		TextPort->Show();
 		InputFieldPort->Show();
 		break;
 	}
@@ -311,9 +311,10 @@ void PanelRoles::OnTextCtrlChanged(wxCommandEvent& event)
 		enableButton = IsEmailFormat(textEmail);
 	}
 	else if (Roles->GetSelection() == 1) {
+		wxString textEmail = InputFieldEmail->GetValue();
 		wxString textIP = InputFieldIP->GetValue();
 		wxString textPort = InputFieldPort->GetValue();
-		enableButton = IsIPFormat(textIP) && IsPortFormat(textPort);
+		enableButton = IsEmailFormat(textEmail) && IsIPFormat(textIP) && IsPortFormat(textPort);
 	}
 
 	ButtonConfirm->Enable(enableButton);
@@ -457,14 +458,14 @@ PanelSender::PanelSender(wxWindow* parent, wxImage image, wxFont headerFont, wxF
 	Set(headerFont, mainFont);
 	CreateSizer();
 }
-void PanelSender::BindControl(std::string &file_name, std::string &app_svc_name, int &processID, std::string target_email, wxScopedPtr<GmailSender>& gmailSender)
+void PanelSender::BindControl(std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, wxScopedPtr<GmailSender>& gmailSender)
 {
 	Features->Bind(wxEVT_RADIOBOX, &PanelSender::OnFeaturesChanged, this);
 	OptionsLSS->Bind(wxEVT_RADIOBOX, &PanelSender::OnOptionsChanged, this);
 	OptionsLGD->Bind(wxEVT_RADIOBOX, &PanelSender::OnOptionsChanged, this);
 	ButtonExit->Bind(wxEVT_BUTTON, &PanelSender::OnButtonExitClicked, this);
-	ButtonConfirm->Bind(wxEVT_BUTTON, [this, &file_name, &app_svc_name, &processID, target_email, &gmailSender](wxCommandEvent&) {
-		OnButtonConfirmClicked(file_name, app_svc_name, processID, target_email, gmailSender);
+	ButtonConfirm->Bind(wxEVT_BUTTON, [this, &file_name, &app_svc_name, &processID, receive_email, &gmailSender](wxCommandEvent&) {
+		OnButtonConfirmClicked(file_name, app_svc_name, processID, receive_email, gmailSender);
 		});
 
 }
@@ -474,11 +475,13 @@ void PanelSender::Create(wxImage image)
 	wxArrayString features = { "Application", "Service", "File", "Screen Capture", "Webcam", "Shutdown" };
 	wxArrayString optionsLSS = { "List", "Start", "Stop" };
 	wxArrayString optionsLGD = { "List", "Get", "Delete" };
+	wxArrayString optionsCamera = { "Open", "Close", "Record", "Capture" };
 
 	TextTitle = new wxStaticText(this, wxID_ANY, "ROLE: SENDER");
 	Features = new wxRadioBox(this, wxID_ANY, "Features", wxDefaultPosition, wxDefaultSize, features, 6, wxRA_SPECIFY_ROWS);
 	OptionsLSS = new wxRadioBox(this, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsLSS, 3, wxRA_SPECIFY_COLS);
 	OptionsLGD = new wxRadioBox(this, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsLGD, 3, wxRA_SPECIFY_COLS);
+	OptionsCamera = new wxRadioBox(this, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsCamera, 2, wxRA_SPECIFY_COLS);
 	ButtonConfirm = new wxButton(this, wxID_ANY, "Confirm");
 	ButtonClose = new wxButton(this, wxID_ANY, "Close");
 	ButtonExit = new wxButton(this, wxID_ANY, "Exit");
@@ -494,7 +497,9 @@ void PanelSender::Set(wxFont headerFont, wxFont mainFont)
 	Features->SetFont(mainFont);
 	OptionsLSS->SetFont(mainFont);
 	OptionsLGD->SetFont(mainFont);
+	OptionsCamera->SetFont(mainFont);
 	OptionsLGD->Hide();
+	OptionsCamera->Hide();
 	InputFieldProcessID->Hide();
 	InputFieldAppSvcName->Hide();
 	InputFieldFileName->Hide();
@@ -521,6 +526,7 @@ void PanelSender::CreateSizer()
 	SubSizer4->Add(SubSizer3, 0, wxTOP | wxBOTTOM, 10);
 	SubSizer4->Add(OptionsLSS);
 	SubSizer4->Add(OptionsLGD);
+	SubSizer4->Add(OptionsCamera);
 	SubSizer4->AddSpacer(20);
 	SubSizer4->Add(InputFieldProcessID);
 	SubSizer4->Add(InputFieldAppSvcName);
@@ -548,14 +554,14 @@ void PanelSender::OnFeaturesChanged(wxCommandEvent& evt)
 	InputFieldFileName->Hide();
 	InputFieldAppSvcName->Hide();
 	InputFieldProcessID->Hide();
-	if (OptionsLSS->IsShown()) {
-		OptionsLSS->SetSelection(0);
-		OptionsLSS->Hide();
-	}
-	else if (OptionsLGD->IsShown()) {
-		OptionsLGD->SetSelection(0);
-		OptionsLGD->Hide();
-	}
+
+	OptionsLSS->SetSelection(0);
+	OptionsLSS->Hide();
+	OptionsLGD->SetSelection(0);
+	OptionsLGD->Hide();
+	OptionsCamera->SetSelection(0);
+	OptionsCamera->Hide();
+
 	ButtonClose->Hide();
 
 	switch (features) {
@@ -566,7 +572,7 @@ void PanelSender::OnFeaturesChanged(wxCommandEvent& evt)
 		OptionsLGD->Show();
 		break;
 	case 4:
-		ButtonClose->Show();
+		OptionsCamera->Show();
 		break;
 	}
 
@@ -618,7 +624,7 @@ void PanelSender::OnOptionsChanged(wxCommandEvent& evt) {
 
 	this->Layout();
 }
-void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &app_svc_name, int &processID, std::string target_email, wxScopedPtr<GmailSender>& gmailSender)
+void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, wxScopedPtr<GmailSender>& gmailSender)
 {
 	// Get the seletion from features and options
 	int featureSelection = Features->GetSelection();
@@ -628,6 +634,9 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 	}
 	else if (OptionsLGD->IsShown()) {
 		optionSelection = OptionsLGD->GetSelection();
+	}
+	else if (OptionsCamera->IsShown()) {
+		optionSelection = OptionsCamera->GetSelection();
 	}
 	file_name = InputFieldFileName->GetValue().ToStdString();
 	app_svc_name = InputFieldAppSvcName->GetValue().ToStdString();
@@ -639,6 +648,8 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 		option = OptionsLSS->GetString(optionSelection).ToStdString();
 	else if (OptionsLGD->IsShown())
 		option = OptionsLGD->GetString(optionSelection).ToStdString();
+	else if (OptionsCamera->IsShown())
+		option = OptionsCamera->GetString(optionSelection).ToStdString();
 	else option = "";
 
 	// Show the value of vars to check if corrected
@@ -705,11 +716,29 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 		break;
 	case 4:
 		// webcam
-		body = "start cam";
-		break;
+		if (optionSelection == 0) {
+			// open camera
+			body = "open";
+			break;
+		}
+		else if (optionSelection == 1) {
+			// close camera
+			body = "close";
+			break;
+		}
+		else if (optionSelection == 2) {
+			// record camera
+			body = "record cam";
+			break;
+		}
+		else if (optionSelection == 3) {
+			// capture camera
+			body = "capture cam";
+			break;
+		}
 	case 5:
 		// shut down
-		std::string body = "shut down";
+		body = "shut down";
 		break;
 	}
 
@@ -718,7 +747,7 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 	std::cout << "Target email: " << gmailSender->m_to << std::endl;
 	std::cout << "Subject: " << gmailSender->m_subject << std::endl;
 	std::cout << "Body: " << gmailSender->m_body << std::endl;
-	std::cout << "Access token: " << gmailSender->m_access_token << std::endl << std::endl;
+	//std::cout << "Access token: " << gmailSender->m_access_token << std::endl << std::endl;
 	if (gmailSender->send()) {
 		std::cout << "Sent successfully";
 	}
@@ -726,7 +755,7 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 }
 void PanelSender::OnButtonCloseClicked()
 {
-
+	this->parent_->Close();
 }
 void PanelSender::OnButtonExitClicked(wxCommandEvent& evt)
 {
@@ -744,8 +773,7 @@ PanelReceiver::PanelReceiver(wxWindow* parent, wxImage image, wxFont headerFont,
 void PanelReceiver::BindControl(wxScopedPtr<Client>& client)
 {
 	ButtonExit->Bind(wxEVT_BUTTON, &PanelReceiver::OnButtonExitClicked, this);
-	//this->Bind(wxEVT_TIMER, &PanelReceiver::OnTimer, this, Timer->GetId());
-	
+	//this->Bind(wxEVT_TIMER, &PanelReceiver::OnUpdateTimer, this, UpdateTimer->GetId());
 }
 void PanelReceiver::Create(wxImage image)
 {
@@ -757,8 +785,8 @@ void PanelReceiver::Create(wxImage image)
 	//TextWaiting = new wxStaticText(this, wxID_ANY, "WAITING FOR COMMAND");
 	//TextProcessing = new wxStaticText(this, wxID_ANY, "CURRENT PROCESSING:");
 	//TextFeature = new wxStaticText(this, wxID_ANY, "FEATURE");
-	//Timer = new wxTimer(this, wxID_ANY);
-	//Timer->Start(2000);
+	//UpdateTimer = new wxTimer(this, wxID_ANY);
+	//UpdateTimer->Start(3000);
 }
 void PanelReceiver::Set(wxFont headerFont, wxFont mainFont)
 {
@@ -789,34 +817,34 @@ void PanelReceiver::CreateSizer(wxStaticText* m_statusText)
 	MainSizer->Add(ButtonExit, 0, wxALIGN_CENTER | wxBOTTOM, 30);
 	this->SetSizer(MainSizer);
 }
-bool PanelReceiver::OnEventListened()
-{
-	return rand() % 2 == 0;
-}
+//bool PanelReceiver::OnEventListened()
+//{
+//	return rand() % 2 == 0;
+//}
 void PanelReceiver::OnButtonExitClicked(wxCommandEvent& evt)
 {
 	//Timer->Stop();
 	parent_->Close(true);
 }
-void PanelReceiver::OnTimer(wxTimerEvent& event)
+void PanelReceiver::OnUpdateTimer(wxTimerEvent& event)
 {
-	UpdateStatusText();
-}
-void PanelReceiver::UpdateStatusText()
-{
-	bool commandReceived = OnEventListened();
-	if (commandReceived) {
-		//TextWaiting->Show();
-		//TextProcessing->Hide();
-		//TextFeature->Hide();
-	}
-	else {
-		//TextWaiting->Hide();
-		//TextProcessing->Show();
-		//TextFeature->Show();
-	}
 	this->Layout();
 }
+//void PanelReceiver::UpdateStatusText()
+//{
+//	bool commandReceived = OnEventListened();
+//	if (commandReceived) {
+//		//TextWaiting->Show();
+//		//TextProcessing->Hide();
+//		//TextFeature->Hide();
+//	}
+//	else {
+//		//TextWaiting->Hide();
+//		//TextProcessing->Show();
+//		//TextFeature->Show();
+//	}
+//	this->Layout();
+//}
 
 //bool PanelReceiver::OnRun()
 //{

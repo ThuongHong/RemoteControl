@@ -6,7 +6,7 @@ wxIMPLEMENT_APP(App);
 
 bool App::OnInit() {
 	RemoteControlDraft* mainFrame = new RemoteControlDraft("C++ GUI");
-	mainFrame->SetClientSize(550, 350);
+	mainFrame->SetClientSize(550, 400);
 	mainFrame->Center();
 
 	if (!mainFrame) {

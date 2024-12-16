@@ -79,7 +79,7 @@ std::string HttpListener::parseAuthorizationCode(const std::string &request)
     }
 
     std::string requestLine = request.substr(httpGet, lineEnd - httpGet);
-    std::cout << "Request line: " << requestLine << std::endl;
+    // std::cout << "Request line: " << requestLine << std::endl;
 
     // Look for code parameter
     size_t codeStart = requestLine.find("code=");
@@ -97,7 +97,7 @@ std::string HttpListener::parseAuthorizationCode(const std::string &request)
     }
 
     std::string code = requestLine.substr(codeStart, codeEnd - codeStart);
-    std::cout << "Found authorization code: " << code << std::endl;
+    // std::cout << "Found authorization code: " << code << std::endl;
     return code;
 }
 
@@ -141,8 +141,52 @@ std::string HttpListener::waitForAuthorizationCode()
             "Content-Type: text/html\r\n"
             "Connection: close\r\n"
             "\r\n"
-            "<html><body><h1>Authorization Successful!</h1>"
-            "<p>You can close this window now.</p></body></html>";
+            "<!DOCTYPE html>\r\n"
+            "<html lang='en'>\r\n"
+            "<head>\r\n"
+            "    <meta charset='UTF-8'>\r\n"
+            "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>\r\n"
+            "    <title>Authorization Success</title>\r\n"
+            "    <style>\r\n"
+            "        body {\r\n"
+            "            font-family: Arial, sans-serif;\r\n"
+            "            background-color: #f0f2f5;\r\n"
+            "            display: flex;\r\n"
+            "            justify-content: center;\r\n"
+            "            align-items: center;\r\n"
+            "            height: 100vh;\r\n"
+            "            margin: 0;\r\n"
+            "        }\r\n"
+            "        .container {\r\n"
+            "            background: white;\r\n"
+            "            padding: 40px;\r\n"
+            "            border-radius: 10px;\r\n"
+            "            box-shadow: 0 2px 10px rgba(0,0,0,0.1);\r\n"
+            "            text-align: center;\r\n"
+            "        }\r\n"
+            "        h1 {\r\n"
+            "            color: #1a73e8;\r\n"
+            "            margin-bottom: 20px;\r\n"
+            "        }\r\n"
+            "        p {\r\n"
+            "            color: #5f6368;\r\n"
+            "            font-size: 18px;\r\n"
+            "        }\r\n"
+            "        .success-icon {\r\n"
+            "            font-size: 64px;\r\n"
+            "            margin-bottom: 20px;\r\n"
+            "        }\r\n"
+            "    </style>\r\n"
+            "</head>\r\n"
+            "<body>\r\n"
+            "    <div class='container'>\r\n"
+            "        <div class='success-icon'>✅</div>\r\n"
+            "        <h1>Authorization Successful!</h1>\r\n"
+            "        <p>Your account has been successfully connected.</p>\r\n"
+            "        <p>You can now close this window and return to the application.</p>\r\n"
+            "    </div>\r\n"
+            "</body>\r\n"
+            "</html>";
 
         send(clientSocket, response.c_str(), response.length(), 0);
         closesocket(clientSocket);

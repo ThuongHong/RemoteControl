@@ -35,12 +35,13 @@ public:
     {
         DWORD pid;
         std::string name;
+        size_t memoryUsage;
     };
-
     struct ServiceInfo
     {
         DWORD pid;
         std::string name;
+        size_t memoryUsage;
     };
 
     ServerHandler();
@@ -66,8 +67,10 @@ public:
     bool startService(const std::string &serviceName);
     bool openApplication(const char *appPath);
     bool shutdownComputer();
-    void startWebcam(SOCKET clientSocket);
+    void startWebcam();
     void stopWebcam();
+    bool recordWebcam();
+    bool takeWebcamShot();
     void listFilesInDirectory(const std::wstring &outputFile);
     bool removeFile(const std::wstring &filename);
 

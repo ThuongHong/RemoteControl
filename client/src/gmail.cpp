@@ -320,9 +320,68 @@ std::vector<std::string> GmailReceiver::getUnreadMessageContents()
             }
         }
     }
-    else
+
+    return message_contents;
+}
+
+std::vector<std::string> GmailReceiver::getUnreadMessageContentsFromSender(const std::string &sender_email)
+{
+    CURL *curl = curl_easy_init();
+    if (!curl)
     {
-        std::cerr << "No messages found in the response." << std::endl;
+        std::cerr << "Failed to initialize CURL" << std::endl;
+        return {};
+    }
+
+    std::string url = "https://gmail.googleapis.com/gmail/v1/users/me/messages?q=is:unread+from:" + sender_email;
+    std::string response;
+    struct curl_slist *headers = NULL;
+    std::string auth_header = "Authorization: Bearer " + m_access_token;
+    headers = curl_slist_append(headers, auth_header.c_str());
+
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L); // Disable SSL verification
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L); // Disable SSL verification
+
+    CURLcode res = curl_easy_perform(curl);
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+
+    if (res != CURLE_OK)
+    {
+        std::cerr << "CURL error: " << curl_easy_strerror(res) << std::endl;
+        return {};
+    }
+
+    json json_response;
+    try
+    {
+        json_response = json::parse(response);
+    }
+    catch (const json::parse_error &e)
+    {
+        std::cerr << "JSON parse error: " << e.what() << std::endl;
+        return {};
+    }
+
+    std::vector<std::string> message_contents;
+    if (json_response.contains("messages"))
+    {
+        for (const auto &message : json_response["messages"])
+        {
+            if (message.contains("id"))
+            {
+                std::string message_id = message["id"];
+                std::string message_content = getMessageContent(message_id);
+                if (!message_content.empty())
+                {
+                    message_contents.push_back(message_content);
+                }
+            }
+        }
     }
 
     return message_contents;
@@ -349,7 +408,7 @@ std::string GmailSender::createMimeMessage() const
 
 bool GmailSender::send()
 {
-    if (m_to.empty() ||m_body.empty())
+    if (m_to.empty() || m_body.empty())
     {
         m_last_error = "To, subject and body must not be empty";
         return false;

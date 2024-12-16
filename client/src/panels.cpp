@@ -265,7 +265,7 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 		if (CreateEmailReceiver(access_token, gmailReceiver)) std::cout << "Create gmail receiver successfully!" << std::endl;
 
 		if (client->initialize(m_statusText)) {
-			client->BindControl(m_statusText, gmailReceiver);
+			client->BindControl(m_statusText, send_email, gmailReceiver);
 			std::cout << "Initialize client successfully!" << std::endl;
 		}
 		else {

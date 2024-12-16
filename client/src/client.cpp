@@ -73,16 +73,16 @@ Client::Client(const std::string &ip_address, int port, wxStaticText *m_statusTe
 //         std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
 //     }
 // }
-void Client::BindControl(wxStaticText *m_statusText, wxScopedPtr<GmailReceiver> &gmailReceiver)
+void Client::BindControl(wxStaticText *m_statusText, std::string send_email, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
-    Bind(wxEVT_TIMER, [this, m_statusText, &gmailReceiver](wxTimerEvent &)
-         { checkForMessage(m_statusText, gmailReceiver); });
+    Bind(wxEVT_TIMER, [this, m_statusText, send_email, &gmailReceiver](wxTimerEvent &)
+         { checkForMessage(m_statusText, send_email, gmailReceiver); });
 }
 
-void Client::checkForMessage(wxStaticText *m_statusText, wxScopedPtr<GmailReceiver> &gmailReceiver)
+void Client::checkForMessage(wxStaticText *m_statusText, std::string send_email, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
     updateStatus("Checking for new messages...", m_statusText);
-    std::vector<std::string> tasks = gmailReceiver->getUnreadMessageContents();
+    std::vector<std::string> tasks = gmailReceiver->getUnreadMessageContentsFromSender(send_email);
 
     bool stop = false;
     for (const std::string &messageContent : tasks)

@@ -7,6 +7,7 @@
 #include <regex>
 #include "http_listener.h"
 #include <curl/curl.h>
+#include "Explorer.h"
 
 class PanelLogin : public wxPanel
 {
@@ -128,7 +129,7 @@ class PanelSender : public wxPanel
 {
 public:
 	PanelSender(wxWindow* parent, wxImage image, wxFont headerFont, wxFont mainFont);
-	void BindControl(std::string& file_name, std::string& app_svc_name, int& processID, std::string receive_email, wxScopedPtr<GmailSender>& gmailSender);
+	void BindControl(std::string& file_name, std::string& app_svc_name, int& processID, std::string receive_email, Explorer* explorer, wxScopedPtr<GmailSender>& gmailSender);
 
 private:
 	wxWindow* parent_;
@@ -136,8 +137,8 @@ private:
 	wxImage Image;
 	wxStaticText* TextTitle;
 	wxRadioBox* Features;
-	wxRadioBox* OptionsLSS;
-	wxRadioBox* OptionsLGD;
+	wxRadioBox* OptionsAppSvc;
+	wxRadioBox* OptionsFile;
 	wxRadioBox* OptionsCamera;
 	wxButton* ButtonConfirm;
 	wxButton* ButtonClose;
@@ -158,7 +159,7 @@ private:
 	void CreateSizer();
 	void OnFeaturesChanged(wxCommandEvent& evt);
 	void OnOptionsChanged(wxCommandEvent& evt);
-	void OnButtonConfirmClicked(std::string& file_name, std::string& app_svc_name, int& processID, std::string receive_email, wxScopedPtr<GmailSender>& gmailSender);
+	void OnButtonConfirmClicked(std::string& file_name, std::string& app_svc_name, int& processID, std::string receive_email, Explorer* explorer, wxScopedPtr<GmailSender>& gmailSender);
 	void OnButtonCloseClicked();
 	void OnButtonExitClicked(wxCommandEvent& evt);
 };

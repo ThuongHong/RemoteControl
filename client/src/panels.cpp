@@ -16,11 +16,12 @@ void PanelLogin::Create(wxString description, wxImage image)
 	TextMem1 = new wxStaticText(this, wxID_ANY, "Luu Thuong Hong - 23122006");
 	TextMem2 = new wxStaticText(this, wxID_ANY, "Nguyen Tan Hung - 23122007");
 	TextMem3 = new wxStaticText(this, wxID_ANY, "Chung Tin Dat      - 23122024");
-	ButtonLogin = new wxButton(this, wxID_ANY, "LOGIN WITH GOOGLE", wxDefaultPosition, wxSize(280, 80));
+	ButtonLogin = new wxButton(this, wxID_ANY, "Login with Google", wxDefaultPosition, wxSize(280, 80));
 	Logo = new wxStaticBitmap(this, wxID_ANY, wxBitmap(Image));
 }
 void PanelLogin::Set(wxFont headerFont, wxFont mainFont, wxBitmap bitmap)
 {
+	wxFont buttonFont(15, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
 	TextTitle->SetFont(headerFont);
 	TextTitle->SetBackgroundColour(wxColour(187, 189, 228));
 	TextDescription->SetFont(mainFont);
@@ -28,8 +29,9 @@ void PanelLogin::Set(wxFont headerFont, wxFont mainFont, wxBitmap bitmap)
 	TextMem1->SetFont(mainFont);
 	TextMem2->SetFont(mainFont);
 	TextMem3->SetFont(mainFont);
-	ButtonLogin->SetFont(mainFont);
+	ButtonLogin->SetFont(buttonFont);
 	ButtonLogin->SetBitmap(bitmap);
+	ButtonLogin->SetForegroundColour(wxColour(128, 128, 128));
 	ButtonLogin->SetBitmapPosition(wxLEFT);
 	ButtonLogin->SetBitmapMargins(20, 0);
 }
@@ -61,7 +63,6 @@ void PanelLogin::BindControl(wxPanel* desPanel, std::string redirect_uri, std::s
 		OnButtonClicked(desPanel, redirect_uri, client_id, access_token, refresh_token, oAuth2Handler);
 	});
 }
-
 void PanelLogin::OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<OAuth2Handler> &oAuth2Handler)
 {
 	if (curl_global_init(CURL_GLOBAL_DEFAULT) != 0)
@@ -97,7 +98,6 @@ void PanelLogin::OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, st
 		}
 
 		// Exchange authorization code for tokens
-		/*std::string access_token;*/
 		std::string refresh_token;
 		if (oAuth2Handler->exchangeAuthCodeForAccessToken(authorization_code, access_token, refresh_token))
 		{
@@ -458,14 +458,14 @@ PanelSender::PanelSender(wxWindow* parent, wxImage image, wxFont headerFont, wxF
 	Set(headerFont, mainFont);
 	CreateSizer();
 }
-void PanelSender::BindControl(std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, wxScopedPtr<GmailSender>& gmailSender)
+void PanelSender::BindControl(std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, Explorer* explorer, wxScopedPtr<GmailSender>& gmailSender)
 {
 	Features->Bind(wxEVT_RADIOBOX, &PanelSender::OnFeaturesChanged, this);
-	OptionsLSS->Bind(wxEVT_RADIOBOX, &PanelSender::OnOptionsChanged, this);
-	OptionsLGD->Bind(wxEVT_RADIOBOX, &PanelSender::OnOptionsChanged, this);
+	OptionsAppSvc->Bind(wxEVT_RADIOBOX, &PanelSender::OnOptionsChanged, this);
+	OptionsFile->Bind(wxEVT_RADIOBOX, &PanelSender::OnOptionsChanged, this);
 	ButtonExit->Bind(wxEVT_BUTTON, &PanelSender::OnButtonExitClicked, this);
-	ButtonConfirm->Bind(wxEVT_BUTTON, [this, &file_name, &app_svc_name, &processID, receive_email, &gmailSender](wxCommandEvent&) {
-		OnButtonConfirmClicked(file_name, app_svc_name, processID, receive_email, gmailSender);
+	ButtonConfirm->Bind(wxEVT_BUTTON, [this, &file_name, &app_svc_name, &processID, receive_email, explorer, &gmailSender](wxCommandEvent&) {
+		OnButtonConfirmClicked(file_name, app_svc_name, processID, receive_email, explorer, gmailSender);
 		});
 
 }
@@ -473,14 +473,14 @@ void PanelSender::Create(wxImage image)
 {
 	Image = image.Scale(120, 120, wxIMAGE_QUALITY_HIGH);
 	wxArrayString features = { "Application", "Service", "File", "Screen Capture", "Webcam", "Shutdown" };
-	wxArrayString optionsLSS = { "List", "Start", "Stop" };
-	wxArrayString optionsLGD = { "List", "Get", "Delete" };
+	wxArrayString optionsAppSvc = { "List", "Explore", "Start", "Stop" };
+	wxArrayString optionsLGD = { "List", "Explore", "Get", "Delete" };
 	wxArrayString optionsCamera = { "Open", "Close", "Record", "Capture" };
 
 	TextTitle = new wxStaticText(this, wxID_ANY, "ROLE: SENDER");
 	Features = new wxRadioBox(this, wxID_ANY, "Features", wxDefaultPosition, wxDefaultSize, features, 6, wxRA_SPECIFY_ROWS);
-	OptionsLSS = new wxRadioBox(this, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsLSS, 3, wxRA_SPECIFY_COLS);
-	OptionsLGD = new wxRadioBox(this, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsLGD, 3, wxRA_SPECIFY_COLS);
+	OptionsAppSvc = new wxRadioBox(this, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsAppSvc, 2, wxRA_SPECIFY_COLS);
+	OptionsFile = new wxRadioBox(this, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsLGD, 2, wxRA_SPECIFY_COLS);
 	OptionsCamera = new wxRadioBox(this, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsCamera, 2, wxRA_SPECIFY_COLS);
 	ButtonConfirm = new wxButton(this, wxID_ANY, "Confirm");
 	ButtonClose = new wxButton(this, wxID_ANY, "Close");
@@ -495,10 +495,10 @@ void PanelSender::Set(wxFont headerFont, wxFont mainFont)
 {
 	TextTitle->SetFont(headerFont);
 	Features->SetFont(mainFont);
-	OptionsLSS->SetFont(mainFont);
-	OptionsLGD->SetFont(mainFont);
+	OptionsAppSvc->SetFont(mainFont);
+	OptionsFile->SetFont(mainFont);
 	OptionsCamera->SetFont(mainFont);
-	OptionsLGD->Hide();
+	OptionsFile->Hide();
 	OptionsCamera->Hide();
 	InputFieldProcessID->Hide();
 	InputFieldAppSvcName->Hide();
@@ -524,8 +524,8 @@ void PanelSender::CreateSizer()
 	SubSizer3->Add(ButtonClose);
 
 	SubSizer4->Add(SubSizer3, 0, wxTOP | wxBOTTOM, 10);
-	SubSizer4->Add(OptionsLSS);
-	SubSizer4->Add(OptionsLGD);
+	SubSizer4->Add(OptionsAppSvc);
+	SubSizer4->Add(OptionsFile);
 	SubSizer4->Add(OptionsCamera);
 	SubSizer4->AddSpacer(20);
 	SubSizer4->Add(InputFieldProcessID);
@@ -555,10 +555,10 @@ void PanelSender::OnFeaturesChanged(wxCommandEvent& evt)
 	InputFieldAppSvcName->Hide();
 	InputFieldProcessID->Hide();
 
-	OptionsLSS->SetSelection(0);
-	OptionsLSS->Hide();
-	OptionsLGD->SetSelection(0);
-	OptionsLGD->Hide();
+	OptionsAppSvc->SetSelection(0);
+	OptionsAppSvc->Hide();
+	OptionsFile->SetSelection(0);
+	OptionsFile->Hide();
 	OptionsCamera->SetSelection(0);
 	OptionsCamera->Hide();
 
@@ -566,10 +566,10 @@ void PanelSender::OnFeaturesChanged(wxCommandEvent& evt)
 
 	switch (features) {
 	case 0: case 1:
-		OptionsLSS->Show();
+		OptionsAppSvc->Show();
 		break;
 	case 2:
-		OptionsLGD->Show();
+		OptionsFile->Show();
 		break;
 	case 4:
 		OptionsCamera->Show();
@@ -587,53 +587,44 @@ void PanelSender::OnOptionsChanged(wxCommandEvent& evt) {
 	InputFieldProcessID->Hide();
 
 	if (features == 0) {
-		if (options == 1) {
+		if (options == 2) {
 			InputFieldAppSvcName->Show();
 			InputFieldAppSvcName->SetValue("Enter Application Name");
 		}
-		else if (options == 2) {
+		else if (options == 3) {
 			InputFieldProcessID->Show();
 			InputFieldProcessID->SetValue("Enter Process ID");
 		}
 	}
 	else if (features == 1) {
-		if (options == 1) {
+		if (options == 2) {
 			InputFieldAppSvcName->Show();
 			InputFieldAppSvcName->SetValue("Enter Service Name");
 		}
-		else if (options == 2) {
+		else if (options == 3) {
 			InputFieldProcessID->Show();
 			InputFieldProcessID->SetValue("Enter Process ID");
 		}
 	}
 	else if (features == 2) {
-		if (options == 1 || options == 2) {
+		if (options == 2 || options == 3) {
 			InputFieldFileName->Show();
 			InputFieldFileName->SetValue("Enter File Name");
 		}
 	}
 
-	/*if ((features == 0 || features == 1) && (options == 1 || options == 2)) {
-		InputFieldProcessID->Show();
-		InputFieldProcessID->SetValue("Enter Process ID");
-	}
-	else if (features == 2 && (options == 1 || options == 2)) {
-		InputFieldFileName->Show();
-		InputFieldFileName->SetValue("Enter File Name");
-	}*/
-
 	this->Layout();
 }
-void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, wxScopedPtr<GmailSender>& gmailSender)
+void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, Explorer* explorer, wxScopedPtr<GmailSender>& gmailSender)
 {
 	// Get the seletion from features and options
 	int featureSelection = Features->GetSelection();
 	int optionSelection = -1;
-	if (OptionsLSS->IsShown()) {
-		optionSelection = OptionsLSS->GetSelection();
+	if (OptionsAppSvc->IsShown()) {
+		optionSelection = OptionsAppSvc->GetSelection();
 	}
-	else if (OptionsLGD->IsShown()) {
-		optionSelection = OptionsLGD->GetSelection();
+	else if (OptionsFile->IsShown()) {
+		optionSelection = OptionsFile->GetSelection();
 	}
 	else if (OptionsCamera->IsShown()) {
 		optionSelection = OptionsCamera->GetSelection();
@@ -644,10 +635,10 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 
 	std::string feature = Features->GetString(featureSelection).ToStdString();
 	std::string option = "";
-	if (OptionsLSS->IsShown())
-		option = OptionsLSS->GetString(optionSelection).ToStdString();
-	else if (OptionsLGD->IsShown())
-		option = OptionsLGD->GetString(optionSelection).ToStdString();
+	if (OptionsAppSvc->IsShown())
+		option = OptionsAppSvc->GetString(optionSelection).ToStdString();
+	else if (OptionsFile->IsShown())
+		option = OptionsFile->GetString(optionSelection).ToStdString();
 	else if (OptionsCamera->IsShown())
 		option = OptionsCamera->GetString(optionSelection).ToStdString();
 	else option = "";
@@ -669,11 +660,17 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 			break;
 		}
 		else if (optionSelection == 1) {
+			// explore app
+			explorer->PopulateTableFromFile("apps_list.txt");
+			if (!explorer->IsShown()) explorer->Show();
+			break;
+		}
+		else if (optionSelection == 2) {
 			// start app
 			body = "start app " + app_svc_name;
 			break;
 		}
-		else if (optionSelection == 2) {
+		else if (optionSelection == 3) {
 			// stop app
 			body = "kill " + processID;
 			break;
@@ -685,11 +682,17 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 			break;
 		}
 		else if (optionSelection == 1) {
+			// explore service
+			explorer->PopulateTableFromFile("services_list.txt");
+			if (!explorer->IsShown()) explorer->Show();
+			break;
+		}
+		else if (optionSelection == 2) {
 			// start service
 			body = "start service " + app_svc_name;
 			break;
 		}
-		else if (optionSelection == 2) {
+		else if (optionSelection == 3) {
 			// stop service
 			std::string body = "kill " + processID;
 			break;
@@ -701,11 +704,15 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 			break;
 		}
 		else if (optionSelection == 1) {
+			// explore file
+			break;
+		}
+		else if (optionSelection == 2) {
 			// get file
 			body = "get " + file_name;
 			break;
 		}
-		else if (optionSelection == 2) {
+		else if (optionSelection == 3) {
 			// delete file
 			body = "remove " + file_name;
 			break;
@@ -718,12 +725,12 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 		// webcam
 		if (optionSelection == 0) {
 			// open camera
-			body = "open";
+			body = "start cam";
 			break;
 		}
 		else if (optionSelection == 1) {
 			// close camera
-			body = "close";
+			body = "stop cam";
 			break;
 		}
 		else if (optionSelection == 2) {
@@ -747,7 +754,8 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 	std::cout << "Target email: " << gmailSender->m_to << std::endl;
 	std::cout << "Subject: " << gmailSender->m_subject << std::endl;
 	std::cout << "Body: " << gmailSender->m_body << std::endl;
-	//std::cout << "Access token: " << gmailSender->m_access_token << std::endl << std::endl;
+	std::cout << "Process ID: " << processID << std::endl;
+	if ((featureSelection == 0 || featureSelection == 1) && optionSelection == 1) return;
 	if (gmailSender->send()) {
 		std::cout << "Sent successfully";
 	}

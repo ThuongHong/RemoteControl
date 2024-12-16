@@ -24,6 +24,7 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 
 	m_statusText = new wxStaticText(panelReceiver, wxID_ANY, "Initializing...");
 	m_statusText->SetFont(processFont);
+	explorer = new Explorer("Explorer", processID);
 
 	//panelLogin->Hide();
 	//panelAuthorization->Hide();
@@ -34,7 +35,7 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	panelLogin->BindControl(panelRoles, redirect_uri, client_id, access_token, refresh_token, oAuth2Handler);
 	//panelAuthorization->BindControl(panelRoles, authorization_code, access_token, refresh_token, client, gmailClient);
 	panelRoles->BindControl(panelSender, panelReceiver, ip_address, port, receive_email, send_email, m_statusText, client, access_token, gmailSender, tasks, gmailReceiver);
-	panelSender->BindControl(file_name, app_svc_name, processID, receive_email, gmailSender);
+	panelSender->BindControl(file_name, app_svc_name, processID, receive_email, explorer, gmailSender);
 	panelReceiver->BindControl(client);
 
 	panelReceiver->CreateSizer(m_statusText);

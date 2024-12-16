@@ -6,6 +6,7 @@
 #include "client.h"
 #include "panels.h"
 #include "gmail.h"
+#include "Explorer.h"
 
 class RemoteControlDraft : public wxFrame
 {
@@ -24,6 +25,7 @@ private:
 	wxBoxSizer *sizerMain;
 	wxStaticText *m_statusText;
 	wxWebView *webView;
+	Explorer* explorer;
 
 	// Socket
 	std::string ip_address;

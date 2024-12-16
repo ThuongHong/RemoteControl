@@ -25,6 +25,8 @@ set(SOURCE_FILES
     src/RemoteControlDraft.h
     src/panels.h
     src/panels.cpp
+    src/Explorer.h
+    src/Explorer.cpp
 )
 
 # Create executable

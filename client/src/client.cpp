@@ -207,7 +207,7 @@ bool Client::openFile(const std::wstring &filename)
     return true;
 }
 
-bool Client::processMessage(const std::string &messageContent, wxStaticText *m_statusText)
+bool Client::processMessage(const std::string& messageContent, wxStaticText* m_statusText)
 {
     updateStatus(wxString::Format("Processing: %s", messageContent), m_statusText);
 
@@ -275,7 +275,24 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
                 openFile(imageFilename);
             }
         }
-
+        else if (messageContent.substr(0, 6) == "remove")
+        {
+            if (receiveFile(L"files_list.txt"))
+            {
+                openFile(L"files_list.txt");
+            }
+        }
+        else if (messageContent.substr(0, 4) == "kill")
+        {
+            if (receiveFile(L"apps_list.txt"))
+            {
+                openFile(L"apps_list.txt");
+            }
+            if (receiveFile(L"services_list.txt"))
+            {
+                openFile(L"services_list.txt");
+            }
+        }
         else if (messageContent.substr(0, 3) == "end")
         {
             return true;

@@ -7,7 +7,8 @@
 #include <regex>
 #include "http_listener.h"
 #include <curl/curl.h>
-#include "Explorer.h"
+#include <wx/listctrl.h>
+//#include "Explorer.h"
 
 class PanelLogin : public wxPanel
 {
@@ -124,12 +125,35 @@ private:
 //	void OnButtonConfirmClicked(wxPanel* desPanel, std::string& authorization_code, std::string& access_token, std::string &refresh_token, wxScopedPtr<Client>& client, wxScopedPtr<GmailReceiver>& gmailReceiver);
 //	void OnClose(wxTimerEvent& evt);
 //};
+class PanelExplorer : public wxPanel
+{
+public:
+	PanelExplorer(wxWindow* parent, int& processID);
+	bool PopulateTableFromFile(const std::string& filePath);
+	void BindControl(wxPanel* desPanel, int& processID, wxScopedPtr<GmailSender>& gmailSender);
+
+private:
+	wxWindow* parent_;
+
+	wxListCtrl* table; // Pointer to the wxListCtrl
+	wxButton* ButtonAction; // Pointer to the action button
+	wxButton* ButtonReturn;
+	wxBoxSizer* MainSizer;
+	wxBoxSizer* SubSizer;
+
+	void Create();
+	void CreateSizer();
+
+	void OnButtonStopClicked(int& processID, wxScopedPtr<GmailSender>& gmailSender);
+	void OnButtonReturnClicked(wxPanel* desPanel);
+	void PerformActionOnRow(long selectedRow); // Your custom function for the action
+};
 
 class PanelSender : public wxPanel
 {
 public:
 	PanelSender(wxWindow* parent, wxImage image, wxFont headerFont, wxFont mainFont);
-	void BindControl(std::string& file_name, std::string& app_svc_name, int& processID, std::string receive_email, Explorer* explorer, wxScopedPtr<GmailSender>& gmailSender);
+	void BindControl(PanelExplorer* panelExplorer, std::string& file_name, std::string& app_svc_name, int& processID, std::string receive_email, wxScopedPtr<GmailSender>& gmailSender);
 
 private:
 	wxWindow* parent_;
@@ -159,7 +183,7 @@ private:
 	void CreateSizer();
 	void OnFeaturesChanged(wxCommandEvent& evt);
 	void OnOptionsChanged(wxCommandEvent& evt);
-	void OnButtonConfirmClicked(std::string& file_name, std::string& app_svc_name, int& processID, std::string receive_email, Explorer* explorer, wxScopedPtr<GmailSender>& gmailSender);
+	void OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::string& file_name, std::string& app_svc_name, int& processID, std::string receive_email, wxScopedPtr<GmailSender>& gmailSender);
 	void OnButtonCloseClicked();
 	void OnButtonExitClicked(wxCommandEvent& evt);
 };

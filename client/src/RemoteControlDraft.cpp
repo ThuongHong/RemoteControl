@@ -1,6 +1,7 @@
 #include "RemoteControlDraft.h"
 
-RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr, wxID_ANY, title) {
+RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxDefaultSize,
+	wxDEFAULT_FRAME_STYLE & ~wxMINIMIZE_BOX & ~wxMAXIMIZE_BOX & ~wxRESIZE_BORDER) {
 	wxInitAllImageHandlers();
 
 	//Meta Data
@@ -21,22 +22,24 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	panelRoles = new PanelRoles(this, description, headerFont, mainFont, bitmap);
 	panelSender = new PanelSender(this, image, headerFont, mainFont);
 	panelReceiver = new PanelReceiver(this, image, headerFont, mainFont, m_statusText);
+	panelExplorer = new PanelExplorer(this, processID);
 
 	m_statusText = new wxStaticText(panelReceiver, wxID_ANY, "Initializing...");
 	m_statusText->SetFont(processFont);
-	explorer = new Explorer("Explorer", processID);
 
 	//panelLogin->Hide();
 	//panelAuthorization->Hide();
 	panelRoles->Hide();
 	panelSender->Hide();
 	panelReceiver->Hide();
+	panelExplorer->Hide();
 
 	panelLogin->BindControl(panelRoles, redirect_uri, client_id, access_token, refresh_token, oAuth2Handler);
 	//panelAuthorization->BindControl(panelRoles, authorization_code, access_token, refresh_token, client, gmailClient);
 	panelRoles->BindControl(panelSender, panelReceiver, ip_address, port, receive_email, send_email, m_statusText, client, access_token, gmailSender, tasks, gmailReceiver);
-	panelSender->BindControl(file_name, app_svc_name, processID, receive_email, explorer, gmailSender);
+	panelSender->BindControl(panelExplorer, file_name, app_svc_name, processID, receive_email, gmailSender);
 	panelReceiver->BindControl(client);
+	panelExplorer->BindControl(panelSender, processID, gmailSender);
 
 	panelReceiver->CreateSizer(m_statusText);
 
@@ -47,6 +50,7 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	sizerMain->Add(panelRoles, 1, wxEXPAND);
 	sizerMain->Add(panelSender, 1, wxEXPAND);
 	sizerMain->Add(panelReceiver, 1, wxEXPAND);
+	sizerMain->Add(panelExplorer, 1, wxEXPAND);
 
 	this->SetSizer(sizerMain);
 }

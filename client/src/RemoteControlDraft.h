@@ -20,12 +20,12 @@ private:
 	// PanelAuthorization *panelAuthorization;
 	PanelSender *panelSender;
 	PanelReceiver *panelReceiver;
+	PanelExplorer* panelExplorer;
 
 	wxString description;
 	wxBoxSizer *sizerMain;
 	wxStaticText *m_statusText;
 	wxWebView *webView;
-	Explorer* explorer;
 
 	// Socket
 	std::string ip_address;

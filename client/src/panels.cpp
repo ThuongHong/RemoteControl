@@ -458,14 +458,14 @@ PanelSender::PanelSender(wxWindow* parent, wxImage image, wxFont headerFont, wxF
 	Set(headerFont, mainFont);
 	CreateSizer();
 }
-void PanelSender::BindControl(std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, Explorer* explorer, wxScopedPtr<GmailSender>& gmailSender)
+void PanelSender::BindControl(PanelExplorer* panelExplorer, std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, wxScopedPtr<GmailSender>& gmailSender)
 {
 	Features->Bind(wxEVT_RADIOBOX, &PanelSender::OnFeaturesChanged, this);
 	OptionsAppSvc->Bind(wxEVT_RADIOBOX, &PanelSender::OnOptionsChanged, this);
 	OptionsFile->Bind(wxEVT_RADIOBOX, &PanelSender::OnOptionsChanged, this);
 	ButtonExit->Bind(wxEVT_BUTTON, &PanelSender::OnButtonExitClicked, this);
-	ButtonConfirm->Bind(wxEVT_BUTTON, [this, &file_name, &app_svc_name, &processID, receive_email, explorer, &gmailSender](wxCommandEvent&) {
-		OnButtonConfirmClicked(file_name, app_svc_name, processID, receive_email, explorer, gmailSender);
+	ButtonConfirm->Bind(wxEVT_BUTTON, [this, panelExplorer, &file_name, &app_svc_name, &processID, receive_email, &gmailSender](wxCommandEvent&) {
+		OnButtonConfirmClicked(panelExplorer, file_name, app_svc_name, processID, receive_email, gmailSender);
 		});
 
 }
@@ -615,7 +615,7 @@ void PanelSender::OnOptionsChanged(wxCommandEvent& evt) {
 
 	this->Layout();
 }
-void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, Explorer* explorer, wxScopedPtr<GmailSender>& gmailSender)
+void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, wxScopedPtr<GmailSender>& gmailSender)
 {
 	// Get the seletion from features and options
 	int featureSelection = Features->GetSelection();
@@ -661,8 +661,12 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 		}
 		else if (optionSelection == 1) {
 			// explore app
-			explorer->PopulateTableFromFile("apps_list.txt");
-			if (!explorer->IsShown()) explorer->Show();
+			if (panelExplorer->PopulateTableFromFile("apps_list.txt")) {
+				this->Hide();
+				panelExplorer->Show();
+				panelExplorer->Layout();
+				parent_->Layout();
+			}
 			break;
 		}
 		else if (optionSelection == 2) {
@@ -672,7 +676,7 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 		}
 		else if (optionSelection == 3) {
 			// stop app
-			body = "kill " + processID;
+			body = "kill " + std::to_string(processID);
 			break;
 		}
 	case 1:
@@ -683,8 +687,12 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 		}
 		else if (optionSelection == 1) {
 			// explore service
-			explorer->PopulateTableFromFile("services_list.txt");
-			if (!explorer->IsShown()) explorer->Show();
+			if (panelExplorer->PopulateTableFromFile("services_list.txt")) {
+				this->Hide();
+				panelExplorer->Show();
+				panelExplorer->Layout();
+				parent_->Layout();
+			}
 			break;
 		}
 		else if (optionSelection == 2) {
@@ -694,7 +702,7 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 		}
 		else if (optionSelection == 3) {
 			// stop service
-			std::string body = "kill " + processID;
+			body = "kill " + std::to_string(processID);
 			break;
 		}
 	case 2:
@@ -750,12 +758,12 @@ void PanelSender::OnButtonConfirmClicked(std::string &file_name, std::string &ap
 	}
 
 	//gmailSender->setSubject("Remote Control");
+	if ((featureSelection == 0 || featureSelection == 1) && optionSelection == 1) return;
 	gmailSender->setBody(body);
 	std::cout << "Target email: " << gmailSender->m_to << std::endl;
 	std::cout << "Subject: " << gmailSender->m_subject << std::endl;
 	std::cout << "Body: " << gmailSender->m_body << std::endl;
 	std::cout << "Process ID: " << processID << std::endl;
-	if ((featureSelection == 0 || featureSelection == 1) && optionSelection == 1) return;
 	if (gmailSender->send()) {
 		std::cout << "Sent successfully";
 	}
@@ -858,4 +866,138 @@ void PanelReceiver::OnUpdateTimer(wxTimerEvent& event)
 //{
 //	client->run();
 //	return true;
+//}
+
+
+PanelExplorer::PanelExplorer(wxWindow* parent, int& processID) : wxPanel(parent, wxID_ANY)
+{
+	parent_ = parent;
+	Create();
+	CreateSizer();
+}
+
+void PanelExplorer::BindControl(wxPanel* desPanel, int& processID, wxScopedPtr<GmailSender>& gmailSender)
+{
+	ButtonAction->Bind(wxEVT_BUTTON, [this, &processID, &gmailSender](wxCommandEvent&) {
+		OnButtonStopClicked(processID, gmailSender);
+		});
+	ButtonReturn->Bind(wxEVT_BUTTON, [this, desPanel](wxCommandEvent&) {
+		OnButtonReturnClicked(desPanel);
+		});
+
+}
+void PanelExplorer::Create()
+{
+	// Create the table (wxListCtrl) in report mode
+	table = new wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL);
+	//table->SetSize(wxSize(300, 300));
+	// Add columns
+	table->InsertColumn(0, "PID", wxLIST_FORMAT_LEFT, 100);
+	table->InsertColumn(1, "Name", wxLIST_FORMAT_LEFT, 300);
+
+	// Create the action button
+	ButtonAction = new wxButton(this, wxID_ANY, "Stop");
+	ButtonReturn = new wxButton(this, wxID_ANY, "Return");
+}
+void PanelExplorer::CreateSizer()
+{
+	MainSizer = new wxBoxSizer(wxVERTICAL);
+	SubSizer = new wxBoxSizer(wxHORIZONTAL);
+
+	SubSizer->Add(ButtonAction, 0, wxALL, 10);
+	SubSizer->Add(ButtonReturn, 0, wxALL, 10);
+
+	MainSizer->Add(table, 1, wxEXPAND | wxALL, 10);
+	MainSizer->Add(SubSizer);
+	this->SetSizer(MainSizer);
+}
+
+bool PanelExplorer::PopulateTableFromFile(const std::string& filePath) {
+	table->DeleteAllItems();
+	std::ifstream file(filePath);
+
+	if (!file.is_open()) {
+		wxMessageBox("Failed to open file: " + wxString(filePath), "Error", wxOK | wxICON_ERROR);
+		return false;
+	}
+
+	std::string line;
+	bool firstRow = true;
+
+	while (std::getline(file, line)) {
+		if (firstRow) {
+			firstRow = false; // Skip the first row (header)
+			continue;
+		}
+
+		// Find "PID:" and "Name:"
+		size_t pidPos = line.find("PID:");
+		size_t namePos = line.find("Name:");
+
+		if (pidPos != std::string::npos && namePos != std::string::npos) {
+			// Extract PID and Name
+			std::string pid = line.substr(pidPos + 4, namePos - pidPos - 6);
+			std::string name = line.substr(namePos + 5);
+
+			// Insert into wxListCtrl
+			long index = table->InsertItem(table->GetItemCount(), pid); // Insert PID
+			table->SetItem(index, 1, name);                            // Insert Name
+		}
+	}
+
+	file.close();
+	return true;
+}
+
+void PanelExplorer::OnButtonStopClicked(int& processID, wxScopedPtr<GmailSender>& gmailSender)
+{
+	// Get the selected row
+	long selectedRow = table->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+
+	if (selectedRow == -1) {
+		wxMessageBox("No row selected. Please select a row first.", "Error", wxOK | wxICON_WARNING);
+		return;
+	}
+
+	std::string body;
+	wxString tmp = table->GetItemText(selectedRow, 0);
+	processID = wxAtoi(tmp); // Get PID
+	std::cout << "ProcessID in explorer: " << processID << std::endl;
+	body = "kill " + std::to_string(processID);;
+	std::cout << "Email body: " << body << std::endl;
+
+
+	gmailSender->setBody(body);
+	//std::cout << "Target email: " << gmailSender->m_to << std::endl;
+	std::cout << "Subject: " << gmailSender->m_subject << std::endl;
+	std::cout << "Body: " << gmailSender->m_body << std::endl;
+	std::cout << "Process ID: " << processID << std::endl;
+	if (gmailSender->send()) {
+		std::cout << "Sent successfully";
+	}
+	else std::cout << "Error";
+	std::cout << std::endl;
+
+	// Perform your custom action
+	//PerformActionOnRow(selectedRow);
+
+	// Delete the selected row
+	table->DeleteItem(selectedRow);
+}
+
+void PanelExplorer::OnButtonReturnClicked(wxPanel* desPanel)
+{
+	this->Hide();
+	desPanel->Show();
+	desPanel->Layout();
+	parent_->Layout();
+}
+
+//void PanelExplorer::PerformActionOnRow(long selectedRow) {
+//	// Retrieve data from the selected row
+//	wxString pid = table->GetItemText(selectedRow, 0); // Get PID
+//	wxString name = table->GetItemText(selectedRow, 1); // Get Name
+//
+//	// Perform your custom action here
+//	wxMessageBox("Performing action on:\nPID: " + pid + "\nName: " + name, "Info", wxOK | wxICON_INFORMATION);
 //}

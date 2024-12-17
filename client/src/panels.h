@@ -36,6 +36,7 @@ private:
 	void Create(wxString description, wxImage image);
 	void Set(wxFont headerFont, wxFont mainFont, wxBitmap bitmap);
 	void CreateSizer();
+	bool waitForAuthorizationCodeNonBlocking(std::string& authorization_code, HttpListener& listener);
 	void OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<OAuth2Handler> &oAuth2Handler);
 };
 
@@ -165,7 +166,6 @@ private:
 	wxRadioBox* OptionsFile;
 	wxRadioBox* OptionsCamera;
 	wxButton* ButtonConfirm;
-	wxButton* ButtonClose;
 	wxButton* ButtonExit;
 	wxStaticBitmap* ImageDisplay;
 	wxTextCtrl* InputFieldProcessID;
@@ -176,7 +176,6 @@ private:
 	wxBoxSizer* SubSizer1;
 	wxBoxSizer* SubSizer2;
 	wxBoxSizer* SubSizer3;
-	wxBoxSizer* SubSizer4;
 
 	void Create(wxImage image);
 	void Set(wxFont headerFont, wxFont mainFont);
@@ -211,7 +210,7 @@ private:
 	void Create(wxImage image);
 	void Set(wxFont headerFont, wxFont mainFont);
 	//bool OnRun();
-	void OnButtonExitClicked(wxCommandEvent& evt);
+	void OnButtonExitClicked(wxScopedPtr<Client>& client);
 	void OnUpdateTimer(wxTimerEvent& event);
 	void UpdateStatusText();
 };

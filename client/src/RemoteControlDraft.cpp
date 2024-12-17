@@ -27,10 +27,10 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	m_statusText = new wxStaticText(panelReceiver, wxID_ANY, "Initializing...");
 	m_statusText->SetFont(processFont);
 
-	//panelLogin->Hide();
+	panelLogin->Hide();
 	//panelAuthorization->Hide();
 	panelRoles->Hide();
-	panelSender->Hide();
+	//panelSender->Hide();
 	panelReceiver->Hide();
 	panelExplorer->Hide();
 
@@ -40,6 +40,7 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	panelSender->BindControl(panelExplorer, file_name, app_svc_name, processID, receive_email, gmailSender);
 	panelReceiver->BindControl(client);
 	panelExplorer->BindControl(panelSender, processID, file_name, gmailSender);
+	BindControl(client);
 
 	panelReceiver->CreateSizer(m_statusText);
 
@@ -55,11 +56,24 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	this->SetSizer(sizerMain);
 }
 
+void RemoteControlDraft::BindControl(wxScopedPtr<Client>& client)
+{
+	Bind(wxEVT_CLOSE_WINDOW, [this, &client](wxCloseEvent& evt) {
+		if (client) client->sendString("end");
+		evt.Skip();
+		});
+}
+
 bool RemoteControlDraft::CreateOAuth2Handler(const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<OAuth2Handler>& oAuth2Handler)
 {
 	oAuth2Handler.reset(new OAuth2Handler(client_id, client_secret, redirect_uri));
 	if (oAuth2Handler) return true;
 	return false;
+}
+
+void RemoteControlDraft::OnClose(wxScopedPtr<Client>& client)
+{
+	
 }
 
 // Todo: OnButtonExitClicked -> Close socket, OnPanelAuthorizationEventListened -> Listen to command,

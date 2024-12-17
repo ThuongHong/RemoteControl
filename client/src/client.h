@@ -30,6 +30,7 @@ public:
     bool initialize(wxStaticText *m_statusText);
     void cleanup();
     void BindControl(wxStaticText* m_statusText, std::string send_email, wxScopedPtr<GmailReceiver> &gmailReceiver);
+    bool sendString(const std::string &message);
     //void startCheckingMessages(wxStaticText *m_statusText);
 
     std::string ip_address_;
@@ -55,6 +56,5 @@ private:
     bool connectToServer(const char *ipAddress, int port);
     bool receiveFile(const std::wstring &savePath);
     void cleanupSocket();
-    bool sendString(const std::string &message);
     cv::Mat receiveFrame();
 };

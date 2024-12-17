@@ -262,9 +262,6 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 		break;
 	case 1: // To RECEIVER PANEL
 		//Connect receiver to server
-		this->Hide();
-		desPanel2->Show();
-		desPanel2->Layout();
 
 		send_email = InputFieldEmail->GetValue().ToStdString();
 		ip_address = InputFieldIP->GetValue().ToStdString();
@@ -281,9 +278,13 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 		if (client->initialize(m_statusText)) {
 			client->BindControl(m_statusText, send_email, gmailReceiver);
 			std::cout << "Initialize client successfully!" << std::endl;
+			this->Hide();
+			desPanel2->Show();
+			desPanel2->Layout();
 		}
 		else {
 			std::cout << "Error initialize client" << std::endl;
+			wxMessageBox("IP or port incorrected!", "Error", wxOK | wxICON_ERROR);
 		}
 		break;
 	}
@@ -496,9 +497,8 @@ void PanelSender::Create(wxImage image)
 	OptionsAppSvc = new wxRadioBox(this, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsAppSvc, 2, wxRA_SPECIFY_COLS);
 	OptionsFile = new wxRadioBox(this, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsLGD, 2, wxRA_SPECIFY_COLS);
 	OptionsCamera = new wxRadioBox(this, wxID_ANY, "Options", wxDefaultPosition, wxDefaultSize, optionsCamera, 2, wxRA_SPECIFY_COLS);
-	ButtonConfirm = new wxButton(this, wxID_ANY, "Confirm");
-	ButtonClose = new wxButton(this, wxID_ANY, "Close");
-	ButtonExit = new wxButton(this, wxID_ANY, "Exit");
+	ButtonConfirm = new wxButton(this, wxID_ANY, "Confirm", wxDefaultPosition, wxSize(150, 50));
+	ButtonExit = new wxButton(this, wxID_ANY, "Exit", wxDefaultPosition, wxSize(100, 30));
 	ImageDisplay = new wxStaticBitmap(this, wxID_ANY, wxBitmap(Image));
 	InputFieldProcessID = new wxTextCtrl(this, wxID_ANY, "Enter process ID", wxDefaultPosition, wxSize(175, -1), 0, wxTextValidator(wxFILTER_NUMERIC));
 	InputFieldAppSvcName = new wxTextCtrl(this, wxID_ANY, "Enter application name", wxDefaultPosition, wxSize(175, -1));
@@ -517,9 +517,7 @@ void PanelSender::Set(wxFont headerFont, wxFont mainFont)
 	InputFieldProcessID->Hide();
 	InputFieldAppSvcName->Hide();
 	InputFieldFileName->Hide();
-	ButtonClose->Hide();
 	ButtonConfirm->SetFont(mainFont);
-	ButtonClose->SetFont(mainFont);
 	ButtonExit->SetFont(mainFont);
 	InputFieldFileName->SetFont(mainFont);
 	InputFieldAppSvcName->SetFont(mainFont);
@@ -530,21 +528,16 @@ void PanelSender::CreateSizer()
 	MainSizer = new wxBoxSizer(wxVERTICAL);
 	SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
 	SubSizer2 = new wxBoxSizer(wxHORIZONTAL);
-	SubSizer3 = new wxBoxSizer(wxHORIZONTAL);
-	SubSizer4 = new wxBoxSizer(wxVERTICAL);
+	SubSizer3 = new wxBoxSizer(wxVERTICAL);
 
-	SubSizer3->Add(ButtonConfirm);
-	SubSizer3->AddSpacer(30);
-	SubSizer3->Add(ButtonClose);
-
-	SubSizer4->Add(SubSizer3, 0, wxTOP | wxBOTTOM, 10);
-	SubSizer4->Add(OptionsAppSvc);
-	SubSizer4->Add(OptionsFile);
-	SubSizer4->Add(OptionsCamera);
-	SubSizer4->AddSpacer(20);
-	SubSizer4->Add(InputFieldProcessID);
-	SubSizer4->Add(InputFieldAppSvcName);
-	SubSizer4->Add(InputFieldFileName);
+	SubSizer3->Add(ButtonConfirm, 0, wxTOP | wxBOTTOM | wxALIGN_CENTER_HORIZONTAL, 10);
+	SubSizer3->Add(OptionsAppSvc);
+	SubSizer3->Add(OptionsFile);
+	SubSizer3->Add(OptionsCamera);
+	SubSizer3->AddSpacer(20);
+	SubSizer3->Add(InputFieldProcessID);
+	SubSizer3->Add(InputFieldAppSvcName);
+	SubSizer3->Add(InputFieldFileName);
 
 	SubSizer1->AddSpacer(30);
 	SubSizer1->Add(TextTitle, 0, wxTOP, 25);
@@ -554,7 +547,7 @@ void PanelSender::CreateSizer()
 	SubSizer2->AddSpacer(50);
 	SubSizer2->Add(Features);
 	SubSizer2->AddSpacer(100);
-	SubSizer2->Add(SubSizer4);
+	SubSizer2->Add(SubSizer3);
 
 	MainSizer->Add(SubSizer1);
 	MainSizer->Add(SubSizer2);
@@ -575,8 +568,6 @@ void PanelSender::OnFeaturesChanged(wxCommandEvent& evt)
 	OptionsFile->Hide();
 	OptionsCamera->SetSelection(0);
 	OptionsCamera->Hide();
-
-	ButtonClose->Hide();
 
 	switch (features) {
 	case 0: case 1:
@@ -812,8 +803,9 @@ PanelReceiver::PanelReceiver(wxWindow* parent, wxImage image, wxFont headerFont,
 }
 void PanelReceiver::BindControl(wxScopedPtr<Client>& client)
 {
-	ButtonExit->Bind(wxEVT_BUTTON, &PanelReceiver::OnButtonExitClicked, this);
-	//this->Bind(wxEVT_TIMER, &PanelReceiver::OnUpdateTimer, this, UpdateTimer->GetId());
+	ButtonExit->Bind(wxEVT_BUTTON, [this, &client](wxCommandEvent&) {
+		OnButtonExitClicked(client);
+		});
 }
 void PanelReceiver::Create(wxImage image)
 {
@@ -843,8 +835,9 @@ void PanelReceiver::CreateSizer(wxStaticText* m_statusText)
 	MainSizer->Add(ButtonExit, 0, wxALIGN_CENTER | wxBOTTOM, 30);
 	this->SetSizer(MainSizer);
 }
-void PanelReceiver::OnButtonExitClicked(wxCommandEvent& evt)
+void PanelReceiver::OnButtonExitClicked(wxScopedPtr<Client> &client)
 {
+	client->sendString("end");
 	parent_->Close(true);
 }
 void PanelReceiver::OnUpdateTimer(wxTimerEvent& event)
@@ -971,7 +964,7 @@ void PanelExplorer::OnButtonActionClicked(int& processID, std::string& filename,
 	long selectedRow = table->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 
 	if (selectedRow == -1) {
-		wxMessageBox("No row selected. Please select a row first.", "Error", wxOK | wxICON_WARNING);
+		wxMessageBox("No row selected. Please select a row first.", "Error", wxOK | wxICON_ERROR);
 		return;
 	}
 

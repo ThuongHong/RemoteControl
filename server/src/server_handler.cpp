@@ -792,7 +792,7 @@ bool ServerHandler::removeFile(const std::wstring &filename)
     }
 }
 
-void ServerHandler::saveApplicationsToFile(const std::vector<ProcessInfo> &applications, const std::string &filename)
+void ServerHandler::saveApplicationsToFile(const std::vector<ProcessInfo>& applications, const std::string& filename)
 {
     std::ofstream file(filename);
     if (!file.is_open())
@@ -801,53 +801,15 @@ void ServerHandler::saveApplicationsToFile(const std::vector<ProcessInfo> &appli
         return;
     }
 
-    time_t now = time(0);
-    char *dt = ctime(&now);
-
-    // Write header
-    file << "===== Running Applications Report =====" << std::endl;
-    file << "Generated: " << dt;
-    file << "Total Applications: " << applications.size() << std::endl;
-    file << std::string(80, '=') << std::endl;
-
-    // Column headers
-    file << std::left
-         << std::setw(8) << "PID"
-         << std::setw(40) << "Application Name"
-         << std::setw(15) << "Memory (KB)"
-         << std::endl;
-    file << std::string(80, '-') << std::endl;
-
-    // Sort by memory usage
-    auto sortedApps = applications;
-    std::sort(sortedApps.begin(), sortedApps.end(),
-              [](const ProcessInfo &a, const ProcessInfo &b)
-              {
-                  return a.memoryUsage > b.memoryUsage;
-              });
-
-    // Write process information
-    size_t totalMemory = 0;
-    for (const auto &app : sortedApps)
+    file << "List of running applications:\n";
+    for (const auto& app : applications)
     {
-        file << std::left
-             << std::setw(8) << app.pid
-             << std::setw(40) << app.name
-             << std::setw(15) << app.memoryUsage
-             << std::endl;
-        totalMemory += app.memoryUsage;
+        file << "PID: " << app.pid << ", Name: " << app.name << "\n";
     }
-
-    // Write summary
-    file << std::string(80, '-') << std::endl;
-    file << "Total Memory Usage: " << (totalMemory / 1024) << " MB" << std::endl;
-    file << std::string(80, '=') << std::endl;
-
     file.close();
-    std::cout << "Applications saved to: " << filename << std::endl;
 }
 
-void ServerHandler::saveServicesToFile(const std::vector<ServiceInfo> &services, const std::string &filename)
+void ServerHandler::saveServicesToFile(const std::vector<ServiceInfo>& services, const std::string& filename)
 {
     std::ofstream file(filename);
     if (!file.is_open())
@@ -856,58 +818,13 @@ void ServerHandler::saveServicesToFile(const std::vector<ServiceInfo> &services,
         return;
     }
 
-    time_t now = time(0);
-    char *dt = ctime(&now);
-
-    // Write header
-    file << "===== Windows Services Report =====" << std::endl;
-    file << "Generated: " << dt;
-    file << "Total Services: " << services.size() << std::endl;
-    file << std::string(100, '=') << std::endl;
-
-    // Column headers
-    file << std::left
-         << std::setw(8) << "Status"
-         << std::setw(40) << "Service Name"
-         << std::setw(8) << "PID"
-         << std::setw(30) << "State"
-         << std::endl;
-    file << std::string(100, '-') << std::endl;
-
-    // Count statistics
-    int runningCount = 0, stoppedCount = 0;
-
-    // Write service information
-    for (const auto &svc : services)
+    file << "List of running services:\n";
+    for (const auto& svc : services)
     {
-        std::string status = (svc.pid > 0) ? "Running" : "Stopped";
-        std::string statusIcon = (svc.pid > 0) ? "✓" : "×";
-
-        if (svc.pid > 0)
-            runningCount++;
-        else
-            stoppedCount++;
-
-        file << std::left
-             << std::setw(8) << statusIcon
-             << std::setw(40) << svc.name
-             << std::setw(8) << (svc.pid ? std::to_string(svc.pid) : "N/A")
-             << std::setw(30) << status
-             << std::endl;
+        file << "PID: " << svc.pid << ", Name: " << svc.name << "\n";
     }
-
-    // Write summary
-    file << std::string(100, '-') << std::endl;
-    file << "Summary:" << std::endl;
-    file << "- Running: " << runningCount << std::endl;
-    file << "- Stopped: " << stoppedCount << std::endl;
-    file << "- Total: " << services.size() << std::endl;
-    file << std::string(100, '=') << std::endl;
-
     file.close();
-    std::cout << "Services saved to: " << filename << std::endl;
 }
-
 void ServerHandler::takeScreenshot(const std::wstring &filename)
 {
     // Get the screen dimensions

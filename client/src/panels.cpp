@@ -1,4 +1,4 @@
-#include "panels.h"
+﻿#include "panels.h"
 
 PanelLogin::PanelLogin(wxWindow* parent, wxString description, wxImage image, wxFont headerFont, wxFont mainFont, wxBitmap bitmap) : wxPanel(parent, wxID_ANY)
 {
@@ -661,7 +661,8 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::stri
 		}
 		else if (optionSelection == 1) {
 			// explore app
-			if (panelExplorer->PopulateTableFromFile("apps_list.txt")) {
+			panelExplorer->ReconstructTable(0);
+			if (panelExplorer->PopulateTableFromFile("apps_list.txt", 0)) {
 				this->Hide();
 				panelExplorer->Show();
 				panelExplorer->Layout();
@@ -687,7 +688,8 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::stri
 		}
 		else if (optionSelection == 1) {
 			// explore service
-			if (panelExplorer->PopulateTableFromFile("services_list.txt")) {
+			panelExplorer->ReconstructTable(1);
+			if (panelExplorer->PopulateTableFromFile("services_list.txt", 1)) {
 				this->Hide();
 				panelExplorer->Show();
 				panelExplorer->Layout();
@@ -713,6 +715,13 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::stri
 		}
 		else if (optionSelection == 1) {
 			// explore file
+			panelExplorer->ReconstructTable(2);
+			if (panelExplorer->PopulateTableFromFile("files_list.txt", 2)) {
+				this->Hide();
+				panelExplorer->Show();
+				panelExplorer->Layout();
+				parent_->Layout();
+			}
 			break;
 		}
 		else if (optionSelection == 2) {
@@ -872,14 +881,15 @@ void PanelReceiver::OnUpdateTimer(wxTimerEvent& event)
 PanelExplorer::PanelExplorer(wxWindow* parent, int& processID) : wxPanel(parent, wxID_ANY)
 {
 	parent_ = parent;
+	format_ = 0;
 	Create();
 	CreateSizer();
 }
 
-void PanelExplorer::BindControl(wxPanel* desPanel, int& processID, wxScopedPtr<GmailSender>& gmailSender)
+void PanelExplorer::BindControl(wxPanel* desPanel, int& processID, std::string& filename, wxScopedPtr<GmailSender>& gmailSender)
 {
-	ButtonAction->Bind(wxEVT_BUTTON, [this, &processID, &gmailSender](wxCommandEvent&) {
-		OnButtonStopClicked(processID, gmailSender);
+	ButtonAction->Bind(wxEVT_BUTTON, [this, &processID, &filename, &gmailSender](wxCommandEvent&) {
+		OnButtonActionClicked(processID, filename, gmailSender);
 		});
 	ButtonReturn->Bind(wxEVT_BUTTON, [this, desPanel](wxCommandEvent&) {
 		OnButtonReturnClicked(desPanel);
@@ -899,6 +909,30 @@ void PanelExplorer::Create()
 	ButtonAction = new wxButton(this, wxID_ANY, "Stop");
 	ButtonReturn = new wxButton(this, wxID_ANY, "Return");
 }
+void PanelExplorer::ReconstructTable(int format)
+{
+	table->DeleteAllColumns();
+	table->DeleteAllItems();
+	// format:
+	// 0 -> Apps list; 1 -> Service list; 2 -> File list
+	format_ = format;
+	switch (format) {
+	case 0:
+		table->InsertColumn(0, "PID", wxLIST_FORMAT_LEFT, 100);
+		table->InsertColumn(1, "Application Name", wxLIST_FORMAT_LEFT, 300);
+		ButtonAction->SetLabel("Stop");
+		break;
+	case 1:
+		table->InsertColumn(0, "PID", wxLIST_FORMAT_LEFT, 100);
+		table->InsertColumn(1, "Service Name", wxLIST_FORMAT_LEFT, 300);
+		ButtonAction->SetLabel("Stop");
+		break;
+	case 2:
+		table->InsertColumn(0, "File name", wxLIST_FORMAT_LEFT, 300);
+		ButtonAction->SetLabel("Delete");
+		break;
+	}
+}
 void PanelExplorer::CreateSizer()
 {
 	MainSizer = new wxBoxSizer(wxVERTICAL);
@@ -912,9 +946,9 @@ void PanelExplorer::CreateSizer()
 	this->SetSizer(MainSizer);
 }
 
-bool PanelExplorer::PopulateTableFromFile(const std::string& filePath) {
-	table->DeleteAllItems();
+bool PanelExplorer::PopulateTableFromFile(const std::string& filePath, int format) {
 	std::ifstream file(filePath);
+	table->DeleteAllItems();
 
 	if (!file.is_open()) {
 		wxMessageBox("Failed to open file: " + wxString(filePath), "Error", wxOK | wxICON_ERROR);
@@ -922,34 +956,42 @@ bool PanelExplorer::PopulateTableFromFile(const std::string& filePath) {
 	}
 
 	std::string line;
-	bool firstRow = true;
+	if (format == 0 || format == 1) {
+		bool firstRow = true;
 
-	while (std::getline(file, line)) {
-		if (firstRow) {
-			firstRow = false; // Skip the first row (header)
-			continue;
-		}
+		while (std::getline(file, line)) {
+			if (firstRow) {
+				firstRow = false; // Skip the first row (header)
+				continue;
+			}
 
-		// Find "PID:" and "Name:"
-		size_t pidPos = line.find("PID:");
-		size_t namePos = line.find("Name:");
+			// Find "PID:" and "Name:"
+			size_t pidPos = line.find("PID:");
+			size_t namePos = line.find("Name:");
 
-		if (pidPos != std::string::npos && namePos != std::string::npos) {
-			// Extract PID and Name
-			std::string pid = line.substr(pidPos + 4, namePos - pidPos - 6);
-			std::string name = line.substr(namePos + 5);
+			if (pidPos != std::string::npos && namePos != std::string::npos) {
+				// Extract PID and Name
+				std::string pid = line.substr(pidPos + 5, namePos - pidPos - 7);
+				if (pid == "0") continue;
+				std::string name = line.substr(namePos + 5);
 
-			// Insert into wxListCtrl
-			long index = table->InsertItem(table->GetItemCount(), pid); // Insert PID
-			table->SetItem(index, 1, name);                            // Insert Name
+				// Insert into wxListCtrl
+				long index = table->InsertItem(table->GetItemCount(), pid); // Insert PID
+				table->SetItem(index, 1, name);                            // Insert Name
+			}
 		}
 	}
-
+	else if (format == 2) {
+		while (std::getline(file, line)) {
+			std::string filename = line.substr(2);
+			table->InsertItem(table->GetItemCount(), filename);
+		}
+	}
 	file.close();
 	return true;
 }
 
-void PanelExplorer::OnButtonStopClicked(int& processID, wxScopedPtr<GmailSender>& gmailSender)
+void PanelExplorer::OnButtonActionClicked(int& processID, std::string& filename, wxScopedPtr<GmailSender>& gmailSender)
 {
 	// Get the selected row
 	long selectedRow = table->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
@@ -961,12 +1003,18 @@ void PanelExplorer::OnButtonStopClicked(int& processID, wxScopedPtr<GmailSender>
 
 	std::string body;
 	wxString tmp = table->GetItemText(selectedRow, 0);
-	processID = wxAtoi(tmp); // Get PID
-	std::cout << "ProcessID in explorer: " << processID << std::endl;
-	body = "kill " + std::to_string(processID);;
+	if (format_ == 0 || format_ == 1) {
+		processID = wxAtoi(tmp); // Get PID
+		std::cout << "ProcessID in explorer: " << processID << std::endl;
+		body = "kill " + std::to_string(processID);;
+	}
+	else if (format_ == 2) {
+		filename = tmp.ToStdString();
+		std::cout << "File name: " << filename << std::endl;
+		body = "remove " + filename;
+	}
+
 	std::cout << "Email body: " << body << std::endl;
-
-
 	gmailSender->setBody(body);
 	//std::cout << "Target email: " << gmailSender->m_to << std::endl;
 	std::cout << "Subject: " << gmailSender->m_subject << std::endl;

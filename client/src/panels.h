@@ -8,7 +8,6 @@
 #include "http_listener.h"
 #include <curl/curl.h>
 #include <wx/listctrl.h>
-//#include "Explorer.h"
 
 class PanelLogin : public wxPanel
 {
@@ -129,11 +128,12 @@ class PanelExplorer : public wxPanel
 {
 public:
 	PanelExplorer(wxWindow* parent, int& processID);
-	bool PopulateTableFromFile(const std::string& filePath);
-	void BindControl(wxPanel* desPanel, int& processID, wxScopedPtr<GmailSender>& gmailSender);
-
+	bool PopulateTableFromFile(const std::string& filePath, int format);
+	void BindControl(wxPanel* desPanel, int& processID, std::string& filename, wxScopedPtr<GmailSender>& gmailSender);
+	void ReconstructTable(int format);
 private:
 	wxWindow* parent_;
+	int format_ = 0;
 
 	wxListCtrl* table; // Pointer to the wxListCtrl
 	wxButton* ButtonAction; // Pointer to the action button
@@ -144,7 +144,7 @@ private:
 	void Create();
 	void CreateSizer();
 
-	void OnButtonStopClicked(int& processID, wxScopedPtr<GmailSender>& gmailSender);
+	void OnButtonActionClicked(int& processID, std::string& filename, wxScopedPtr<GmailSender>& gmailSender);
 	void OnButtonReturnClicked(wxPanel* desPanel);
 	void PerformActionOnRow(long selectedRow); // Your custom function for the action
 };

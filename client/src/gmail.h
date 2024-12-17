@@ -52,9 +52,9 @@ public:
     std::string getLastError() const { return m_last_error; }
 
     std::string m_access_token;
-    std::string m_to;
-    std::string m_subject;
-    std::string m_body;
+    std::string m_to = "";
+    std::string m_subject = "";
+    std::string m_body = "";
 
 private:
     std::string m_last_error;

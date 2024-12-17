@@ -6,7 +6,6 @@
 #include "client.h"
 #include "panels.h"
 #include "gmail.h"
-#include "Explorer.h"
 
 class RemoteControlDraft : public wxFrame
 {

@@ -39,7 +39,7 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	panelRoles->BindControl(panelSender, panelReceiver, ip_address, port, receive_email, send_email, m_statusText, client, access_token, gmailSender, tasks, gmailReceiver);
 	panelSender->BindControl(panelExplorer, file_name, app_svc_name, processID, receive_email, gmailSender);
 	panelReceiver->BindControl(client);
-	panelExplorer->BindControl(panelSender, processID, gmailSender);
+	panelExplorer->BindControl(panelSender, processID, file_name, gmailSender);
 
 	panelReceiver->CreateSizer(m_statusText);
 

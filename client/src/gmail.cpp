@@ -305,6 +305,8 @@ std::string GmailReceiver::getMessageContent(const std::string &message_id)
     }
 
     std::string message_content;
+    bool found_plain_text = false;
+
     if (json_response.contains("payload"))
     {
         const auto &payload = json_response["payload"];
@@ -316,7 +318,11 @@ std::string GmailReceiver::getMessageContent(const std::string &message_id)
                 {
                     std::string encoded_content = part["body"]["data"];
                     std::string decoded_content = base64url_decode(encoded_content);
-                    message_content += decoded_content + "\n";
+                    if (part["mimeType"] == "text/plain")
+                    {
+                        message_content += decoded_content + "\n";
+                        found_plain_text = true;
+                    }
                 }
             }
         }

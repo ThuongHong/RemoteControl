@@ -184,17 +184,17 @@ void Client::updateStatus(const wxString &message, wxStaticText *m_statusText)
     }
 }
 
-//void Client::startCheckingMessages(wxStaticText *m_statusText)
+// void Client::startCheckingMessages(wxStaticText *m_statusText)
 //{
-//    updateStatus("Waiting for message...", m_statusText);
-//    m_checkMessageTimer->Start(3000);
-//}
+//     updateStatus("Waiting for message...", m_statusText);
+//     m_checkMessageTimer->Start(3000);
+// }
 //
-//void Client::stopCheckingMessages(wxStaticText *m_statusText)
+// void Client::stopCheckingMessages(wxStaticText *m_statusText)
 //{
-//    m_checkMessageTimer->Stop();
-//    updateStatus("Message checking stopped", m_statusText);
-//}
+//     m_checkMessageTimer->Stop();
+//     updateStatus("Message checking stopped", m_statusText);
+// }
 
 bool Client::openFile(const std::wstring &filename)
 {
@@ -207,7 +207,7 @@ bool Client::openFile(const std::wstring &filename)
     return true;
 }
 
-bool Client::processMessage(const std::string& messageContent, wxStaticText* m_statusText)
+bool Client::processMessage(const std::string &messageContent, wxStaticText *m_statusText)
 {
     updateStatus(wxString::Format("Processing: %s", messageContent), m_statusText);
 
@@ -277,20 +277,20 @@ bool Client::processMessage(const std::string& messageContent, wxStaticText* m_s
         }
         else if (messageContent.substr(0, 6) == "remove")
         {
-            if (receiveFile(L"files_list.txt"))
+            if (!receiveFile(L"files_list.txt"))
             {
-                openFile(L"files_list.txt");
+                std::cout << "Failed to receive files list" << std::endl;
             }
         }
         else if (messageContent.substr(0, 4) == "kill")
         {
-            if (receiveFile(L"apps_list.txt"))
+            if (!receiveFile(L"apps_list.txt"))
             {
-                openFile(L"apps_list.txt");
+                std::cout << "Failed to receive apps list" << std::endl;
             }
-            if (receiveFile(L"services_list.txt"))
+            if (!receiveFile(L"services_list.txt"))
             {
-                openFile(L"services_list.txt");
+                std::cout << "Failed to receive services list" << std::endl;
             }
         }
         else if (messageContent.substr(0, 3) == "end")

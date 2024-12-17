@@ -782,13 +782,14 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::stri
 
 	//gmailSender->setSubject("Remote Control");
 	if ((featureSelection == 0 || featureSelection == 1) && optionSelection == 1) return;
+	gmailSender->setSubject("Remote Control");
 	gmailSender->setBody(body);
 	std::cout << "Target email: " << gmailSender->m_to << std::endl;
 	std::cout << "Subject: " << gmailSender->m_subject << std::endl;
 	std::cout << "Body: " << gmailSender->m_body << std::endl;
 	std::cout << "Process ID: " << processID << std::endl;
 	if (gmailSender->send()) {
-		std::cout << "Sent successfully";
+		// std::cout << "Sent successfully";
 	}
 	else std::cout << "Error";
 }

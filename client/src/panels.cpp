@@ -58,6 +58,20 @@ void PanelLogin::CreateSizer()
 
 	this->SetSizer(MainSizer);
 }
+//bool PanelLogin::waitForAuthorizationCodeNonBlocking(std::string& authorization_code, HttpListener& listener)
+//{
+//	// Allow wxWidgets to process events during the wait for the authorization code
+//	while (authorization_code.empty())
+//	{
+//		// Wait for the authorization code without blocking the UI
+//		authorization_code = listener.waitForAuthorizationCode();
+//
+//		// Allow wxWidgets to process events and update the UI
+//		wxYield(); // This gives control back to the event loop to handle UI events
+//	}
+//
+//	return !authorization_code.empty();
+//}
 void PanelLogin::BindControl(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<OAuth2Handler> &oAuth2Handler) {
 	ButtonLogin->Bind(wxEVT_BUTTON, [this, desPanel, redirect_uri, client_id, &access_token, &refresh_token, &oAuth2Handler](wxCommandEvent&) {
 		OnButtonClicked(desPanel, redirect_uri, client_id, access_token, refresh_token, oAuth2Handler);
@@ -806,22 +820,11 @@ void PanelReceiver::Create(wxImage image)
 	TextTitle = new wxStaticText(this, wxID_ANY, "ROLE: RECEIVER");
 	ButtonExit = new wxButton(this, wxID_ANY, "Exit");
 	ImageDisplay = new wxStaticBitmap(this, wxID_ANY, wxBitmap(Image));
-
-	//TextWaiting = new wxStaticText(this, wxID_ANY, "WAITING FOR COMMAND");
-	//TextProcessing = new wxStaticText(this, wxID_ANY, "CURRENT PROCESSING:");
-	//TextFeature = new wxStaticText(this, wxID_ANY, "FEATURE");
-	//UpdateTimer = new wxTimer(this, wxID_ANY);
-	//UpdateTimer->Start(3000);
 }
 void PanelReceiver::Set(wxFont headerFont, wxFont mainFont)
 {
 	TextTitle->SetFont(headerFont);
-	//TextWaiting->SetFont(headerFont);
-	//TextProcessing->SetFont(headerFont);
-	//TextFeature->SetFont(headerFont);
 	ButtonExit->SetFont(mainFont);
-	//TextProcessing->Hide();
-	//TextFeature->Hide();
 }
 void PanelReceiver::CreateSizer(wxStaticText* m_statusText)
 {
@@ -835,48 +838,18 @@ void PanelReceiver::CreateSizer(wxStaticText* m_statusText)
 
 	MainSizer->Add(SubSizer1);
 	MainSizer->Add(m_statusText, 1, wxALIGN_CENTER | wxTOP | wxBOTTOM, 40);
-	//MainSizer->Add(TextWaiting, 1, wxALIGN_CENTER | wxTOP | wxBOTTOM, 40);
-	//MainSizer->Add(TextProcessing, 1, wxALIGN_CENTER);
-	//MainSizer->Add(TextFeature, 1, wxALIGN_CENTER);
 	MainSizer->AddSpacer(30);
 	MainSizer->Add(ButtonExit, 0, wxALIGN_CENTER | wxBOTTOM, 30);
 	this->SetSizer(MainSizer);
 }
-//bool PanelReceiver::OnEventListened()
-//{
-//	return rand() % 2 == 0;
-//}
 void PanelReceiver::OnButtonExitClicked(wxCommandEvent& evt)
 {
-	//Timer->Stop();
 	parent_->Close(true);
 }
 void PanelReceiver::OnUpdateTimer(wxTimerEvent& event)
 {
 	this->Layout();
 }
-//void PanelReceiver::UpdateStatusText()
-//{
-//	bool commandReceived = OnEventListened();
-//	if (commandReceived) {
-//		//TextWaiting->Show();
-//		//TextProcessing->Hide();
-//		//TextFeature->Hide();
-//	}
-//	else {
-//		//TextWaiting->Hide();
-//		//TextProcessing->Show();
-//		//TextFeature->Show();
-//	}
-//	this->Layout();
-//}
-
-//bool PanelReceiver::OnRun()
-//{
-//	client->run();
-//	return true;
-//}
-
 
 PanelExplorer::PanelExplorer(wxWindow* parent, int& processID) : wxPanel(parent, wxID_ANY)
 {
@@ -900,7 +873,7 @@ void PanelExplorer::Create()
 {
 	// Create the table (wxListCtrl) in report mode
 	table = new wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL);
-	//table->SetSize(wxSize(300, 300));
+
 	// Add columns
 	table->InsertColumn(0, "PID", wxLIST_FORMAT_LEFT, 100);
 	table->InsertColumn(1, "Name", wxLIST_FORMAT_LEFT, 300);

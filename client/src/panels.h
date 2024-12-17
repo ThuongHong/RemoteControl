@@ -202,20 +202,14 @@ private:
 	wxStaticText* TextTitle;
 	wxButton* ButtonExit;
 	wxStaticBitmap* ImageDisplay;
-	//wxStaticText* TextWaiting;
-	//wxStaticText* TextProcessing;
-	//wxStaticText* TextFeature;
 	Client* m_client;
 	wxTextCtrl* inputMessage;
-	//wxTimer* UpdateTimer;
 
 	wxBoxSizer* MainSizer;
 	wxBoxSizer* SubSizer1;
 
 	void Create(wxImage image);
 	void Set(wxFont headerFont, wxFont mainFont);
-
-	bool OnEventListened();
 	//bool OnRun();
 	void OnButtonExitClicked(wxCommandEvent& evt);
 	void OnUpdateTimer(wxTimerEvent& event);

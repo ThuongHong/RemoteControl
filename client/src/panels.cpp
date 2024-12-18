@@ -715,7 +715,7 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::stri
 	case 2:
 		if (optionSelection == 0) {
 			// list file
-			body = "list file";
+			body = "list files";
 			break;
 		}
 		else if (optionSelection == 1) {

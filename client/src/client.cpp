@@ -284,13 +284,15 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         }
         else if (messageContent.substr(0, 4) == "kill")
         {
-            if (!receiveFile(L"apps_list.txt"))
-            {
-                std::cout << "Failed to receive apps list" << std::endl;
-            }
-            if (!receiveFile(L"services_list.txt"))
-            {
-                std::cout << "Failed to receive services list" << std::endl;
+            if (receiveMessage() == "Kill successfully") {
+                if (!receiveFile(L"apps_list.txt"))
+                {
+                    std::cout << "Failed to receive apps list" << std::endl;
+                }
+                if (!receiveFile(L"services_list.txt"))
+                {
+                    std::cout << "Failed to receive services list" << std::endl;
+                }
             }
         }
         else if (messageContent.substr(0, 3) == "end")
@@ -430,71 +432,13 @@ bool Client::sendString(const std::string &message)
     return send(server_socket_, message.c_str(), message.size(), 0) != SOCKET_ERROR;
 }
 
-cv::Mat Client::receiveFrame()
+std::string Client::receiveMessage()
 {
-    // Receive frame size
-    int frameSizeNetworkOrder;
-    if (recv(server_socket_, reinterpret_cast<char *>(&frameSizeNetworkOrder), sizeof(frameSizeNetworkOrder), 0) <= 0)
+    char buffer[1024];
+    int bytesReceived = recv(server_socket_, buffer, sizeof(buffer), 0);
+    if (bytesReceived > 0)
     {
-        std::cerr << "Error receiving frame size" << std::endl;
-        return cv::Mat();
+        return std::string(buffer, bytesReceived);
     }
-    int frameSize = ntohl(frameSizeNetworkOrder);
-
-    // Send ACK for frame size
-    const char *ack = "ACK";
-    if (send(server_socket_, ack, strlen(ack), 0) <= 0)
-    {
-        std::cerr << "Failed to send ACK for frame size" << std::endl;
-        return cv::Mat();
-    }
-
-    // Receive frame data in chunks
-    std::vector<uchar> buffer(frameSize);
-    size_t totalReceived = 0;
-
-    while (totalReceived < frameSize)
-    {
-        int chunkSize = min(MAX_PACKET_SIZE, frameSize - totalReceived);
-        int bytesReceived = recv(server_socket_, reinterpret_cast<char *>(buffer.data() + totalReceived), chunkSize, 0);
-
-        if (bytesReceived <= 0)
-        {
-            int error = WSAGetLastError();
-            if (error == WSAETIMEDOUT)
-            {
-                std::cerr << "Connection timed out while receiving frame" << std::endl;
-            }
-            else if (error == WSAECONNRESET)
-            {
-                std::cerr << "Connection was reset by peer" << std::endl;
-            }
-            else
-            {
-                std::cerr << "Error receiving frame data: " << error << std::endl;
-            }
-
-            // Try to resend last ACK
-            send(server_socket_, ack, strlen(ack), 0);
-            return cv::Mat();
-        }
-
-        totalReceived += bytesReceived;
-
-        // Send acknowledgment for chunk
-        if (send(server_socket_, ack, strlen(ack), 0) <= 0)
-        {
-            std::cerr << "Failed to send chunk ACK" << std::endl;
-            return cv::Mat();
-        }
-    }
-
-    // Decode frame
-    cv::Mat frame = cv::imdecode(buffer, cv::IMREAD_COLOR);
-    if (frame.empty())
-    {
-        std::cerr << "Failed to decode frame" << std::endl;
-    }
-
-    return frame;
+    return "";
 }

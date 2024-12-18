@@ -56,5 +56,5 @@ private:
     bool connectToServer(const char *ipAddress, int port);
     bool receiveFile(const std::wstring &savePath);
     void cleanupSocket();
-    cv::Mat receiveFrame();
+    std::string receiveMessage();
 };

@@ -142,19 +142,21 @@ int main()
             DWORD pid = std::stoul(trimString(std::string(receivedMessage.begin() + 5, receivedMessage.end())));
             if (server.terminateProcessByPID(pid))
             {
+                Sleep(5000);
+                server.sendMessage(clientSocket, "Kill successfully");
                 std::cout << "Process terminated successfully" << std::endl;
-            }
-            std::vector<ServerHandler::ProcessInfo> applications = server.listRunningApplications();
-            server.saveApplicationsToFile(applications, "apps_list.txt");
-            if (server.sendFile(clientSocket, L"apps_list.txt"))
-            {
-                std::cerr << "File sent to client!" << std::endl;
-            }
-            std::vector<ServerHandler::ServiceInfo> services = server.listRunningServices();
-            server.saveServicesToFile(services, "services_list.txt");
-            if (server.sendFile(clientSocket, L"services_list.txt"))
-            {
-                std::cerr << "File sent to client!" << std::endl;
+                std::vector<ServerHandler::ProcessInfo> applications = server.listRunningApplications();
+                server.saveApplicationsToFile(applications, "apps_list.txt");
+                if (server.sendFile(clientSocket, L"apps_list.txt"))
+                {
+                    std::cerr << "File sent to client!" << std::endl;
+                }
+                std::vector<ServerHandler::ServiceInfo> services = server.listRunningServices();
+                server.saveServicesToFile(services, "services_list.txt");
+                if (server.sendFile(clientSocket, L"services_list.txt"))
+                {
+                    std::cerr << "File sent to client!" << std::endl;
+                }
             }
         }
         else if (receivedMessage.substr(0, 9) == "start app")

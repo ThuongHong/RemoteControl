@@ -141,13 +141,14 @@ private:
 	wxButton* ButtonReturn;
 	wxBoxSizer* MainSizer;
 	wxBoxSizer* SubSizer;
+	wxTimer* Timer;
 
 	void Create();
 	void CreateSizer();
 
 	void OnButtonActionClicked(int& processID, std::string& filename, wxScopedPtr<GmailSender>& gmailSender);
 	void OnButtonReturnClicked(wxPanel* desPanel);
-	void PerformActionOnRow(long selectedRow); // Your custom function for the action
+	void OnTimer(wxTimerEvent& evt); // Your custom function for the action
 };
 
 class PanelSender : public wxPanel

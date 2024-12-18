@@ -268,23 +268,23 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 		port = std::stoi(InputFieldPort->GetValue().ToStdString());
 
 		if (CreateClient(ip_address, port, m_statusText, client, tasks)) {
-			std::cout << "Create client successfully!" << std::endl;
-			std::cout << "Client IP: " << client->ip_address_ << std::endl;
-			std::cout << "Client port: " << client->port_ << std::endl;
+			//std::cout << "Create client successfully!" << std::endl;
+			//std::cout << "Client IP: " << client->ip_address_ << std::endl;
+			//std::cout << "Client port: " << client->port_ << std::endl;
 		}
 
 		if (CreateEmailReceiver(access_token, gmailReceiver)) std::cout << "Create gmail receiver successfully!" << std::endl;
 
 		if (client->initialize(m_statusText)) {
 			client->BindControl(m_statusText, send_email, gmailReceiver);
-			std::cout << "Initialize client successfully!" << std::endl;
+			//std::cout << "Initialize client successfully!" << std::endl;
 			this->Hide();
 			desPanel2->Show();
 			desPanel2->Layout();
 		}
 		else {
-			std::cout << "Error initialize client" << std::endl;
-			wxMessageBox("IP or port incorrected!", "Error", wxOK | wxICON_ERROR);
+			//std::cout << "Error initialize client" << std::endl;
+			wxMessageBox("IP or port incorrected!", "Error", wxOK | wxICON_ERROR, nullptr);
 		}
 		break;
 	}
@@ -861,13 +861,14 @@ void PanelExplorer::BindControl(wxPanel* desPanel, int& processID, std::string& 
 	ButtonReturn->Bind(wxEVT_BUTTON, [this, desPanel](wxCommandEvent&) {
 		OnButtonReturnClicked(desPanel);
 		});
+	Bind(wxEVT_TIMER, &PanelExplorer::OnTimer, this);
 
 }
 void PanelExplorer::Create()
 {
 	// Create the table (wxListCtrl) in report mode
 	table = new wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL);
-
+	Timer = new wxTimer(this);
 	// Add columns
 	table->InsertColumn(0, "PID", wxLIST_FORMAT_LEFT, 100);
 	table->InsertColumn(1, "Name", wxLIST_FORMAT_LEFT, 300);
@@ -972,32 +973,33 @@ void PanelExplorer::OnButtonActionClicked(int& processID, std::string& filename,
 	wxString tmp = table->GetItemText(selectedRow, 0);
 	if (format_ == 0 || format_ == 1) {
 		processID = wxAtoi(tmp); // Get PID
-		std::cout << "ProcessID in explorer: " << processID << std::endl;
+		//std::cout << "ProcessID in explorer: " << processID << std::endl;
 		body = "kill " + std::to_string(processID);;
 	}
 	else if (format_ == 2) {
 		filename = tmp.ToStdString();
-		std::cout << "File name: " << filename << std::endl;
+		//std::cout << "File name: " << filename << std::endl;
 		body = "remove " + filename;
 	}
 
-	std::cout << "Email body: " << body << std::endl;
+	//std::cout << "Email body: " << body << std::endl;
 	gmailSender->setBody(body);
-	//std::cout << "Target email: " << gmailSender->m_to << std::endl;
-	std::cout << "Subject: " << gmailSender->m_subject << std::endl;
-	std::cout << "Body: " << gmailSender->m_body << std::endl;
-	std::cout << "Process ID: " << processID << std::endl;
+	////std::cout << "Target email: " << gmailSender->m_to << std::endl;
+	//std::cout << "Subject: " << gmailSender->m_subject << std::endl;
+	//std::cout << "Body: " << gmailSender->m_body << std::endl;
+	//std::cout << "Process ID: " << processID << std::endl;
 	if (gmailSender->send()) {
 		std::cout << "Sent successfully";
 	}
 	else std::cout << "Error";
-	std::cout << std::endl;
+	//std::cout << std::endl;
 
 	// Perform your custom action
 	//PerformActionOnRow(selectedRow);
 
 	// Delete the selected row
-	table->DeleteItem(selectedRow);
+	//table->DeleteItem(selectedRow);
+	Timer->Start(7000);
 }
 
 void PanelExplorer::OnButtonReturnClicked(wxPanel* desPanel)
@@ -1006,6 +1008,22 @@ void PanelExplorer::OnButtonReturnClicked(wxPanel* desPanel)
 	desPanel->Show();
 	desPanel->Layout();
 	parent_->Layout();
+}
+
+void PanelExplorer::OnTimer(wxTimerEvent& evt)
+{
+	switch (format_) {
+	case 0:
+		PopulateTableFromFile("apps_list.txt", format_);
+		break;
+	case 1:
+		PopulateTableFromFile("services_list.txt", format_);
+		break;
+	case 2:
+		PopulateTableFromFile("files_list.txt", format_);
+		break;
+	}
+	Timer->Stop();
 }
 
 //void PanelExplorer::PerformActionOnRow(long selectedRow) {

@@ -142,9 +142,9 @@ int main()
             DWORD pid = std::stoul(trimString(std::string(receivedMessage.begin() + 5, receivedMessage.end())));
             if (server.terminateProcessByPID(pid))
             {
-                Sleep(5000);
                 server.sendMessage(clientSocket, "Kill successfully");
                 std::cout << "Process terminated successfully" << std::endl;
+                Sleep(2000);
                 std::vector<ServerHandler::ProcessInfo> applications = server.listRunningApplications();
                 server.saveApplicationsToFile(applications, "apps_list.txt");
                 if (server.sendFile(clientSocket, L"apps_list.txt"))

@@ -116,7 +116,7 @@ void PanelLogin::OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, st
 		if (oAuth2Handler->exchangeAuthCodeForAccessToken(authorization_code, access_token, refresh_token))
 		{
 			oAuth2Handler->saveAccessTokenToFile(access_token);
-			std::cout << "Access token: " << access_token << std::endl;
+			//std::cout << "Access token: " << access_token << std::endl;
 			wxMessageBox("Access token exchanged and saved successfully!");
 		}
 		else
@@ -220,30 +220,49 @@ void PanelRoles::BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string
 	Roles->Bind(wxEVT_RADIOBOX, &PanelRoles::OnRolesChanged, this);
 	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &receive_email, &send_email, m_statusText, &client, &access_token, &gmailSender, &tasks, &gmailReceiver](wxCommandEvent&) {
 		OnButtonClicked(desPanel1, desPanel2, ip_address, port, receive_email, send_email, m_statusText, client, access_token, gmailSender, tasks, gmailReceiver);
-	});
+		});
 
 	InputFieldEmail->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
 	InputFieldIP->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
 	InputFieldPort->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
 }
-bool PanelRoles::CreateClient(std::string& ip_address, int& port, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::vector<std::string> &tasks)
+bool PanelRoles::CreateClient(std::string& ip_address, int& port, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::vector<std::string>& tasks)
 {
-	client.reset(new Client(ip_address, port, m_statusText, tasks));
-	if (client) return true;
-	return false;
+	try {
+		client.reset(new Client(ip_address, port, m_statusText, tasks));
+		return true; // Successfully created the client
+	}
+	catch (const std::exception& e) {
+		wxLogError("Failed to create Client: %s", e.what());
+		client.reset(); // Ensure client is null in case of failure
+		return false;
+	}
 }
 bool PanelRoles::CreateEmailSender(const std::string& access_token, wxScopedPtr<GmailSender>& gmailSender)
 {
-	gmailSender.reset(new GmailSender());
-	gmailSender->setAccessToken(access_token);
-	if (gmailSender) return true;
-	return false;
+	try {
+		gmailSender.reset(new GmailSender());
+		gmailSender->setAccessToken(access_token);
+		return true;
+	}
+	catch (const std::exception& e) {
+		wxLogError("Failed to create Gmail Sender: %s", e.what());
+		gmailSender.reset();
+		return false;
+	}
 }
 bool PanelRoles::CreateEmailReceiver(const std::string& access_token, wxScopedPtr<GmailReceiver>& gmailReceiver)
 {
-	gmailReceiver.reset(new GmailReceiver());
-	gmailReceiver->setAccessToken(access_token);
-	return false;
+	try {
+		gmailReceiver.reset(new GmailReceiver());
+		gmailReceiver->setAccessToken(access_token);
+		return true;
+	}
+	catch (const std::exception& e) {
+		wxLogError("Failed to create Gmail Receiver %s", e.what());
+		gmailReceiver.reset();
+		return false;
+	}
 }
 void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &receive_email, std::string &send_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string &access_token, wxScopedPtr<GmailSender> &gmailSender, std::vector<std::string> &tasks, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
@@ -268,11 +287,10 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 		port = std::stoi(InputFieldPort->GetValue().ToStdString());
 
 		if (CreateClient(ip_address, port, m_statusText, client, tasks)) {
-			//std::cout << "Create client successfully!" << std::endl;
-			//std::cout << "Client IP: " << client->ip_address_ << std::endl;
-			//std::cout << "Client port: " << client->port_ << std::endl;
+			std::cout << "Create client successfully!" << std::endl;
+			std::cout << "Client IP: " << client->ip_address_ << std::endl;
+			std::cout << "Client port: " << client->port_ << std::endl;
 		}
-
 		if (CreateEmailReceiver(access_token, gmailReceiver)) std::cout << "Create gmail receiver successfully!" << std::endl;
 
 		if (client->initialize(m_statusText)) {
@@ -281,6 +299,7 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 			this->Hide();
 			desPanel2->Show();
 			desPanel2->Layout();
+			parent_->Layout();
 		}
 		else {
 			//std::cout << "Error initialize client" << std::endl;
@@ -288,9 +307,6 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 		}
 		break;
 	}
-	std::cout << "Receive email: " << receive_email << std::endl;
-	std::cout << "Send email: " << send_email << std::endl;
-	parent_->Layout();
 }
 void PanelRoles::OnRolesChanged(wxCommandEvent& evt)
 {
@@ -775,10 +791,10 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::stri
 	if ((featureSelection == 0 || featureSelection == 1) && optionSelection == 1) return;
 	gmailSender->setSubject("Remote Control");
 	gmailSender->setBody(body);
-	std::cout << "Target email: " << gmailSender->m_to << std::endl;
-	std::cout << "Subject: " << gmailSender->m_subject << std::endl;
+	//std::cout << "Target email: " << gmailSender->m_to << std::endl;
+	//std::cout << "Subject: " << gmailSender->m_subject << std::endl;
 	std::cout << "Body: " << gmailSender->m_body << std::endl;
-	std::cout << "Process ID: " << processID << std::endl;
+	//std::cout << "Process ID: " << processID << std::endl;
 	if (gmailSender->send()) {
 		// std::cout << "Sent successfully";
 	}
@@ -989,9 +1005,9 @@ void PanelExplorer::OnButtonActionClicked(int& processID, std::string& filename,
 	//std::cout << "Body: " << gmailSender->m_body << std::endl;
 	//std::cout << "Process ID: " << processID << std::endl;
 	if (gmailSender->send()) {
-		std::cout << "Sent successfully";
+		//std::cout << "Sent successfully";
 	}
-	else std::cout << "Error";
+	else std::cout << "Error" << std::endl;
 	//std::cout << std::endl;
 
 	// Perform your custom action

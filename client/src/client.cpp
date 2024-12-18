@@ -156,7 +156,7 @@ bool Client::initialize(wxStaticText *m_statusText)
     }
     if (connectToServer(ip_address_.c_str(), port_))
     {
-        // checkForMessage(m_statusText, tasks);
+        updateStatus("Server connection successfully", m_statusText);
     }
     else
     {

@@ -18,7 +18,6 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 
 	/*Create Panel*/
 	panelLogin = new PanelLogin(this, description, image, headerFont, mainFont, bitmap);
-	//panelAuthorization = new PanelAuthorization(this, headerFont, mainFont);
 	panelRoles = new PanelRoles(this, description, headerFont, mainFont, bitmap);
 	panelSender = new PanelSender(this, image, headerFont, mainFont);
 	panelReceiver = new PanelReceiver(this, image, headerFont, mainFont, m_statusText);
@@ -28,14 +27,12 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	m_statusText->SetFont(processFont);
 
 	//panelLogin->Hide();
-	//panelAuthorization->Hide();
 	panelRoles->Hide();
 	panelSender->Hide();
 	panelReceiver->Hide();
 	panelExplorer->Hide();
 
 	panelLogin->BindControl(panelRoles, redirect_uri, client_id, access_token, refresh_token, oAuth2Handler);
-	//panelAuthorization->BindControl(panelRoles, authorization_code, access_token, refresh_token, client, gmailClient);
 	panelRoles->BindControl(panelSender, panelReceiver, ip_address, port, receive_email, send_email, m_statusText, client, access_token, gmailSender, tasks, gmailReceiver);
 	panelSender->BindControl(panelExplorer, file_name, app_svc_name, processID, receive_email, gmailSender);
 	panelReceiver->BindControl(client);
@@ -47,7 +44,6 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	/* Create Sizer */
 	sizerMain = new wxBoxSizer(wxVERTICAL);
 	sizerMain->Add(panelLogin, 1, wxEXPAND);
-	//sizerMain->Add(panelAuthorization, 1, wxEXPAND);
 	sizerMain->Add(panelRoles, 1, wxEXPAND);
 	sizerMain->Add(panelSender, 1, wxEXPAND);
 	sizerMain->Add(panelReceiver, 1, wxEXPAND);

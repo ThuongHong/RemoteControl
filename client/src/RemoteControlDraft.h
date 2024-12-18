@@ -17,14 +17,13 @@ private:
 	// GUI
 	PanelLogin *panelLogin;
 	PanelRoles *panelRoles;
-	// PanelAuthorization *panelAuthorization;
 	PanelSender *panelSender;
 	PanelReceiver *panelReceiver;
 	PanelExplorer* panelExplorer;
 
 	wxString description;
 	wxBoxSizer *sizerMain;
-	wxStaticText *m_statusText;
+	wxStaticText* m_statusText;
 	wxWebView *webView;
 
 	// Socket
@@ -42,9 +41,9 @@ private:
 	std::string file_name;
 	std::string app_svc_name;
 	int processID;
+	std::vector<std::string> tasks;
 	wxScopedPtr<Client> client;
 	wxScopedPtr<OAuth2Handler> oAuth2Handler;
-	std::vector<std::string> tasks;
 	wxScopedPtr<GmailSender> gmailSender;
 	wxScopedPtr<GmailReceiver> gmailReceiver;
 

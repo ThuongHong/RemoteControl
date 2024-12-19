@@ -1,88 +1,83 @@
 ﻿cmake_minimum_required(VERSION 3.24)
 
-# Project name
-project(client)
-
-# Set C++ standard
+# Project settings
+project(client VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Source files for the executable
+# Build type
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
+# Source files
 set(SOURCE_FILES
-    # src/client_socket.cpp
-    # src/client_socket.h
-    src/gmail.h
-    src/gmail.cpp
-    src/client.h
-    src/client.cpp
     src/main.cpp
-    src/base64.h
-    src/base64.cpp
-    src/http_listener.h
-    src/http_listener.cpp
+    src/Gmail.h
+    src/Gmail.cpp
+    src/Client.h
+    src/Client.cpp
+    src/Base64.h
+    src/Base64.cpp
+    src/HTTPListener.h
+    src/HTTPListener.cpp
     src/App.cpp
     src/App.h
     src/RemoteControlDraft.cpp
     src/RemoteControlDraft.h
-    src/panels.h
-    src/panels.cpp
+    src/Panels.h
+    src/Panels.cpp
 )
 
-# Create executable
-add_executable(client ${SOURCE_FILES})
+# Define executable
+add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
-# Copy assets to build directory
-set(ASSETS_DIR "${CMAKE_SOURCE_DIR}/assets")
-set(OUTPUT_DIR "${CMAKE_BINARY_DIR}/assets")
-add_custom_command(TARGET client POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${ASSETS_DIR} ${OUTPUT_DIR})
+# Dependencies paths
+set(DEPS_ROOT "${CMAKE_SOURCE_DIR}/lib")
+set(CURL_ROOT "${DEPS_ROOT}/curl")
+set(OPENSSL_ROOT "${DEPS_ROOT}/OpenSSL-Win64")
+set(WX_ROOT "${DEPS_ROOT}/WxWidget")
 
-# Set default build type if not specified
-if(NOT CMAKE_BUILD_TYPE)
-    message(STATUS "No specific build type selected, defaulting to Release")
-    set(CMAKE_BUILD_TYPE Release)
-else()
-    message(STATUS "${CMAKE_BUILD_TYPE} build")
-endif()
-
-# Set cURL and OpenSSL paths (replace with your paths)
-set(CURL_DIR "${CMAKE_SOURCE_DIR}/lib/curl")
-set(OPENSSL_DIR "${CMAKE_SOURCE_DIR}/lib/OpenSSL-Win64")
-
-# Include directories for cURL and OpenSSL
-set(CURL_INCLUDE_DIR "${CURL_DIR}/install/include")
-set(OPENSSL_INCLUDE_DIR "${OPENSSL_DIR}/include")
-target_include_directories(client PRIVATE ${CURL_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
-
-# Link cURL and OpenSSL libraries
-set(CURL_LIBRARY_DIR "${CURL_DIR}/install/lib")
-set(OPENSSL_LIB_DIR "${OPENSSL_DIR}/lib/VC/x64/MD")
-target_link_libraries(client PRIVATE
-    "${CURL_LIBRARY_DIR}/libcurl.lib"
-    "${OPENSSL_LIB_DIR}/libssl.lib"
-    "${OPENSSL_LIB_DIR}/libcrypto.lib"
-)
-
-# Define static library for cURL
+# Configure cURL
+set(CURL_INCLUDE_DIR "${CURL_ROOT}/install/include")
+set(CURL_LIBRARY_DIR "${CURL_ROOT}/install/lib")
 add_definitions(-DCURL_STATICLIB)
 
-# Find and link wxWidgets
-#set(wxWidgets_ROOT_DIR "C:/Users/PC/Documents/wxWidget")
-#set(wxWidgets_LIB_DIR "${wxWidgets_ROOT_DIR}/lib/vc_x64_lib")
-#set(wxWidgets_INCLUDE_DIRS "${wxWidgets_ROOT_DIR}/include")
+# Configure OpenSSL
+set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT}/include")
+set(OPENSSL_LIB_DIR "${OPENSSL_ROOT}/lib/VC/x64/MD")
+
+# Configure wxWidgets
+set(wxWidgets_ROOT_DIR ${WX_ROOT})
+set(wxWidgets_LIB_DIR "${WX_ROOT}/lib/vc_x64_lib")
+set(wxWidgets_INCLUDE_DIRS "${WX_ROOT}/include")
 find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
-target_link_libraries(client PRIVATE ${wxWidgets_LIBRARIES})
 
-# Find and link OpenCV
+# Configure OpenCV
 find_package(OpenCV REQUIRED)
-if(OpenCV_FOUND)
-    target_include_directories(client PRIVATE ${OpenCV_INCLUDE_DIRS})
-    target_link_libraries(client PRIVATE ${OpenCV_LIBS})
-else()
+if(NOT OpenCV_FOUND)
     message(FATAL_ERROR "OpenCV not found")
 endif()
 
-# Link Windows libraries
-target_link_libraries(client PRIVATE
+# Include directories
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CURL_INCLUDE_DIR}
+    ${OPENSSL_INCLUDE_DIR}
+    ${OpenCV_INCLUDE_DIRS}
+)
+
+# Link libraries
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    # Third party libraries
+    "${CURL_LIBRARY_DIR}/libcurl.lib"
+    "${OPENSSL_LIB_DIR}/libssl.lib"
+    "${OPENSSL_LIB_DIR}/libcrypto.lib"
+    ${wxWidgets_LIBRARIES}
+    ${OpenCV_LIBS}
+    
+    # Windows system libraries
     Crypt32.lib
     Wldap32.lib
     ws2_32.lib
@@ -97,3 +92,51 @@ target_link_libraries(client PRIVATE
     comdlg32.lib
     advapi32.lib
 )
+
+# Asset paths
+set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
+
+# Installation rules
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION bin
+)
+
+# Install assets to bin directory
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/assets"
+    DESTINATION bin
+    FILES_MATCHING 
+    PATTERN "*.png"
+)
+
+# CPack Configuration
+set(CPACK_PACKAGE_NAME "Remote Control via Gmail - Client")
+set(CPACK_PACKAGE_VENDOR "HCMUS-23TNT1")
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Remote Control via Gmail - Client Application")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "Remote Control via Gmail - Client")
+
+# NSIS specific settings
+set(CPACK_GENERATOR "NSIS")
+set(CPACK_NSIS_PACKAGE_NAME "Remote Control via Gmail - Client")
+set(CPACK_NSIS_DISPLAY_NAME "Remote Control via Gmail - Client") 
+set(CPACK_NSIS_CONTACT "luuthuonghong@gmail.com")
+set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+set(CPACK_NSIS_MODIFY_PATH ON)
+
+# Start Menu shortcuts with assets path
+set(CPACK_NSIS_CREATE_ICONS_EXTRA
+    "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Remote Control via Gmail - Client.lnk' '$INSTDIR\\\\bin\\\\client.exe' '' '$INSTDIR\\\\bin\\\\assets\\\\icon.ico'"
+)
+set(CPACK_NSIS_DELETE_ICONS_EXTRA
+    "Delete '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Remote Control via Gmail - Client.lnk'"
+)
+
+# Desktop shortcut with assets path
+set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
+    "CreateShortCut '$DESKTOP\\\\Remote Control via Gmail - Client.lnk' '$INSTDIR\\\\bin\\\\client.exe' '' '$INSTDIR\\\\bin\\\\assets\\\\icon.ico'"
+)
+set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
+    "Delete '$DESKTOP\\\\Remote Control via Gmail - Client.lnk'"
+)
+
+include(CPack)

@@ -1,12 +1,13 @@
 #include "RemoteControlDraft.h"
 
-RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxDefaultSize,
-	wxDEFAULT_FRAME_STYLE & ~wxMINIMIZE_BOX & ~wxMAXIMIZE_BOX & ~wxRESIZE_BORDER) {
+RemoteControlDraft::RemoteControlDraft(const wxString &title) : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxDefaultSize,
+																		wxDEFAULT_FRAME_STYLE & ~wxMINIMIZE_BOX & ~wxMAXIMIZE_BOX & ~wxRESIZE_BORDER)
+{
 	wxInitAllImageHandlers();
 
-	//Meta Data
+	// Meta Data
 	wxString description("Our program allows you to control computers through Gmail. Send commands, execute tasks, all from your Gmail inbox.");
-	wxFont headerFont(35, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Impact"); //Unispace, Impact
+	wxFont headerFont(35, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Impact"); // Unispace, Impact
 	wxFont mainFont(11, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
 	wxFont processFont(28, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Impact");
 	wxImage image("assets\\HCMUS.png", wxBITMAP_TYPE_PNG);
@@ -26,7 +27,7 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	m_statusText = new wxStaticText(panelReceiver, wxID_ANY, "Initializing...");
 	m_statusText->SetFont(processFont);
 
-	//panelLogin->Hide();
+	// panelLogin->Hide();
 	panelRoles->Hide();
 	panelSender->Hide();
 	panelReceiver->Hide();
@@ -52,24 +53,24 @@ RemoteControlDraft::RemoteControlDraft(const wxString& title) : wxFrame(nullptr,
 	this->SetSizer(sizerMain);
 }
 
-void RemoteControlDraft::BindControl(wxScopedPtr<Client>& client)
+void RemoteControlDraft::BindControl(wxScopedPtr<Client> &client)
 {
-	Bind(wxEVT_CLOSE_WINDOW, [this, &client](wxCloseEvent& evt) {
+	Bind(wxEVT_CLOSE_WINDOW, [this, &client](wxCloseEvent &evt)
+		 {
 		if (client) client->sendString("end");
-		evt.Skip();
-		});
+		evt.Skip(); });
 }
 
-bool RemoteControlDraft::CreateOAuth2Handler(const std::string& client_id, const std::string& client_secret, const std::string& redirect_uri, wxScopedPtr<OAuth2Handler>& oAuth2Handler)
+bool RemoteControlDraft::CreateOAuth2Handler(const std::string &client_id, const std::string &client_secret, const std::string &redirect_uri, wxScopedPtr<OAuth2Handler> &oAuth2Handler)
 {
 	oAuth2Handler.reset(new OAuth2Handler(client_id, client_secret, redirect_uri));
-	if (oAuth2Handler) return true;
+	if (oAuth2Handler)
+		return true;
 	return false;
 }
 
-void RemoteControlDraft::OnClose(wxScopedPtr<Client>& client)
+void RemoteControlDraft::OnClose(wxScopedPtr<Client> &client)
 {
-	
 }
 
 // Todo: OnButtonExitClicked -> Close socket, OnPanelAuthorizationEventListened -> Listen to command,

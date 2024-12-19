@@ -1,4 +1,4 @@
-﻿#include "panels.h"
+﻿#include "Panels.h"
 
 PanelLogin::PanelLogin(wxWindow *parent, wxString description, wxImage image, wxFont headerFont, wxFont mainFont, wxBitmap bitmap) : wxPanel(parent, wxID_ANY)
 {

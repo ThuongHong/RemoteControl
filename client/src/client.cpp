@@ -1,5 +1,5 @@
 // client.cpp
-#include "client.h"
+#include "Client.h"
 
 #ifndef ntohll
 #if defined(_MSC_VER)
@@ -170,7 +170,8 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         }
         else if (messageContent.substr(0, 4) == "kill")
         {
-            if (receiveMessage() == "Kill successfully") {
+            if (receiveMessage() == "Kill successfully")
+            {
                 if (!receiveFile(L"apps_list.txt"))
                 {
                     std::cout << "Failed to receive apps list" << std::endl;

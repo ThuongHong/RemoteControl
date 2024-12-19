@@ -1,5 +1,5 @@
-#include "gmail.h"
-#include "base64.h" // Include a base64 decoding library
+#include "Gmail.h"
+#include "Base64.h" // Include a base64 decoding library
 
 using json = nlohmann::json;
 

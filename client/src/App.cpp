@@ -4,12 +4,14 @@
 
 wxIMPLEMENT_APP(App);
 
-bool App::OnInit() {
-	RemoteControlDraft* mainFrame = new RemoteControlDraft("C++ GUI");
+bool App::OnInit()
+{
+	RemoteControlDraft *mainFrame = new RemoteControlDraft("C++ GUI");
 	mainFrame->SetClientSize(550, 400);
 	mainFrame->Center();
 
-	if (!mainFrame) {
+	if (!mainFrame)
+	{
 		wxLogError("Failed to create the main frame.");
 		return false;
 	}
@@ -17,4 +19,3 @@ bool App::OnInit() {
 	mainFrame->Show();
 	return true;
 }
- 

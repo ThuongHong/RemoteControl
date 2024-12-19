@@ -11,7 +11,7 @@ class RemoteControlDraft : public wxFrame
 {
 public:
 	RemoteControlDraft(const wxString &title);
-	void BindControl(wxScopedPtr<Client>& client);
+	void BindControl(wxScopedPtr<Client> &client);
 
 private:
 	// GUI
@@ -19,11 +19,11 @@ private:
 	PanelRoles *panelRoles;
 	PanelSender *panelSender;
 	PanelReceiver *panelReceiver;
-	PanelExplorer* panelExplorer;
+	PanelExplorer *panelExplorer;
 
 	wxString description;
 	wxBoxSizer *sizerMain;
-	wxStaticText* m_statusText;
+	wxStaticText *m_statusText;
 	wxWebView *webView;
 
 	// Socket
@@ -48,5 +48,5 @@ private:
 	wxScopedPtr<GmailReceiver> gmailReceiver;
 
 	bool CreateOAuth2Handler(const std::string &client_id, const std::string &client_secret, const std::string &redirect_uri, wxScopedPtr<OAuth2Handler> &oAuth2Handler);
-	void OnClose(wxScopedPtr<Client>& client);
+	void OnClose(wxScopedPtr<Client> &client);
 };

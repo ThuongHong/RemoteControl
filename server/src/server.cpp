@@ -1,8 +1,8 @@
-#include "server_handler.h"
+#include "ServerHandler.h"
 #include <iostream>
 #include <string>
 
-std::wstring trimWString(const std::wstring& str)
+std::wstring trimWString(const std::wstring &str)
 {
     size_t first = str.find_first_not_of(L" \t\n\r\f\v");
     size_t last = str.find_last_not_of(L" \t\n\r\f\v");
@@ -11,7 +11,7 @@ std::wstring trimWString(const std::wstring& str)
     return str.substr(first, (last - first + 1));
 }
 
-std::string trimString(const std::string& str)
+std::string trimString(const std::string &str)
 {
     size_t first = str.find_first_not_of(" \t\n\r\f\v");
     size_t last = str.find_last_not_of(" \t\n\r\f\v");
@@ -48,7 +48,7 @@ int main()
     // Get client IP address
     sockaddr_in clientAddr;
     int addrLen = sizeof(clientAddr);
-    if (getpeername(clientSocket, (sockaddr*)&clientAddr, &addrLen) == 0)
+    if (getpeername(clientSocket, (sockaddr *)&clientAddr, &addrLen) == 0)
     {
         char clientIP[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &clientAddr.sin_addr, clientIP, INET_ADDRSTRLEN);
@@ -67,7 +67,7 @@ int main()
             continue;
 
         std::cout << "\n-------------------------------------\n"
-            << std::endl;
+                  << std::endl;
         std::cout << "Received message: " << receivedMessage << std::endl;
 
         if (receivedMessage.substr(0, 8) == "list app")

@@ -10,7 +10,7 @@
 #include <opencv2/opencv.hpp>
 #include <winsock2.h>
 #pragma comment(lib, "Ws2_32.lib") // Link Winsock library
-#define MAX_PACKET_SIZE 1400 // Maximum packet size
+#define MAX_PACKET_SIZE 1400       // Maximum packet size
 
 class Socket
 {

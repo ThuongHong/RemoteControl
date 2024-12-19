@@ -1,6 +1,6 @@
 ﻿#include "panels.h"
 
-PanelLogin::PanelLogin(wxWindow* parent, wxString description, wxImage image, wxFont headerFont, wxFont mainFont, wxBitmap bitmap) : wxPanel(parent, wxID_ANY)
+PanelLogin::PanelLogin(wxWindow *parent, wxString description, wxImage image, wxFont headerFont, wxFont mainFont, wxBitmap bitmap) : wxPanel(parent, wxID_ANY)
 {
 	parent_ = parent;
 	Create(description, image);
@@ -10,7 +10,7 @@ PanelLogin::PanelLogin(wxWindow* parent, wxString description, wxImage image, wx
 void PanelLogin::Create(wxString description, wxImage image)
 {
 	Image = image.Scale(180, 180, wxIMAGE_QUALITY_HIGH);
-	roles = { "Sender", "Receiver" };
+	roles = {"Sender", "Receiver"};
 	TextTitle = new wxStaticText(this, wxID_ANY, "PC REMOTE CONTROL", wxDefaultPosition, wxSize(600, -1), wxALIGN_CENTER);
 	TextDescription = new wxStaticText(this, wxID_ANY, description);
 	TextMem1 = new wxStaticText(this, wxID_ANY, "Luu Thuong Hong - 23122006");
@@ -58,7 +58,7 @@ void PanelLogin::CreateSizer()
 
 	this->SetSizer(MainSizer);
 }
-//bool PanelLogin::waitForAuthorizationCodeNonBlocking(std::string& authorization_code, HttpListener& listener)
+// bool PanelLogin::waitForAuthorizationCodeNonBlocking(std::string& authorization_code, HttpListener& listener)
 //{
 //	// Allow wxWidgets to process events during the wait for the authorization code
 //	while (authorization_code.empty())
@@ -71,13 +71,13 @@ void PanelLogin::CreateSizer()
 //	}
 //
 //	return !authorization_code.empty();
-//}
-void PanelLogin::BindControl(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<OAuth2Handler> &oAuth2Handler) {
-	ButtonLogin->Bind(wxEVT_BUTTON, [this, desPanel, redirect_uri, client_id, &access_token, &refresh_token, &oAuth2Handler](wxCommandEvent&) {
-		OnButtonClicked(desPanel, redirect_uri, client_id, access_token, refresh_token, oAuth2Handler);
-	});
+// }
+void PanelLogin::BindControl(wxPanel *desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<OAuth2Handler> &oAuth2Handler)
+{
+	ButtonLogin->Bind(wxEVT_BUTTON, [this, desPanel, redirect_uri, client_id, &access_token, &refresh_token, &oAuth2Handler](wxCommandEvent &)
+					  { OnButtonClicked(desPanel, redirect_uri, client_id, access_token, refresh_token, oAuth2Handler); });
 }
-void PanelLogin::OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<OAuth2Handler> &oAuth2Handler)
+void PanelLogin::OnButtonClicked(wxPanel *desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<OAuth2Handler> &oAuth2Handler)
 {
 	if (curl_global_init(CURL_GLOBAL_DEFAULT) != 0)
 	{
@@ -116,7 +116,7 @@ void PanelLogin::OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, st
 		if (oAuth2Handler->exchangeAuthCodeForAccessToken(authorization_code, access_token, refresh_token))
 		{
 			oAuth2Handler->saveAccessTokenToFile(access_token);
-			//std::cout << "Access token: " << access_token << std::endl;
+			// std::cout << "Access token: " << access_token << std::endl;
 			wxMessageBox("Access token exchanged and saved successfully!");
 		}
 		else
@@ -125,7 +125,7 @@ void PanelLogin::OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, st
 			curl_global_cleanup();
 		}
 	}
-	catch (const std::exception& e)
+	catch (const std::exception &e)
 	{
 		wxMessageBox(wxString::Format("HTTP Listener error: %s", e.what()), "Error", wxOK | wxICON_ERROR);
 		curl_global_cleanup();
@@ -137,7 +137,7 @@ void PanelLogin::OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, st
 	parent_->Layout();
 }
 
-PanelRoles::PanelRoles(wxWindow* parent, wxString description, wxFont headerFont, wxFont mainFont, wxBitmap bitmap) : wxPanel(parent, wxID_ANY)
+PanelRoles::PanelRoles(wxWindow *parent, wxString description, wxFont headerFont, wxFont mainFont, wxBitmap bitmap) : wxPanel(parent, wxID_ANY)
 {
 	parent_ = parent;
 	Create(description);
@@ -146,7 +146,7 @@ PanelRoles::PanelRoles(wxWindow* parent, wxString description, wxFont headerFont
 }
 void PanelRoles::Create(wxString description)
 {
-	roles = { "Sender", "Receiver" };
+	roles = {"Sender", "Receiver"};
 	TextTitle = new wxStaticText(this, wxID_ANY, "PC REMOTE CONTROL", wxDefaultPosition, wxSize(600, -1), wxALIGN_CENTER);
 	TextDescription = new wxStaticText(this, wxID_ANY, description);
 	TextMem1 = new wxStaticText(this, wxID_ANY, "Luu Thuong Hong - 23122006");
@@ -215,64 +215,72 @@ void PanelRoles::CreateSizer()
 
 	this->SetSizer(MainSizer);
 }
-void PanelRoles::BindControl(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int &port, std::string &receive_email, std::string &send_email, wxStaticText* m_statusText, wxScopedPtr<Client> &client, std::string &access_token, wxScopedPtr<GmailSender>& gmailSender, std::vector<std::string> &tasks, wxScopedPtr<GmailReceiver> &gmailReceiver)
+void PanelRoles::BindControl(wxPanel *desPanel1, wxPanel *desPanel2, std::string &ip_address, int &port, std::string &receive_email, std::string &send_email, wxStaticText *m_statusText, wxScopedPtr<Client> &client, std::string &access_token, wxScopedPtr<GmailSender> &gmailSender, std::vector<std::string> &tasks, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
 	Roles->Bind(wxEVT_RADIOBOX, &PanelRoles::OnRolesChanged, this);
-	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &receive_email, &send_email, m_statusText, &client, &access_token, &gmailSender, &tasks, &gmailReceiver](wxCommandEvent&) {
-		OnButtonClicked(desPanel1, desPanel2, ip_address, port, receive_email, send_email, m_statusText, client, access_token, gmailSender, tasks, gmailReceiver);
-		});
+	ButtonConfirm->Bind(wxEVT_BUTTON, [this, desPanel1, desPanel2, &ip_address, &port, &receive_email, &send_email, m_statusText, &client, &access_token, &gmailSender, &tasks, &gmailReceiver](wxCommandEvent &)
+						{ OnButtonClicked(desPanel1, desPanel2, ip_address, port, receive_email, send_email, m_statusText, client, access_token, gmailSender, tasks, gmailReceiver); });
 
 	InputFieldEmail->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
 	InputFieldIP->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
 	InputFieldPort->Bind(wxEVT_TEXT, &PanelRoles::OnTextCtrlChanged, this);
 }
-bool PanelRoles::CreateClient(std::string& ip_address, int& port, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::vector<std::string>& tasks)
+bool PanelRoles::CreateClient(std::string &ip_address, int &port, wxStaticText *m_statusText, wxScopedPtr<Client> &client, std::vector<std::string> &tasks)
 {
-	try {
+	try
+	{
 		client.reset(new Client(ip_address, port, m_statusText, tasks));
 		return true; // Successfully created the client
 	}
-	catch (const std::exception& e) {
+	catch (const std::exception &e)
+	{
+		std::cout << "Failed to create Client: " << e.what() << std::endl;
 		wxLogError("Failed to create Client: %s", e.what());
 		client.reset(); // Ensure client is null in case of failure
 		return false;
 	}
 }
-bool PanelRoles::CreateEmailSender(const std::string& access_token, wxScopedPtr<GmailSender>& gmailSender)
+bool PanelRoles::CreateEmailSender(const std::string &access_token, wxScopedPtr<GmailSender> &gmailSender)
 {
-	try {
+	try
+	{
 		gmailSender.reset(new GmailSender());
 		gmailSender->setAccessToken(access_token);
 		return true;
 	}
-	catch (const std::exception& e) {
+	catch (const std::exception &e)
+	{
 		wxLogError("Failed to create Gmail Sender: %s", e.what());
 		gmailSender.reset();
 		return false;
 	}
 }
-bool PanelRoles::CreateEmailReceiver(const std::string& access_token, wxScopedPtr<GmailReceiver>& gmailReceiver)
+bool PanelRoles::CreateEmailReceiver(const std::string &access_token, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
-	try {
+	try
+	{
 		gmailReceiver.reset(new GmailReceiver());
 		gmailReceiver->setAccessToken(access_token);
 		return true;
 	}
-	catch (const std::exception& e) {
+	catch (const std::exception &e)
+	{
 		wxLogError("Failed to create Gmail Receiver %s", e.what());
 		gmailReceiver.reset();
 		return false;
 	}
 }
-void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::string& ip_address, int& port, std::string &receive_email, std::string &send_email, wxStaticText* m_statusText, wxScopedPtr<Client>& client, std::string &access_token, wxScopedPtr<GmailSender> &gmailSender, std::vector<std::string> &tasks, wxScopedPtr<GmailReceiver> &gmailReceiver)
+void PanelRoles::OnButtonClicked(wxPanel *desPanel1, wxPanel *desPanel2, std::string &ip_address, int &port, std::string &receive_email, std::string &send_email, wxStaticText *m_statusText, wxScopedPtr<Client> &client, std::string &access_token, wxScopedPtr<GmailSender> &gmailSender, std::vector<std::string> &tasks, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
 	int selection = Roles->GetSelection();
-	switch (selection) { 
+	switch (selection)
+	{
 	case 0: // To SENDER PANEL
 		receive_email = InputFieldEmail->GetValue().ToStdString();
 		/*std::cout << receive_email << std::endl;*/
 
-		if (CreateEmailSender(access_token, gmailSender)) std::cout << "Create gmail sender successfully!" << std::endl;
+		if (CreateEmailSender(access_token, gmailSender))
+			std::cout << "Create gmail sender successfully!" << std::endl;
 		gmailSender->setTo(receive_email);
 
 		this->Hide();
@@ -280,35 +288,81 @@ void PanelRoles::OnButtonClicked(wxPanel* desPanel1, wxPanel* desPanel2, std::st
 		desPanel1->Layout();
 		break;
 	case 1: // To RECEIVER PANEL
-		//Connect receiver to server
+		// Connect receiver to server
 
 		send_email = InputFieldEmail->GetValue().ToStdString();
 		ip_address = InputFieldIP->GetValue().ToStdString();
 		port = std::stoi(InputFieldPort->GetValue().ToStdString());
 
-		if (CreateClient(ip_address, port, m_statusText, client, tasks)) {
+		if (CreateClient(ip_address, port, m_statusText, client, tasks))
+		{
 			std::cout << "Create client successfully!" << std::endl;
 			std::cout << "Client IP: " << client->ip_address_ << std::endl;
 			std::cout << "Client port: " << client->port_ << std::endl;
 		}
-		if (CreateEmailReceiver(access_token, gmailReceiver)) std::cout << "Create gmail receiver successfully!" << std::endl;
+		if (CreateEmailReceiver(access_token, gmailReceiver))
+			std::cout << "Create gmail receiver successfully!" << std::endl;
 
-		if (client->initialize(m_statusText)) {
+		if (client->initialize(m_statusText))
+		{
 			client->BindControl(m_statusText, send_email, gmailReceiver);
-			//std::cout << "Initialize client successfully!" << std::endl;
+			// std::cout << "Initialize client successfully!" << std::endl;
 			this->Hide();
 			desPanel2->Show();
 			desPanel2->Layout();
 			parent_->Layout();
 		}
-		else {
-			//std::cout << "Error initialize client" << std::endl;
-			wxMessageBox("IP or port incorrected!", "Error", wxOK | wxICON_ERROR, nullptr);
+		else
+		{
+			wxMessageBox("IP or port incorrect!", "Error", wxOK | wxICON_ERROR);
+
+			// Stop timer first
+			if (client && client->m_checkMessageTimer)
+			{
+				client->m_checkMessageTimer->Stop();
+				delete client->m_checkMessageTimer;
+				client->m_checkMessageTimer = nullptr;
+			}
+
+			if (client)
+			{
+				client->cleanup();
+				client.reset();
+			}
+
+			// Safe UI reset
+			selection = -1;
+
+			if (InputFieldEmail && InputFieldEmail->IsEnabled())
+			{
+				InputFieldEmail->Clear();
+			}
+
+			if (InputFieldIP && InputFieldIP->IsEnabled())
+			{
+				InputFieldIP->Clear();
+			}
+
+			if (InputFieldPort && InputFieldPort->IsEnabled())
+			{
+				InputFieldPort->Clear();
+			}
+
+			// Safe button reset
+			if (ButtonConfirm && ButtonConfirm->IsEnabled())
+			{
+				ButtonConfirm->Enable(true);
+				ButtonConfirm->SetLabel("Confirm");
+				ButtonConfirm->Refresh();
+			}
+
+			this->Layout();
 		}
+
 		break;
 	}
 }
-void PanelRoles::OnRolesChanged(wxCommandEvent& evt)
+void PanelRoles::OnRolesChanged(wxCommandEvent &evt)
 {
 	int selection = evt.GetInt();
 	TextIP->Hide();
@@ -319,7 +373,8 @@ void PanelRoles::OnRolesChanged(wxCommandEvent& evt)
 	InputFieldEmail->Clear();
 	InputFieldIP->Clear();
 	InputFieldPort->Clear();
-	switch (selection) {
+	switch (selection)
+	{
 	case 0:
 		TextEmail->SetLabel("Receiver Email");
 		break;
@@ -333,15 +388,17 @@ void PanelRoles::OnRolesChanged(wxCommandEvent& evt)
 	}
 	this->Layout();
 }
-void PanelRoles::OnTextCtrlChanged(wxCommandEvent& event)
+void PanelRoles::OnTextCtrlChanged(wxCommandEvent &event)
 {
 	bool enableButton = false;
 
-	if (Roles->GetSelection() == 0) {
+	if (Roles->GetSelection() == 0)
+	{
 		wxString textEmail = InputFieldEmail->GetValue();
 		enableButton = IsEmailFormat(textEmail);
 	}
-	else if (Roles->GetSelection() == 1) {
+	else if (Roles->GetSelection() == 1)
+	{
 		wxString textEmail = InputFieldEmail->GetValue();
 		wxString textIP = InputFieldIP->GetValue();
 		wxString textPort = InputFieldPort->GetValue();
@@ -350,23 +407,24 @@ void PanelRoles::OnTextCtrlChanged(wxCommandEvent& event)
 
 	ButtonConfirm->Enable(enableButton);
 }
-bool PanelRoles::IsEmailFormat(const wxString& text)
+bool PanelRoles::IsEmailFormat(const wxString &text)
 {
 	const std::regex emailPattern(R"((\w+)(\.\w+)*@gmail\.com)");
 	return std::regex_match(text.ToStdString(), emailPattern);
 }
-bool PanelRoles::IsIPFormat(const wxString& text)
+bool PanelRoles::IsIPFormat(const wxString &text)
 {
 	const std::regex ipPattern("^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
 	return std::regex_match(text.ToStdString(), ipPattern);
 }
-bool PanelRoles::IsPortFormat(const wxString& text)
+bool PanelRoles::IsPortFormat(const wxString &text)
 {
 	// Regular expression to check for a numeric string
 	std::regex portRegex("^[0-9]+$");
 
 	// Check if it matches the regex
-	if (!std::regex_match(text.ToStdString(), portRegex)) {
+	if (!std::regex_match(text.ToStdString(), portRegex))
+	{
 		return false;
 	}
 
@@ -375,14 +433,14 @@ bool PanelRoles::IsPortFormat(const wxString& text)
 	return portNum >= 0 && portNum <= 65535;
 }
 
-//PanelAuthorization::PanelAuthorization(wxWindow* parent, wxFont headerFont, wxFont mainFont) : wxPanel(parent, wxID_ANY)
+// PanelAuthorization::PanelAuthorization(wxWindow* parent, wxFont headerFont, wxFont mainFont) : wxPanel(parent, wxID_ANY)
 //{
 //	parent_ = parent;
 //	Create();
 //	Set(headerFont, mainFont);
 //	CreateSizer();
-//}
-//void PanelAuthorization::BindControl(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client> &client, wxScopedPtr<GmailReceiver> &gmailReceiver)
+// }
+// void PanelAuthorization::BindControl(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client> &client, wxScopedPtr<GmailReceiver> &gmailReceiver)
 //{
 //	//ButtonYes->Bind(wxEVT_BUTTON, &PanelAuthorization::OnButtonYesClicked, this);
 //	//ButtonNo->Bind(wxEVT_BUTTON, &PanelAuthorization::OnButtonNoClicked, this);
@@ -391,8 +449,8 @@ bool PanelRoles::IsPortFormat(const wxString& text)
 //		OnButtonConfirmClicked(desPanel, authorization_code, access_token, refresh_token, client, gmailReceiver);
 //	});
 //	this->Bind(wxEVT_TIMER, &PanelAuthorization::OnClose, this, Timer->GetId());
-//}
-//void PanelAuthorization::Create()
+// }
+// void PanelAuthorization::Create()
 //{
 //	TextTitle = new wxStaticText(this, wxID_ANY, "PC REMOTE CONTROL", wxDefaultPosition, wxSize(600, -1), wxALIGN_CENTER);
 //	TextHelp = new wxStaticText(this, wxID_ANY, "After logging in, please copy the authorization code from the URL and paste it here");
@@ -403,8 +461,8 @@ bool PanelRoles::IsPortFormat(const wxString& text)
 //	ButtonExit = new wxButton(this, wxID_ANY, "Exit");
 //	InputField = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(300, -1));
 //	Timer = new wxTimer(this);
-//}
-//void PanelAuthorization::Set(wxFont headerFont, wxFont mainFont)
+// }
+// void PanelAuthorization::Set(wxFont headerFont, wxFont mainFont)
 //{
 //	TextTitle->SetFont(headerFont);
 //	TextTitle->SetBackgroundColour(wxColour(187, 189, 228));
@@ -427,8 +485,8 @@ bool PanelRoles::IsPortFormat(const wxString& text)
 //	//ButtonExit->Hide();
 //	//
 //	//this->Bind(wxEVT_TIMER, &RemoteControlDraft::OnPanelAuthorizationClose, this);
-//}
-//void PanelAuthorization::CreateSizer()
+// }
+// void PanelAuthorization::CreateSizer()
 //{
 //	MainSizer = new wxBoxSizer(wxVERTICAL);
 //	SubSizer1 = new wxBoxSizer(wxVERTICAL);
@@ -451,14 +509,14 @@ bool PanelRoles::IsPortFormat(const wxString& text)
 //	MainSizer->Add(SubSizer2, 1, wxALIGN_CENTER_HORIZONTAL);
 //
 //	this->SetSizer(MainSizer);
-//}
-//void PanelAuthorization::OnButtonExitClicked(wxCommandEvent& evt)
+// }
+// void PanelAuthorization::OnButtonExitClicked(wxCommandEvent& evt)
 //{
 //	//Close socket
 //	Timer->Stop();
 //	parent_->Close(true);
-//}
-//void PanelAuthorization::OnButtonConfirmClicked(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client>& client, wxScopedPtr<GmailReceiver>& gmailReceiver) {
+// }
+// void PanelAuthorization::OnButtonConfirmClicked(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client>& client, wxScopedPtr<GmailReceiver>& gmailReceiver) {
 //	authorization_code = InputField->GetValue();
 //	std::cout << authorization_code << std::endl;
 //	if (gmailReceiver->exchangeAuthCodeForAccessToken(authorization_code, access_token, refresh_token))
@@ -475,38 +533,36 @@ bool PanelRoles::IsPortFormat(const wxString& text)
 //	this->Hide();
 //	desPanel->Show();
 //	parent_->Layout();
-//}
-//void PanelAuthorization::OnClose(wxTimerEvent& evt) {
+// }
+// void PanelAuthorization::OnClose(wxTimerEvent& evt) {
 //	//Close socket
 //	Timer->Stop();
 //	parent_->Close(true);
-//}
+// }
 
-PanelSender::PanelSender(wxWindow* parent, wxImage image, wxFont headerFont, wxFont mainFont) : wxPanel(parent, wxID_ANY)
+PanelSender::PanelSender(wxWindow *parent, wxImage image, wxFont headerFont, wxFont mainFont) : wxPanel(parent, wxID_ANY)
 {
 	parent_ = parent;
 	Create(image);
 	Set(headerFont, mainFont);
 	CreateSizer();
 }
-void PanelSender::BindControl(PanelExplorer* panelExplorer, std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, wxScopedPtr<GmailSender>& gmailSender)
+void PanelSender::BindControl(PanelExplorer *panelExplorer, std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, wxScopedPtr<GmailSender> &gmailSender)
 {
 	Features->Bind(wxEVT_RADIOBOX, &PanelSender::OnFeaturesChanged, this);
 	OptionsAppSvc->Bind(wxEVT_RADIOBOX, &PanelSender::OnOptionsChanged, this);
 	OptionsFile->Bind(wxEVT_RADIOBOX, &PanelSender::OnOptionsChanged, this);
 	ButtonExit->Bind(wxEVT_BUTTON, &PanelSender::OnButtonExitClicked, this);
-	ButtonConfirm->Bind(wxEVT_BUTTON, [this, panelExplorer, &file_name, &app_svc_name, &processID, receive_email, &gmailSender](wxCommandEvent&) {
-		OnButtonConfirmClicked(panelExplorer, file_name, app_svc_name, processID, receive_email, gmailSender);
-		});
-
+	ButtonConfirm->Bind(wxEVT_BUTTON, [this, panelExplorer, &file_name, &app_svc_name, &processID, receive_email, &gmailSender](wxCommandEvent &)
+						{ OnButtonConfirmClicked(panelExplorer, file_name, app_svc_name, processID, receive_email, gmailSender); });
 }
 void PanelSender::Create(wxImage image)
 {
 	Image = image.Scale(120, 120, wxIMAGE_QUALITY_HIGH);
-	wxArrayString features = { "Application", "Service", "File", "Screen Capture", "Webcam", "Shutdown" };
-	wxArrayString optionsAppSvc = { "List", "Explore", "Start", "Stop" };
-	wxArrayString optionsLGD = { "List", "Explore", "Get", "Delete" };
-	wxArrayString optionsCamera = { "Open", "Close", "Record", "Capture" };
+	wxArrayString features = {"Application", "Service", "File", "Screen Capture", "Webcam", "Shutdown"};
+	wxArrayString optionsAppSvc = {"List", "Explore", "Start", "Stop"};
+	wxArrayString optionsLGD = {"List", "Explore", "Get", "Delete"};
+	wxArrayString optionsCamera = {"Open", "Close", "Record", "Capture"};
 
 	TextTitle = new wxStaticText(this, wxID_ANY, "ROLE: SENDER");
 	Features = new wxRadioBox(this, wxID_ANY, "Features", wxDefaultPosition, wxDefaultSize, features, 6, wxRA_SPECIFY_ROWS);
@@ -519,7 +575,6 @@ void PanelSender::Create(wxImage image)
 	InputFieldProcessID = new wxTextCtrl(this, wxID_ANY, "Enter process ID", wxDefaultPosition, wxSize(175, -1), 0, wxTextValidator(wxFILTER_NUMERIC));
 	InputFieldAppSvcName = new wxTextCtrl(this, wxID_ANY, "Enter application name", wxDefaultPosition, wxSize(175, -1));
 	InputFieldFileName = new wxTextCtrl(this, wxID_ANY, "Enter file name", wxDefaultPosition, wxSize(210, -1));
-
 }
 void PanelSender::Set(wxFont headerFont, wxFont mainFont)
 {
@@ -570,7 +625,7 @@ void PanelSender::CreateSizer()
 	MainSizer->Add(ButtonExit, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP, 10);
 	this->SetSizer(MainSizer);
 }
-void PanelSender::OnFeaturesChanged(wxCommandEvent& evt)
+void PanelSender::OnFeaturesChanged(wxCommandEvent &evt)
 {
 	int features = evt.GetInt();
 
@@ -585,8 +640,10 @@ void PanelSender::OnFeaturesChanged(wxCommandEvent& evt)
 	OptionsCamera->SetSelection(0);
 	OptionsCamera->Hide();
 
-	switch (features) {
-	case 0: case 1:
+	switch (features)
+	{
+	case 0:
+	case 1:
 		OptionsAppSvc->Show();
 		break;
 	case 2:
@@ -599,7 +656,8 @@ void PanelSender::OnFeaturesChanged(wxCommandEvent& evt)
 
 	this->Layout();
 }
-void PanelSender::OnOptionsChanged(wxCommandEvent& evt) {
+void PanelSender::OnOptionsChanged(wxCommandEvent &evt)
+{
 	int features = Features->GetSelection();
 	int options = evt.GetInt();
 
@@ -607,28 +665,36 @@ void PanelSender::OnOptionsChanged(wxCommandEvent& evt) {
 	InputFieldAppSvcName->Hide();
 	InputFieldProcessID->Hide();
 
-	if (features == 0) {
-		if (options == 2) {
+	if (features == 0)
+	{
+		if (options == 2)
+		{
 			InputFieldAppSvcName->Show();
 			InputFieldAppSvcName->SetValue("Enter Application Name");
 		}
-		else if (options == 3) {
+		else if (options == 3)
+		{
 			InputFieldProcessID->Show();
 			InputFieldProcessID->SetValue("Enter Process ID");
 		}
 	}
-	else if (features == 1) {
-		if (options == 2) {
+	else if (features == 1)
+	{
+		if (options == 2)
+		{
 			InputFieldAppSvcName->Show();
 			InputFieldAppSvcName->SetValue("Enter Service Name");
 		}
-		else if (options == 3) {
+		else if (options == 3)
+		{
 			InputFieldProcessID->Show();
 			InputFieldProcessID->SetValue("Enter Process ID");
 		}
 	}
-	else if (features == 2) {
-		if (options == 2 || options == 3) {
+	else if (features == 2)
+	{
+		if (options == 2 || options == 3)
+		{
 			InputFieldFileName->Show();
 			InputFieldFileName->SetValue("Enter File Name");
 		}
@@ -636,18 +702,21 @@ void PanelSender::OnOptionsChanged(wxCommandEvent& evt) {
 
 	this->Layout();
 }
-void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, wxScopedPtr<GmailSender>& gmailSender)
+void PanelSender::OnButtonConfirmClicked(PanelExplorer *panelExplorer, std::string &file_name, std::string &app_svc_name, int &processID, std::string receive_email, wxScopedPtr<GmailSender> &gmailSender)
 {
 	// Get the seletion from features and options
 	int featureSelection = Features->GetSelection();
 	int optionSelection = -1;
-	if (OptionsAppSvc->IsShown()) {
+	if (OptionsAppSvc->IsShown())
+	{
 		optionSelection = OptionsAppSvc->GetSelection();
 	}
-	else if (OptionsFile->IsShown()) {
+	else if (OptionsFile->IsShown())
+	{
 		optionSelection = OptionsFile->GetSelection();
 	}
-	else if (OptionsCamera->IsShown()) {
+	else if (OptionsCamera->IsShown())
+	{
 		optionSelection = OptionsCamera->GetSelection();
 	}
 	file_name = InputFieldFileName->GetValue().ToStdString();
@@ -662,7 +731,8 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::stri
 		option = OptionsFile->GetString(optionSelection).ToStdString();
 	else if (OptionsCamera->IsShown())
 		option = OptionsCamera->GetString(optionSelection).ToStdString();
-	else option = "";
+	else
+		option = "";
 
 	// Show the value of vars to check if corrected
 	std::cout << "Feature: " << feature << std::endl;
@@ -673,17 +743,21 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::stri
 
 	// Send email
 	std::string body;
-	switch (featureSelection) {
+	switch (featureSelection)
+	{
 	case 0:
-		if (optionSelection == 0) {
+		if (optionSelection == 0)
+		{
 			// list app
 			body = "list app";
 			break;
 		}
-		else if (optionSelection == 1) {
+		else if (optionSelection == 1)
+		{
 			// explore app
 			panelExplorer->ReconstructTable(0);
-			if (panelExplorer->PopulateTableFromFile("apps_list.txt", 0)) {
+			if (panelExplorer->PopulateTableFromFile("apps_list.txt", 0))
+			{
 				this->Hide();
 				panelExplorer->Show();
 				panelExplorer->Layout();
@@ -691,26 +765,31 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::stri
 			}
 			break;
 		}
-		else if (optionSelection == 2) {
+		else if (optionSelection == 2)
+		{
 			// start app
 			body = "start app " + app_svc_name;
 			break;
 		}
-		else if (optionSelection == 3) {
+		else if (optionSelection == 3)
+		{
 			// stop app
 			body = "kill " + std::to_string(processID);
 			break;
 		}
 	case 1:
-		if (optionSelection == 0) {
+		if (optionSelection == 0)
+		{
 			// list service
 			body = "list service";
 			break;
 		}
-		else if (optionSelection == 1) {
+		else if (optionSelection == 1)
+		{
 			// explore service
 			panelExplorer->ReconstructTable(1);
-			if (panelExplorer->PopulateTableFromFile("services_list.txt", 1)) {
+			if (panelExplorer->PopulateTableFromFile("services_list.txt", 1))
+			{
 				this->Hide();
 				panelExplorer->Show();
 				panelExplorer->Layout();
@@ -718,26 +797,31 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::stri
 			}
 			break;
 		}
-		else if (optionSelection == 2) {
+		else if (optionSelection == 2)
+		{
 			// start service
 			body = "start service " + app_svc_name;
 			break;
 		}
-		else if (optionSelection == 3) {
+		else if (optionSelection == 3)
+		{
 			// stop service
 			body = "kill " + std::to_string(processID);
 			break;
 		}
 	case 2:
-		if (optionSelection == 0) {
+		if (optionSelection == 0)
+		{
 			// list file
 			body = "list files";
 			break;
 		}
-		else if (optionSelection == 1) {
+		else if (optionSelection == 1)
+		{
 			// explore file
 			panelExplorer->ReconstructTable(2);
-			if (panelExplorer->PopulateTableFromFile("files_list.txt", 2)) {
+			if (panelExplorer->PopulateTableFromFile("files_list.txt", 2))
+			{
 				this->Hide();
 				panelExplorer->Show();
 				panelExplorer->Layout();
@@ -745,12 +829,14 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::stri
 			}
 			break;
 		}
-		else if (optionSelection == 2) {
+		else if (optionSelection == 2)
+		{
 			// get file
 			body = "get " + file_name;
 			break;
 		}
-		else if (optionSelection == 3) {
+		else if (optionSelection == 3)
+		{
 			// delete file
 			body = "remove " + file_name;
 			break;
@@ -761,22 +847,26 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::stri
 		break;
 	case 4:
 		// webcam
-		if (optionSelection == 0) {
+		if (optionSelection == 0)
+		{
 			// open camera
 			body = "start cam";
 			break;
 		}
-		else if (optionSelection == 1) {
+		else if (optionSelection == 1)
+		{
 			// close camera
 			body = "stop cam";
 			break;
 		}
-		else if (optionSelection == 2) {
+		else if (optionSelection == 2)
+		{
 			// record camera
 			body = "record cam";
 			break;
 		}
-		else if (optionSelection == 3) {
+		else if (optionSelection == 3)
+		{
 			// capture camera
 			body = "capture cam";
 			break;
@@ -787,41 +877,43 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer* panelExplorer, std::stri
 		break;
 	}
 
-	//gmailSender->setSubject("Remote Control");
-	if ((featureSelection == 0 || featureSelection == 1) && optionSelection == 1) return;
+	// gmailSender->setSubject("Remote Control");
+	if ((featureSelection == 0 || featureSelection == 1) && optionSelection == 1)
+		return;
 	gmailSender->setSubject("Remote Control");
 	gmailSender->setBody(body);
-	//std::cout << "Target email: " << gmailSender->m_to << std::endl;
-	//std::cout << "Subject: " << gmailSender->m_subject << std::endl;
+	// std::cout << "Target email: " << gmailSender->m_to << std::endl;
+	// std::cout << "Subject: " << gmailSender->m_subject << std::endl;
 	std::cout << "Body: " << gmailSender->m_body << std::endl;
-	//std::cout << "Process ID: " << processID << std::endl;
-	if (gmailSender->send()) {
+	// std::cout << "Process ID: " << processID << std::endl;
+	if (gmailSender->send())
+	{
 		// std::cout << "Sent successfully";
 	}
-	else std::cout << "Error";
+	else
+		std::cout << "Error";
 }
 void PanelSender::OnButtonCloseClicked()
 {
 	this->parent_->Close();
 }
-void PanelSender::OnButtonExitClicked(wxCommandEvent& evt)
+void PanelSender::OnButtonExitClicked(wxCommandEvent &evt)
 {
-	//Close socket
+	// Close socket
 	parent_->Close(true);
 }
 
-PanelReceiver::PanelReceiver(wxWindow* parent, wxImage image, wxFont headerFont, wxFont mainFont, wxStaticText* m_statusText) : wxPanel(parent, wxID_ANY)
+PanelReceiver::PanelReceiver(wxWindow *parent, wxImage image, wxFont headerFont, wxFont mainFont, wxStaticText *m_statusText) : wxPanel(parent, wxID_ANY)
 {
 	parent_ = parent;
 	Create(image);
 	Set(headerFont, mainFont);
-	//CreateSizer(m_statusText);
+	// CreateSizer(m_statusText);
 }
-void PanelReceiver::BindControl(wxScopedPtr<Client>& client)
+void PanelReceiver::BindControl(wxScopedPtr<Client> &client)
 {
-	ButtonExit->Bind(wxEVT_BUTTON, [this, &client](wxCommandEvent&) {
-		OnButtonExitClicked(client);
-		});
+	ButtonExit->Bind(wxEVT_BUTTON, [this, &client](wxCommandEvent &)
+					 { OnButtonExitClicked(client); });
 }
 void PanelReceiver::Create(wxImage image)
 {
@@ -835,7 +927,7 @@ void PanelReceiver::Set(wxFont headerFont, wxFont mainFont)
 	TextTitle->SetFont(headerFont);
 	ButtonExit->SetFont(mainFont);
 }
-void PanelReceiver::CreateSizer(wxStaticText* m_statusText)
+void PanelReceiver::CreateSizer(wxStaticText *m_statusText)
 {
 	MainSizer = new wxBoxSizer(wxVERTICAL);
 	SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
@@ -856,12 +948,12 @@ void PanelReceiver::OnButtonExitClicked(wxScopedPtr<Client> &client)
 	client->sendString("end");
 	parent_->Close(true);
 }
-void PanelReceiver::OnUpdateTimer(wxTimerEvent& event)
+void PanelReceiver::OnUpdateTimer(wxTimerEvent &event)
 {
 	this->Layout();
 }
 
-PanelExplorer::PanelExplorer(wxWindow* parent, int& processID) : wxPanel(parent, wxID_ANY)
+PanelExplorer::PanelExplorer(wxWindow *parent, int &processID) : wxPanel(parent, wxID_ANY)
 {
 	parent_ = parent;
 	format_ = 0;
@@ -869,16 +961,13 @@ PanelExplorer::PanelExplorer(wxWindow* parent, int& processID) : wxPanel(parent,
 	CreateSizer();
 }
 
-void PanelExplorer::BindControl(wxPanel* desPanel, int& processID, std::string& filename, wxScopedPtr<GmailSender>& gmailSender)
+void PanelExplorer::BindControl(wxPanel *desPanel, int &processID, std::string &filename, wxScopedPtr<GmailSender> &gmailSender)
 {
-	ButtonAction->Bind(wxEVT_BUTTON, [this, &processID, &filename, &gmailSender](wxCommandEvent&) {
-		OnButtonActionClicked(processID, filename, gmailSender);
-		});
-	ButtonReturn->Bind(wxEVT_BUTTON, [this, desPanel](wxCommandEvent&) {
-		OnButtonReturnClicked(desPanel);
-		});
+	ButtonAction->Bind(wxEVT_BUTTON, [this, &processID, &filename, &gmailSender](wxCommandEvent &)
+					   { OnButtonActionClicked(processID, filename, gmailSender); });
+	ButtonReturn->Bind(wxEVT_BUTTON, [this, desPanel](wxCommandEvent &)
+					   { OnButtonReturnClicked(desPanel); });
 	Bind(wxEVT_TIMER, &PanelExplorer::OnTimer, this);
-
 }
 void PanelExplorer::Create()
 {
@@ -900,7 +989,8 @@ void PanelExplorer::ReconstructTable(int format)
 	// format:
 	// 0 -> Apps list; 1 -> Service list; 2 -> File list
 	format_ = format;
-	switch (format) {
+	switch (format)
+	{
 	case 0:
 		table->InsertColumn(0, "PID", wxLIST_FORMAT_LEFT, 100);
 		table->InsertColumn(1, "Application Name", wxLIST_FORMAT_LEFT, 300);
@@ -930,21 +1020,26 @@ void PanelExplorer::CreateSizer()
 	this->SetSizer(MainSizer);
 }
 
-bool PanelExplorer::PopulateTableFromFile(const std::string& filePath, int format) {
+bool PanelExplorer::PopulateTableFromFile(const std::string &filePath, int format)
+{
 	std::ifstream file(filePath);
 	table->DeleteAllItems();
 
-	if (!file.is_open()) {
+	if (!file.is_open())
+	{
 		wxMessageBox("Failed to open file: " + wxString(filePath), "Error", wxOK | wxICON_ERROR);
 		return false;
 	}
 
 	std::string line;
-	if (format == 0 || format == 1) {
+	if (format == 0 || format == 1)
+	{
 		bool firstRow = true;
 
-		while (std::getline(file, line)) {
-			if (firstRow) {
+		while (std::getline(file, line))
+		{
+			if (firstRow)
+			{
 				firstRow = false; // Skip the first row (header)
 				continue;
 			}
@@ -953,20 +1048,24 @@ bool PanelExplorer::PopulateTableFromFile(const std::string& filePath, int forma
 			size_t pidPos = line.find("PID:");
 			size_t namePos = line.find("Name:");
 
-			if (pidPos != std::string::npos && namePos != std::string::npos) {
+			if (pidPos != std::string::npos && namePos != std::string::npos)
+			{
 				// Extract PID and Name
 				std::string pid = line.substr(pidPos + 5, namePos - pidPos - 7);
-				if (pid == "0") continue;
+				if (pid == "0")
+					continue;
 				std::string name = line.substr(namePos + 5);
 
 				// Insert into wxListCtrl
 				long index = table->InsertItem(table->GetItemCount(), pid); // Insert PID
-				table->SetItem(index, 1, name);                            // Insert Name
+				table->SetItem(index, 1, name);								// Insert Name
 			}
 		}
 	}
-	else if (format == 2) {
-		while (std::getline(file, line)) {
+	else if (format == 2)
+	{
+		while (std::getline(file, line))
+		{
 			std::string filename = line.substr(2);
 			table->InsertItem(table->GetItemCount(), filename);
 		}
@@ -975,50 +1074,56 @@ bool PanelExplorer::PopulateTableFromFile(const std::string& filePath, int forma
 	return true;
 }
 
-void PanelExplorer::OnButtonActionClicked(int& processID, std::string& filename, wxScopedPtr<GmailSender>& gmailSender)
+void PanelExplorer::OnButtonActionClicked(int &processID, std::string &filename, wxScopedPtr<GmailSender> &gmailSender)
 {
 	// Get the selected row
 	long selectedRow = table->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 
-	if (selectedRow == -1) {
+	if (selectedRow == -1)
+	{
 		wxMessageBox("No row selected. Please select a row first.", "Error", wxOK | wxICON_ERROR);
 		return;
 	}
 
 	std::string body;
 	wxString tmp = table->GetItemText(selectedRow, 0);
-	if (format_ == 0 || format_ == 1) {
+	if (format_ == 0 || format_ == 1)
+	{
 		processID = wxAtoi(tmp); // Get PID
-		//std::cout << "ProcessID in explorer: " << processID << std::endl;
-		body = "kill " + std::to_string(processID);;
+		// std::cout << "ProcessID in explorer: " << processID << std::endl;
+		body = "kill " + std::to_string(processID);
+		;
 	}
-	else if (format_ == 2) {
+	else if (format_ == 2)
+	{
 		filename = tmp.ToStdString();
-		//std::cout << "File name: " << filename << std::endl;
+		// std::cout << "File name: " << filename << std::endl;
 		body = "remove " + filename;
 	}
 
-	//std::cout << "Email body: " << body << std::endl;
+	// std::cout << "Email body: " << body << std::endl;
 	gmailSender->setBody(body);
 	////std::cout << "Target email: " << gmailSender->m_to << std::endl;
-	//std::cout << "Subject: " << gmailSender->m_subject << std::endl;
-	//std::cout << "Body: " << gmailSender->m_body << std::endl;
-	//std::cout << "Process ID: " << processID << std::endl;
-	if (gmailSender->send()) {
-		//std::cout << "Sent successfully";
+	// std::cout << "Subject: " << gmailSender->m_subject << std::endl;
+	// std::cout << "Body: " << gmailSender->m_body << std::endl;
+	// std::cout << "Process ID: " << processID << std::endl;
+	if (gmailSender->send())
+	{
+		// std::cout << "Sent successfully";
 	}
-	else std::cout << "Error" << std::endl;
-	//std::cout << std::endl;
+	else
+		std::cout << "Error" << std::endl;
+	// std::cout << std::endl;
 
 	// Perform your custom action
-	//PerformActionOnRow(selectedRow);
+	// PerformActionOnRow(selectedRow);
 
 	// Delete the selected row
-	//table->DeleteItem(selectedRow);
+	// table->DeleteItem(selectedRow);
 	Timer->Start(7000);
 }
 
-void PanelExplorer::OnButtonReturnClicked(wxPanel* desPanel)
+void PanelExplorer::OnButtonReturnClicked(wxPanel *desPanel)
 {
 	this->Hide();
 	desPanel->Show();
@@ -1026,9 +1131,10 @@ void PanelExplorer::OnButtonReturnClicked(wxPanel* desPanel)
 	parent_->Layout();
 }
 
-void PanelExplorer::OnTimer(wxTimerEvent& evt)
+void PanelExplorer::OnTimer(wxTimerEvent &evt)
 {
-	switch (format_) {
+	switch (format_)
+	{
 	case 0:
 		PopulateTableFromFile("apps_list.txt", format_);
 		break;
@@ -1042,11 +1148,11 @@ void PanelExplorer::OnTimer(wxTimerEvent& evt)
 	Timer->Stop();
 }
 
-//void PanelExplorer::PerformActionOnRow(long selectedRow) {
+// void PanelExplorer::PerformActionOnRow(long selectedRow) {
 //	// Retrieve data from the selected row
 //	wxString pid = table->GetItemText(selectedRow, 0); // Get PID
 //	wxString name = table->GetItemText(selectedRow, 1); // Get Name
 //
 //	// Perform your custom action here
 //	wxMessageBox("Performing action on:\nPID: " + pid + "\nName: " + name, "Info", wxOK | wxICON_INFORMATION);
-//}
+// }

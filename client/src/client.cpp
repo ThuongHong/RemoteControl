@@ -16,63 +16,6 @@ Client::Client(const std::string &ip_address, int port, wxStaticText *m_statusTe
     m_checkMessageTimer->Start(3000);
 }
 
-// void Client::loadAccessToken()
-// {
-//     std::ifstream token_file("access_token.txt");
-//     if (token_file.is_open())
-//     {
-//         std::getline(token_file, access_token_);
-//         token_file.close();
-//     }
-//     else
-//     {
-//         std::cerr << "Unable to open access token file." << std::endl;
-//     }
-// }
-
-// void Client::checkForMessages(wxStaticText *m_statusText)
-//{
-//     const int interval_seconds = 3; // Polling interval
-//     while (true)
-//     {
-//         updateStatus("Checking for new messages...", m_statusText);
-//
-//         std::vector<std::string> tasks;
-//         try
-//         {
-//             tasks = m_gmailReceiver.getUnreadMessageContents();
-//         }
-//         catch (const std::exception &e)
-//         {
-//             // std::cerr << "Error retrieving messages: " << e.what() << std::endl;
-//             updateStatus("Error retrieving messages", m_statusText);
-//             break;
-//         }
-//
-//         // if (tasks.empty())
-//         // {
-//         //     std::cout << "No new messages found." << std::endl;
-//         // }
-//
-//         bool stop = false;
-//         for (const std::string &messageContent : tasks)
-//         {
-//             stop = processMessage(messageContent, m_statusText);
-//             if (stop)
-//             {
-//                 break;
-//             }
-//         }
-//
-//         if (stop)
-//         {
-//             break;
-//         }
-//
-//         updateStatus("Waiting for messages...", m_statusText);
-//         std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
-//     }
-// }
 void Client::BindControl(wxStaticText *m_statusText, std::string send_email, wxScopedPtr<GmailReceiver> &gmailReceiver)
 {
     Bind(wxEVT_TIMER, [this, m_statusText, send_email, &gmailReceiver](wxTimerEvent &)
@@ -94,50 +37,6 @@ void Client::checkForMessage(wxStaticText *m_statusText, std::string send_email,
         }
     }
 }
-
-// void Client::checkForMessages(wxStaticText* m_statusText)
-//{
-//     const int interval_seconds = 3; // Polling interval
-//     while (true)
-//     {
-//         updateStatus("Checking for new messages...", m_statusText);
-//
-//         std::vector<std::string> tasks;
-//         try
-//         {
-//             tasks = m_gmailReceiver.getUnreadMessageContents();
-//         }
-//         catch (const std::exception& e)
-//         {
-//             // std::cerr << "Error retrieving messages: " << e.what() << std::endl;
-//             updateStatus("Error retrieving messages", m_statusText);
-//             break;
-//         }
-//
-//         // if (tasks.empty())
-//         // {
-//         //     std::cout << "No new messages found." << std::endl;
-//         // }
-//
-//         bool stop = false;
-//         for (const std::string& messageContent : tasks)
-//         {
-//             stop = processMessage(messageContent, m_statusText);
-//             if (stop)
-//             {
-//                 break;
-//             }
-//         }
-//
-//         if (stop)
-//         {
-//             break;
-//         }
-//
-//         updateStatus("Waiting for messages...", m_statusText);
-//         std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
-//     }
-// }
 
 bool Client::initialize(wxStaticText *m_statusText)
 {
@@ -183,18 +82,6 @@ void Client::updateStatus(const wxString &message, wxStaticText *m_statusText)
         m_statusText->GetParent()->Layout();
     }
 }
-
-// void Client::startCheckingMessages(wxStaticText *m_statusText)
-//{
-//     updateStatus("Waiting for message...", m_statusText);
-//     m_checkMessageTimer->Start(3000);
-// }
-//
-// void Client::stopCheckingMessages(wxStaticText *m_statusText)
-//{
-//     m_checkMessageTimer->Stop();
-//     updateStatus("Message checking stopped", m_statusText);
-// }
 
 bool Client::openFile(const std::wstring &filename)
 {

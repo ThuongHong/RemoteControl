@@ -25,28 +25,20 @@ class Client : public wxEvtHandler
 {
 public:
     Client(const std::string &ip_address, int port, wxStaticText *m_statusText, std::vector<std::string> &tasks);
-    // void checkForMessages(wxStaticText *m_statusText);
     void checkForMessage(wxStaticText *m_statusText, std::string send_email, wxScopedPtr<GmailReceiver> &gmailReceiver);
     bool initialize(wxStaticText *m_statusText);
     void cleanup();
     void BindControl(wxStaticText *m_statusText, std::string send_email, wxScopedPtr<GmailReceiver> &gmailReceiver);
     bool sendString(const std::string &message);
-    // void startCheckingMessages(wxStaticText *m_statusText);
 
     std::string ip_address_;
     int port_;
-
-    // GmailReceiver m_gmailReceiver;
-    //  GmailSender m_gmailSender;
-    //  void loadAccessToken();
-    //  std::string access_token_;
     wxTimer *m_checkMessageTimer;
 
 private:
     SOCKET server_socket_;
 
     void updateStatus(const wxString &message, wxStaticText *m_statusText);
-    // void stopCheckingMessages(wxStaticText *m_statusText);
     bool openFile(const std::wstring &filename);
     bool processMessage(const std::string &messageContent, wxStaticText *m_statusText);
 

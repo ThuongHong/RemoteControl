@@ -36,7 +36,6 @@ private:
 	void Create(wxString description, wxImage image);
 	void Set(wxFont headerFont, wxFont mainFont, wxBitmap bitmap);
 	void CreateSizer();
-	bool waitForAuthorizationCodeNonBlocking(std::string& authorization_code, HttpListener& listener);
 	void OnButtonClicked(wxPanel* desPanel, std::string redirect_uri, std::string client_id, std::string &access_token, std::string &refresh_token, wxScopedPtr<OAuth2Handler> &oAuth2Handler);
 };
 
@@ -87,44 +86,6 @@ private:
 	bool CreateEmailReceiver(const std::string& access_token, wxScopedPtr<GmailReceiver>& gmailReceiver);
 };
 
-//class PanelAuthorization : public wxPanel
-//{
-//public:
-//	PanelAuthorization(wxWindow* parent, wxFont headerFont, wxFont mainFont);
-//	void BindControl(wxPanel* desPanel, std::string &authorization_code, std::string &access_token, std::string &refresh_token, wxScopedPtr<Client> &client, wxScopedPtr<GmailReceiver> &gmailReceiver);
-//
-//private:
-//	wxWindow* parent_;
-//
-//	wxStaticText* TextTitle;
-//	wxStaticText* TextHelp;
-//	//wxStaticText* TextAsk;
-//	//wxButton* ButtonYes;
-//	//wxButton* ButtonNo;
-//	wxButton* ButtonConfirm;
-//	wxButton* ButtonExit;
-//	wxStaticText* TextAuthorization;
-//	wxStaticText* TextSuccess;
-//	wxStaticText* TextFail;
-//	wxTextCtrl* InputField;
-//	wxTimer* Timer;
-//
-//	wxBoxSizer* MainSizer;
-//	wxBoxSizer* SubSizer1;
-//	wxBoxSizer* SubSizer2;
-//	wxBoxSizer* SubSizer3;
-//	wxBoxSizer* SubSizer4;
-//
-//	void Create();
-//	void Set(wxFont headerFont, wxFont mainFont);
-//	void CreateSizer();
-//
-//	/*void OnButtonYesClicked(wxCommandEvent& evt);
-//	void OnButtonNoClicked(wxCommandEvent& evt);*/
-//	void OnButtonExitClicked(wxCommandEvent& evt);
-//	void OnButtonConfirmClicked(wxPanel* desPanel, std::string& authorization_code, std::string& access_token, std::string &refresh_token, wxScopedPtr<Client>& client, wxScopedPtr<GmailReceiver>& gmailReceiver);
-//	void OnClose(wxTimerEvent& evt);
-//};
 class PanelExplorer : public wxPanel
 {
 public:
@@ -136,8 +97,8 @@ private:
 	wxWindow* parent_;
 	int format_ = 0;
 
-	wxListCtrl* table; // Pointer to the wxListCtrl
-	wxButton* ButtonAction; // Pointer to the action button
+	wxListCtrl* table;
+	wxButton* ButtonAction;
 	wxButton* ButtonReturn;
 	wxBoxSizer* MainSizer;
 	wxBoxSizer* SubSizer;
@@ -148,7 +109,7 @@ private:
 
 	void OnButtonActionClicked(int& processID, std::string& filename, wxScopedPtr<GmailSender>& gmailSender);
 	void OnButtonReturnClicked(wxPanel* desPanel);
-	void OnTimer(wxTimerEvent& evt); // Your custom function for the action
+	void OnTimer(wxTimerEvent& evt);
 };
 
 class PanelSender : public wxPanel
@@ -210,8 +171,6 @@ private:
 
 	void Create(wxImage image);
 	void Set(wxFont headerFont, wxFont mainFont);
-	//bool OnRun();
 	void OnButtonExitClicked(wxScopedPtr<Client>& client);
 	void OnUpdateTimer(wxTimerEvent& event);
-	void UpdateStatusText();
 };

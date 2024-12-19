@@ -133,8 +133,7 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         }
         else if (messageContent.substr(0, 3) == "get")
         {
-            std::string filename = messageContent.substr(4);
-            std::wstring wfilename(filename.begin(), filename.end());
+            std::wstring wfilename = L"received_file.txt";
             if (receiveFile(wfilename))
             {
                 openFile(wfilename);

@@ -22,6 +22,7 @@ set(SOURCE_FILES
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 # OpenCV configuration
+set(OpenCV_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/opencv/build")
 find_package(OpenCV REQUIRED)
 if(NOT OpenCV_FOUND)
     message(FATAL_ERROR "OpenCV not found")

@@ -33,6 +33,8 @@ set(SOURCE_FILES
 # Define executable
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
+set(BUILD_SHARED_LIBS OFF)
+
 # Dependencies paths
 set(DEPS_ROOT "${CMAKE_SOURCE_DIR}/lib")
 set(CURL_ROOT "${DEPS_ROOT}/curl")
@@ -59,6 +61,9 @@ set(wxWidgets_USE_STATIC ON)
 set(wxWidgets_USE_UNICODE ON)
 set(wxWidgets_USE_UNIVERSAL OFF)
 set(wxWidgets_USE_DEBUG OFF)
+add_definitions(-DwxUSE_IMAGE=1)
+add_definitions(-DwxUSE_LIBPNG=1)
+add_definitions(-DwxUSE_LIBJPEG=1)
 find_package(wxWidgets REQUIRED COMPONENTS core base webview adv aui html xml net)
 include(${wxWidgets_USE_FILE})
 
@@ -90,6 +95,22 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     uuid.lib
     comdlg32.lib
     advapi32.lib
+
+    # WxWidgets libraries with full paths
+    "${WX_ROOT}/lib/vc_x64_lib/wxmsw32u_core.lib"
+    "${WX_ROOT}/lib/vc_x64_lib/wxbase32u.lib"
+    "${WX_ROOT}/lib/vc_x64_lib/wxmsw32u_webview.lib"
+    "${WX_ROOT}/lib/vc_x64_lib/wxmsw32u_adv.lib"
+    "${WX_ROOT}/lib/vc_x64_lib/wxmsw32u_aui.lib"
+    "${WX_ROOT}/lib/vc_x64_lib/wxmsw32u_html.lib"
+    "${WX_ROOT}/lib/vc_x64_lib/wxbase32u_xml.lib"
+    "${WX_ROOT}/lib/vc_x64_lib/wxbase32u_net.lib"
+    "${WX_ROOT}/lib/vc_x64_lib/wxpng.lib"
+    "${WX_ROOT}/lib/vc_x64_lib/wxtiff.lib"
+    "${WX_ROOT}/lib/vc_x64_lib/wxjpeg.lib"
+    "${WX_ROOT}/lib/vc_x64_lib/wxzlib.lib"
+    "${WX_ROOT}/lib/vc_x64_lib/wxregexu.lib"
+    "${WX_ROOT}/lib/vc_x64_lib/wxexpat.lib"
 )
 
 # Asset paths

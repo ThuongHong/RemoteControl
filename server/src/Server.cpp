@@ -1,6 +1,7 @@
 #include "ServerHandler.h"
 #include <iostream>
 #include <string>
+#include <set>
 
 std::wstring trimWString(const std::wstring &str)
 {
@@ -22,6 +23,23 @@ std::string trimString(const std::string &str)
 
 int main()
 {
+    std::set<std::string> commands;
+    commands.insert("list app");
+    commands.insert("list service");
+    commands.insert("take screenshot");
+    commands.insert("shutdown");
+    commands.insert("list files");
+    commands.insert("get");
+    commands.insert("remove");
+    commands.insert("kill");
+    commands.insert("start app");
+    commands.insert("start service");
+    commands.insert("start cam");
+    commands.insert("stop cam");
+    commands.insert("record cam");
+    commands.insert("capture cam");
+    commands.insert("end");
+
     ServerHandler server;
 
     if (!server.initialize())
@@ -65,10 +83,24 @@ int main()
         std::string receivedMessage = server.receiveMessage(clientSocket);
         if (receivedMessage.empty())
             continue;
+        bool isCommand = false;
+        for (auto &command : commands)
+        {
+            if (receivedMessage.substr(0, command.size()) == command)
+            {
+                isCommand = true;
+                break;
+            }
+        }
+
+        if (!isCommand)
+        {
+            continue;
+        }
 
         std::cout << "\n-------------------------------------\n"
                   << std::endl;
-        std::cout << "Received message: " << receivedMessage << std::endl;
+        std::cout << "Received command: " << receivedMessage << std::endl;
 
         if (receivedMessage.substr(0, 8) == "list app")
         {
@@ -202,6 +234,9 @@ int main()
         {
             break;
         }
+
+        std::cout << "\n-------------------------------------\n"
+                  << std::endl;
     }
 
     server.cleanup();

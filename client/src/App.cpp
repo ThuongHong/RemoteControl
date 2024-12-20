@@ -6,6 +6,8 @@ wxIMPLEMENT_APP(App);
 
 bool App::OnInit()
 {
+	wxInitAllImageHandlers();
+
 	RemoteControlDraft *mainFrame = new RemoteControlDraft("Remote Control via Gmail");
 	mainFrame->SetClientSize(550, 400);
 	mainFrame->Center();

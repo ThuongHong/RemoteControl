@@ -47,12 +47,19 @@ add_definitions(-DCURL_STATICLIB)
 # Configure OpenSSL
 set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT}/include")
 set(OPENSSL_LIB_DIR "${OPENSSL_ROOT}/lib/VC/x64/MD")
+set(wxWidgets_CONFIGURATION mswu)
+set(OPENSSL_USE_STATIC_LIBS ON)
+set(OPENSSL_MSVC_STATIC_RT ON)
 
 # Configure wxWidgets
 set(wxWidgets_ROOT_DIR ${WX_ROOT})
 set(wxWidgets_LIB_DIR "${WX_ROOT}/lib/vc_x64_lib")
 set(wxWidgets_INCLUDE_DIRS "${WX_ROOT}/include")
-find_package(wxWidgets REQUIRED)
+set(wxWidgets_USE_STATIC ON)
+set(wxWidgets_USE_UNICODE ON)
+set(wxWidgets_USE_UNIVERSAL OFF)
+set(wxWidgets_USE_DEBUG OFF)
+find_package(wxWidgets REQUIRED COMPONENTS core base webview adv aui html xml net)
 include(${wxWidgets_USE_FILE})
 
 # Include directories
@@ -111,6 +118,14 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/assets"
     FILES_MATCHING 
     PATTERN "*.png"
     PATTERN "*.ico"
+)
+
+# Install runtime dependencies
+install(FILES
+    "${OPENSSL_ROOT}/bin/libssl-3-x64.dll"
+    "${OPENSSL_ROOT}/bin/libcrypto-3-x64.dll"
+    DESTINATION bin
+    COMPONENT runtime
 )
 
 # CPack Configuration

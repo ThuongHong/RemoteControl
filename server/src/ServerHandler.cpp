@@ -90,132 +90,109 @@ bool ServerHandler::sendMessage(SOCKET clientSocket, const std::string &message)
     return true;
 }
 
-// In ServerHandler::sendFile
 bool ServerHandler::sendFile(SOCKET clientSocket, const std::wstring &filename)
 {
-    std::ifstream file(filename, std::ios::binary);
+    // Get executable directory
+    wchar_t exePath[MAX_PATH];
+    GetModuleFileNameW(NULL, exePath, MAX_PATH);
+    std::wstring exeDir = std::wstring(exePath);
+    exeDir = exeDir.substr(0, exeDir.find_last_of(L"\\/"));
+
+    // Create full path
+    std::wstring fullPath = exeDir + L"\\" + filename;
+    
+    // Check if file exists
+    if (!std::filesystem::exists(fullPath))
+    {
+        std::wcerr << L"File does not exist: " << fullPath << std::endl;
+        return false;
+    }
+
+    // Open file
+    std::ifstream file(fullPath, std::ios::binary);
     if (!file.is_open())
     {
-        std::cerr << "Failed to open file: " << std::string(filename.begin(), filename.end()) << std::endl;
+        DWORD error = GetLastError();
+        std::wcerr << L"Failed to open file: " << fullPath << std::endl;
+        std::cerr << "Error code: " << error << std::endl;
         return false;
     }
 
     // Get file size
     file.seekg(0, std::ios::end);
-    uint64_t fileSize = file.tellg(); // Changed to uint64_t
+    uint64_t fileSize = file.tellg();
     file.seekg(0, std::ios::beg);
 
-    std::cout << "Sending file size: " << fileSize << " bytes" << std::endl;
+    std::wcout << L"Sending file: " << fullPath << std::endl;
+    std::cout << "File size: " << fileSize << " bytes" << std::endl;
 
-    // Convert to network byte order
-    uint64_t fileSizeNetwork = htonll(fileSize); // Use htonll for 64-bit
-    if (send(clientSocket, reinterpret_cast<char *>(&fileSizeNetwork), sizeof(fileSizeNetwork), 0) != sizeof(fileSizeNetwork))
+    // Send file size
+    uint64_t fileSizeNetwork = htonll(fileSize);
+    if (send(clientSocket, reinterpret_cast<char*>(&fileSizeNetwork), sizeof(fileSizeNetwork), 0) != sizeof(fileSizeNetwork))
     {
         std::cerr << "Error sending file size" << std::endl;
         file.close();
         return false;
     }
 
-    // Wait for initial acknowledgment
+    // Wait for acknowledgment
     char ack[4];
     int retryCount = 0;
     const int maxRetries = 5;
     const int retryDelay = 1000;
+    const size_t chunkSize = 8192;
 
     while (retryCount < maxRetries)
     {
         int ackReceived = recv(clientSocket, ack, sizeof(ack), 0);
         if (ackReceived > 0 && std::string(ack, ackReceived) == "ACK")
-        {
             break;
-        }
         Sleep(retryDelay);
-        retryCount++;
+        if (++retryCount >= maxRetries)
+        {
+            std::cerr << "Failed to receive initial acknowledgment" << std::endl;
+            file.close();
+            return false;
+        }
     }
 
-    if (retryCount >= maxRetries)
-    {
-        std::cerr << "Failed to receive initial acknowledgment" << std::endl;
-        file.close();
-        return false;
-    }
-
-    // Send file data in chunks
-    const size_t chunkSize = MAX_PACKET_SIZE;
+    // Send file in chunks
     std::vector<char> buffer(chunkSize);
     uint64_t totalSent = 0;
 
     while (totalSent < fileSize)
     {
         size_t remaining = fileSize - totalSent;
-        size_t bytesToSend = std::min(remaining, chunkSize);
+        size_t bytesToRead = std::min(remaining, static_cast<uint64_t>(chunkSize));
+        
+        file.read(buffer.data(), bytesToRead);
+        size_t bytesRead = file.gcount();
 
-        file.read(buffer.data(), bytesToSend);
-        size_t actualRead = file.gcount();
-
-        retryCount = 0;
-        bool chunkSent = false;
-
-        while (retryCount < maxRetries && !chunkSent)
+        int bytesSent = send(clientSocket, buffer.data(), bytesRead, 0);
+        if (bytesSent <= 0)
         {
-            int bytesSent = send(clientSocket, buffer.data(), actualRead, 0);
-            if (bytesSent > 0)
-            {
-                totalSent += bytesSent;
-                chunkSent = true;
-
-                // Wait for acknowledgment
-                retryCount = 0;
-                bool ackReceived = false;
-
-                while (retryCount < maxRetries && !ackReceived)
-                {
-                    int result = recv(clientSocket, ack, sizeof(ack), 0);
-                    if (result > 0 && std::string(ack, result) == "ACK")
-                    {
-                        ackReceived = true;
-                    }
-                    else
-                    {
-                        Sleep(retryDelay);
-                        retryCount++;
-                    }
-                }
-
-                if (!ackReceived)
-                {
-                    std::cerr << "Failed to receive chunk acknowledgment" << std::endl;
-                    file.close();
-                    return false;
-                }
-
-                // Show progress
-                int percentComplete = static_cast<int>((totalSent * 100) / fileSize);
-                std::cout << "\rSending file: " << percentComplete << "% ("
-                          << totalSent << "/" << fileSize << " bytes)" << std::flush;
-
-                // Add delay for large files
-                if (fileSize > 1024 * 1024)
-                {
-                    Sleep(50);
-                }
-            }
-            else
-            {
-                Sleep(retryDelay);
-                retryCount++;
-            }
-        }
-
-        if (!chunkSent)
-        {
-            std::cerr << "Failed to send chunk after " << maxRetries << " retries" << std::endl;
+            std::cerr << "Error sending data. WSA Error: " << WSAGetLastError() << std::endl;
             file.close();
             return false;
         }
+
+        totalSent += bytesSent;
+
+        // Wait for chunk acknowledgment
+        if (recv(clientSocket, ack, sizeof(ack), 0) <= 0)
+        {
+            std::cerr << "Failed to receive chunk acknowledgment" << std::endl;
+            file.close();
+            return false;
+        }
+
+        // Show progress
+        int percentComplete = static_cast<int>((totalSent * 100) / fileSize);
+        std::cout << "\rProgress: " << percentComplete << "% (" 
+                  << totalSent << "/" << fileSize << " bytes)" << std::flush;
     }
 
-    std::cout << "\nFile sent successfully" << std::endl;
+    std::cout << "\nFile sent successfully: " << totalSent << " bytes" << std::endl;
     file.close();
     return true;
 }
@@ -687,27 +664,35 @@ bool ServerHandler::recordWebcam()
         return false;
     }
 
-    // Set socket to non-blocking mode
-    u_long mode = 1;
-    ioctlsocket(clientSock, FIONBIO, &mode);
+    // Get executable directory
+    char exePath[MAX_PATH];
+    GetModuleFileNameA(NULL, exePath, MAX_PATH);
+    std::string exeDir = std::string(exePath);
+    exeDir = exeDir.substr(0, exeDir.find_last_of("\\/"));
 
-    // Define video writer
+    // Set up video writer
     cv::VideoWriter videoWriter;
     int frameWidth = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH));
     int frameHeight = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
     int fps = 20;
-    std::string videoFilename = "recorded_cam.avi";
-    videoWriter.open(videoFilename, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), fps, cv::Size(frameWidth, frameHeight));
+    std::string fullPath = exeDir + "\\recorded_cam.avi";
+    
+    std::cout << "Recording to: " << fullPath << std::endl;
+    
+    videoWriter.open(fullPath, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 
+                    fps, cv::Size(frameWidth, frameHeight));
 
     if (!videoWriter.isOpened())
     {
-        std::cerr << "Error: Could not open video writer." << std::endl;
+        DWORD error = GetLastError();
+        std::cerr << "Error: Could not open video writer. Error code: " << error << std::endl;
         return false;
     }
 
     // Record video for 3 seconds
     int frameCount = 0;
     int maxFrames = fps * 3;
+    std::cout << "Recording " << maxFrames << " frames..." << std::endl;
 
     while (frameCount < maxFrames)
     {
@@ -715,7 +700,8 @@ bool ServerHandler::recordWebcam()
         cap >> frame;
         if (frame.empty())
         {
-            std::cerr << "Error: Could not capture frame." << std::endl;
+            std::cerr << "Error: Could not capture frame " << frameCount << std::endl;
+            videoWriter.release();
             return false;
         }
 
@@ -725,24 +711,23 @@ bool ServerHandler::recordWebcam()
         cv::imshow("Server - Recording", frame);
         char key = (char)cv::waitKey(1);
         if (key == 27)
+        {
+            std::cout << "Recording cancelled by user" << std::endl;
+            videoWriter.release();
+            cv::destroyWindow("Server - Recording");
             return false;
+        }
     }
 
     videoWriter.release();
     cv::destroyWindow("Server - Recording");
-    std::cout << "Video recorded successfully" << std::endl;
+    std::cout << "Video recorded successfully to: " << fullPath << std::endl;
 
     return true;
 }
 
 bool ServerHandler::takeWebcamShot()
 {
-    if (!cap.isOpened())
-    {
-        std::cerr << "Error: Webcam is not running. Call startWebcam first." << std::endl;
-        return false;
-    }
-
     cv::Mat frame;
     cap >> frame;
 
@@ -752,7 +737,13 @@ bool ServerHandler::takeWebcamShot()
         return false;
     }
 
-    std::string filename = "captured_cam.jpg";
+    // Get executable directory
+    char exePath[MAX_PATH];
+    GetModuleFileNameA(NULL, exePath, MAX_PATH);
+    std::string exeDir = std::string(exePath);
+    exeDir = exeDir.substr(0, exeDir.find_last_of("\\/"));
+
+    std::string filename = exeDir + "\\captured_cam.jpg";
     cv::imwrite(filename, frame);
     std::cout << "Webcam photo saved as: " << filename << std::endl;
     return true;
@@ -760,14 +751,24 @@ bool ServerHandler::takeWebcamShot()
 
 void ServerHandler::listFilesInDirectory(const std::wstring &outputFile)
 {
-    std::wofstream file(outputFile);
+    // Get executable directory
+    wchar_t exePath[MAX_PATH];
+    GetModuleFileNameW(NULL, exePath, MAX_PATH);
+    std::wstring exeDir = std::wstring(exePath);
+    exeDir = exeDir.substr(0, exeDir.find_last_of(L"\\/"));
+
+    std::wstring fullPath = exeDir + L"\\" + outputFile;
+    std::wofstream file(fullPath);
     if (!file)
     {
-        std::wcerr << L"Failed to open output file" << std::endl;
+        DWORD error = GetLastError();
+        std::wcerr << L"Failed to open output file: " << fullPath << std::endl;
+        std::wcerr << L"Error code: " << error << std::endl;
         return;
     }
 
-    for (const auto &entry : std::filesystem::directory_iterator("."))
+    // List files in executable directory
+    for (const auto &entry : std::filesystem::directory_iterator(exeDir))
     {
         file << entry.path().wstring() << std::endl;
     }
@@ -794,10 +795,27 @@ bool ServerHandler::removeFile(const std::wstring &filename)
 
 void ServerHandler::saveApplicationsToFile(const std::vector<ProcessInfo> &applications, const std::string &filename)
 {
-    std::ofstream file(filename);
+    // Get executable directory
+    char exePath[MAX_PATH];
+    GetModuleFileNameA(NULL, exePath, MAX_PATH);
+    std::string exeDir = std::string(exePath);
+    exeDir = exeDir.substr(0, exeDir.find_last_of("\\/"));
+
+    // Create absolute path
+    std::string fullPath = exeDir + "\\" + filename;
+    std::cout << "Writing to file: " << fullPath << std::endl;
+
+    // Get current directory for debugging
+    char currentDir[MAX_PATH];
+    GetCurrentDirectoryA(MAX_PATH, currentDir);
+    std::cout << "Current directory: " << currentDir << std::endl;
+
+    std::ofstream file(fullPath);
     if (!file.is_open())
     {
-        std::cerr << "Failed to open file: " << filename << std::endl;
+        DWORD error = GetLastError();
+        std::cerr << "Failed to open file: " << fullPath << std::endl;
+        std::cerr << "Error code: " << error << std::endl;
         return;
     }
 
@@ -806,15 +824,25 @@ void ServerHandler::saveApplicationsToFile(const std::vector<ProcessInfo> &appli
     {
         file << "PID: " << app.pid << ", Name: " << app.name << "\n";
     }
+    file.flush();
     file.close();
 }
 
 void ServerHandler::saveServicesToFile(const std::vector<ServiceInfo> &services, const std::string &filename)
 {
-    std::ofstream file(filename);
+    // Get executable directory
+    char exePath[MAX_PATH];
+    GetModuleFileNameA(NULL, exePath, MAX_PATH);
+    std::string exeDir = std::string(exePath);
+    exeDir = exeDir.substr(0, exeDir.find_last_of("\\/"));
+
+    std::string fullPath = exeDir + "\\" + filename;
+    std::ofstream file(fullPath);
     if (!file.is_open())
     {
-        std::cerr << "Failed to open file: " << filename << std::endl;
+        DWORD error = GetLastError();
+        std::cerr << "Failed to open file: " << fullPath << std::endl;
+        std::cerr << "Error code: " << error << std::endl;
         return;
     }
 
@@ -823,10 +851,20 @@ void ServerHandler::saveServicesToFile(const std::vector<ServiceInfo> &services,
     {
         file << "PID: " << svc.pid << ", Name: " << svc.name << "\n";
     }
+    file.flush();
     file.close();
 }
+
 void ServerHandler::takeScreenshot(const std::wstring &filename)
 {
+    // Get executable directory
+    wchar_t exePath[MAX_PATH];
+    GetModuleFileNameW(NULL, exePath, MAX_PATH);
+    std::wstring exeDir = std::wstring(exePath);
+    exeDir = exeDir.substr(0, exeDir.find_last_of(L"\\/"));
+
+    std::wstring fullPath = exeDir + L"\\" + filename;
+
     // Get the screen dimensions
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -844,7 +882,9 @@ void ServerHandler::takeScreenshot(const std::wstring &filename)
     Gdiplus::Bitmap bmp(bitmap, NULL);
     CLSID encoderClsid;
     GetEncoderClsid(L"image/jpeg", &encoderClsid);
-    bmp.Save(filename.c_str(), &encoderClsid);
+    bmp.Save(fullPath.c_str(), &encoderClsid);
+
+    std::wcout << L"Screenshot saved as: " << fullPath << std::endl;
 
     // Cleanup
     DeleteObject(bitmap);

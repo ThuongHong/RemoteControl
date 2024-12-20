@@ -1,9 +1,11 @@
 # Ignore everything
 *
 
-# Allow source files
-!/src/
-!/src/**
+# Allow source files and CMake config
+!src/
+!src/**
+!assets/
+!assets/**
 
 # Allow directories (needed to traverse directories)
 !*/

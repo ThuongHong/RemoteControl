@@ -9,7 +9,6 @@
 #include <conio.h>
 #include <locale>
 #include <codecvt>
-#include <opencv2/opencv.hpp>
 #include <winsock2.h>
 #include "gmail.h"
 #include <wx/wx.h>

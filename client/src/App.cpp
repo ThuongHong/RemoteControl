@@ -6,7 +6,7 @@ wxIMPLEMENT_APP(App);
 
 bool App::OnInit()
 {
-	RemoteControlDraft *mainFrame = new RemoteControlDraft("C++ GUI");
+	RemoteControlDraft *mainFrame = new RemoteControlDraft("Remote Control via Gmail");
 	mainFrame->SetClientSize(550, 400);
 	mainFrame->Center();
 

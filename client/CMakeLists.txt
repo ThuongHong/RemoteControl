@@ -55,17 +55,10 @@ set(wxWidgets_INCLUDE_DIRS "${WX_ROOT}/include")
 find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
 
-# Configure OpenCV
-find_package(OpenCV REQUIRED)
-if(NOT OpenCV_FOUND)
-    message(FATAL_ERROR "OpenCV not found")
-endif()
-
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CURL_INCLUDE_DIR}
     ${OPENSSL_INCLUDE_DIR}
-    ${OpenCV_INCLUDE_DIRS}
 )
 
 # Link libraries
@@ -75,7 +68,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     "${OPENSSL_LIB_DIR}/libssl.lib"
     "${OPENSSL_LIB_DIR}/libcrypto.lib"
     ${wxWidgets_LIBRARIES}
-    ${OpenCV_LIBS}
     
     # Windows system libraries
     Crypt32.lib
@@ -94,7 +86,19 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 # Asset paths
-set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
+set(ASSETS_DIR "${CMAKE_SOURCE_DIR}/assets")
+set(ASSETS_OUTPUT_DIR "${CMAKE_BINARY_DIR}/assets")
+
+# Copy assets to build directory
+add_custom_target(copy_assets ALL
+    COMMAND ${CMAKE_COMMAND} -E echo "Copying from ${ASSETS_DIR} to ${ASSETS_OUTPUT_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${ASSETS_OUTPUT_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${ASSETS_DIR}" "${ASSETS_OUTPUT_DIR}"
+    COMMENT "Copying assets to build directory"
+)
+
+# Make client depend on assets
+add_dependencies(${PROJECT_NAME} copy_assets)
 
 # Installation rules
 install(TARGETS ${PROJECT_NAME}
@@ -106,6 +110,7 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/assets"
     DESTINATION bin
     FILES_MATCHING 
     PATTERN "*.png"
+    PATTERN "*.ico"
 )
 
 # CPack Configuration

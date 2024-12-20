@@ -1,4 +1,3 @@
-// client.h
 #pragma once
 
 #include <string>

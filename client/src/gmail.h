@@ -1,5 +1,4 @@
-﻿// gmail.h
-#pragma once
+﻿#pragma once
 
 #include <iostream>
 #include <fstream>

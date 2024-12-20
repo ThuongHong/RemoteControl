@@ -1,4 +1,3 @@
-// http_listener.h
 #pragma once
 #include <string>
 #include <winsock2.h>

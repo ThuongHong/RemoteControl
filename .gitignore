@@ -4,7 +4,6 @@
 # Allow source files
 !/src/
 !/src/**
-!/lib/
 
 # Allow directories (needed to traverse directories)
 !*/

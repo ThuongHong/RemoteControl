@@ -1,4 +1,3 @@
-// client.cpp
 #include "Client.h"
 
 #ifndef ntohll

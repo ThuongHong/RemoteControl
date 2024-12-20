@@ -2,7 +2,6 @@
 #include <iostream>
 #include <sstream>
 
-// http_listener.cpp
 HttpListener::HttpListener(int port) : serverSocket(INVALID_SOCKET)
 {
     if (!initializeWinsock())

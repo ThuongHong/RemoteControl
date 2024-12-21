@@ -53,7 +53,7 @@ public:
     SOCKET acceptClient();
     bool sendMessage(SOCKET clientSocket, const std::string &message);
     bool sendFile(SOCKET clientSocket, const std::wstring &filename);
-    void sendFrame(SOCKET clientSocket, const cv::Mat &frame);
+    // void sendFrame(SOCKET clientSocket, const cv::Mat &frame);
     std::string receiveMessage(SOCKET clientSocket);
     void cleanup();
 
@@ -90,7 +90,7 @@ private:
     void initializeGdiplus();
     int GetEncoderClsid(const WCHAR *format, CLSID *pClsid);
     void saveBitmapToJpeg(HBITMAP hBitmap, const WCHAR *filename);
-    bool sendFrame(SOCKET clientSocket, cv::Mat &frame);
+    // bool sendFrame(SOCKET clientSocket, cv::Mat &frame);
     bool isClientConnected;
 };
 

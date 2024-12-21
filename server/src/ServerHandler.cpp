@@ -260,155 +260,156 @@ bool ServerHandler::sendFile(SOCKET clientSocket, const std::wstring &filename)
 //     return true;
 // }
 
-bool ServerHandler::sendFrame(SOCKET clientSocket, cv::Mat &frame)
-{
-    try
-    {
-        if (frame.empty() || clientSocket == INVALID_SOCKET)
-        {
-            std::cerr << "Invalid frame or socket" << std::endl;
-            return false;
-        }
+// bool ServerHandler::sendFrame(SOCKET clientSocket, cv::Mat &frame)
+// {
+//     try
+//     {
+//         if (frame.empty() || clientSocket == INVALID_SOCKET)
+//         {
+//             std::cerr << "Invalid frame or socket" << std::endl;
+//             return false;
+//         }
 
-        // Encode frame
-        std::vector<uchar> buffer;
-        if (!cv::imencode(".jpg", frame, buffer, {cv::IMWRITE_JPEG_QUALITY, 80}))
-        {
-            std::cerr << "Failed to encode frame" << std::endl;
-            return false;
-        }
+//         // Encode frame
+//         std::vector<uchar> buffer;
+//         if (!cv::imencode(".jpg", frame, buffer, {cv::IMWRITE_JPEG_QUALITY, 80}))
+//         {
+//             std::cerr << "Failed to encode frame" << std::endl;
+//             return false;
+//         }
 
-        // Send frame size
-        int frameSize = static_cast<int>(buffer.size());
-        int frameSizeNetworkOrder = htonl(frameSize);
+//         // Send frame size
+//         int frameSize = static_cast<int>(buffer.size());
+//         int frameSizeNetworkOrder = htonl(frameSize);
 
-        // Wait for socket to be ready
-        fd_set writeSet;
-        struct timeval timeout;
-        timeout.tv_sec = 5; // Increase timeout to 5 seconds
-        timeout.tv_usec = 0;
+//         // Wait for socket to be ready
+//         fd_set writeSet;
+//         struct timeval timeout;
+//         timeout.tv_sec = 5; // Increase timeout to 5 seconds
+//         timeout.tv_usec = 0;
 
-        FD_ZERO(&writeSet);
-        FD_SET(clientSocket, &writeSet);
+//         FD_ZERO(&writeSet);
+//         FD_SET(clientSocket, &writeSet);
 
-        if (select(0, NULL, &writeSet, NULL, &timeout) > 0)
-        {
-            if (send(clientSocket, reinterpret_cast<char *>(&frameSizeNetworkOrder),
-                     sizeof(frameSizeNetworkOrder), 0) == SOCKET_ERROR)
-            {
-                if (WSAGetLastError() != WSAEWOULDBLOCK)
-                {
-                    std::cerr << "Error sending frame size: " << WSAGetLastError() << std::endl;
-                    return false;
-                }
-            }
-        }
+//         if (select(0, NULL, &writeSet, NULL, &timeout) > 0)
+//         {
+//             if (send(clientSocket, reinterpret_cast<char *>(&frameSizeNetworkOrder),
+//                      sizeof(frameSizeNetworkOrder), 0) == SOCKET_ERROR)
+//             {
+//                 if (WSAGetLastError() != WSAEWOULDBLOCK)
+//                 {
+//                     std::cerr << "Error sending frame size: " << WSAGetLastError() << std::endl;
+//                     return false;
+//                 }
+//             }
+//         }
 
-        // Wait for acknowledgment from client with retry
-        char ack[4];
-        int ackReceived = 0;
-        int retryCount = 0;
-        const int maxRetries = 5;
+//         // Wait for acknowledgment from client with retry
+//         char ack[4];
+//         int ackReceived = 0;
+//         int retryCount = 0;
+//         const int maxRetries = 5;
 
-        while (retryCount < maxRetries)
-        {
-            ackReceived = recv(clientSocket, ack, sizeof(ack), 0);
-            if (ackReceived > 0 && std::string(ack, ackReceived) == "ACK")
-            {
-                break;
-            }
-            else
-            {
-                retryCount++;
-                Sleep(1000); // Wait 1 second before retrying
-            }
-        }
+//         while (retryCount < maxRetries)
+//         {
+//             ackReceived = recv(clientSocket, ack, sizeof(ack), 0);
+//             if (ackReceived > 0 && std::string(ack, ackReceived) == "ACK")
+//             {
+//                 break;
+//             }
+//             else
+//             {
+//                 retryCount++;
+//                 Sleep(1000); // Wait 1 second before retrying
+//             }
+//         }
 
-        if (retryCount >= maxRetries)
-        {
-            std::cerr << "Failed to receive acknowledgment for frame size from client" << std::endl;
-            return false;
-        }
+//         if (retryCount >= maxRetries)
+//         {
+//             std::cerr << "Failed to receive acknowledgment for frame size from client" << std::endl;
+//             return false;
+//         }
 
-        // Send frame data in chunks with retry
-        const size_t chunkSize = MAX_PACKET_SIZE;
-        size_t bytesSent = 0;
-        retryCount = 0;
+//         // Send frame data in chunks with retry
+//         const size_t chunkSize = MAX_PACKET_SIZE;
+//         size_t bytesSent = 0;
+//         retryCount = 0;
 
-        while (bytesSent < buffer.size() && retryCount < maxRetries)
-        {
-            size_t remainingBytes = buffer.size() - bytesSent;
-            size_t bytesToSend = std::min(remainingBytes, chunkSize);
+//         while (bytesSent < buffer.size() && retryCount < maxRetries)
+//         {
+//             size_t remainingBytes = buffer.size() - bytesSent;
+//             size_t bytesToSend = std::min(remainingBytes, chunkSize);
 
-            // Wait for socket to be ready
-            FD_ZERO(&writeSet);
-            FD_SET(clientSocket, &writeSet);
+//             // Wait for socket to be ready
+//             FD_ZERO(&writeSet);
+//             FD_SET(clientSocket, &writeSet);
 
-            if (select(0, NULL, &writeSet, NULL, &timeout) > 0)
-            {
-                int result = send(clientSocket,
-                                  reinterpret_cast<char *>(buffer.data() + bytesSent),
-                                  static_cast<int>(bytesToSend),
-                                  0);
+//             if (select(0, NULL, &writeSet, NULL, &timeout) > 0)
+//             {
+//                 int result = send(clientSocket,
+//                                   reinterpret_cast<char *>(buffer.data() + bytesSent),
+//                                   static_cast<int>(bytesToSend),
+//                                   0);
 
-                if (result == SOCKET_ERROR)
-                {
-                    if (WSAGetLastError() == WSAEWOULDBLOCK)
-                    {
-                        Sleep(50); // Wait before retry
-                        retryCount++;
-                        continue;
-                    }
-                    std::cerr << "Error sending frame data: " << WSAGetLastError() << std::endl;
-                    return false;
-                }
+//                 if (result == SOCKET_ERROR)
+//                 {
+//                     if (WSAGetLastError() == WSAEWOULDBLOCK)
+//                     {
+//                         Sleep(50); // Wait before retry
+//                         retryCount++;
+//                         continue;
+//                     }
+//                     std::cerr << "Error sending frame data: " << WSAGetLastError() << std::endl;
+//                     return false;
+//                 }
 
-                bytesSent += result;
-                retryCount = 0; // Reset retry count on successful send
+//                 bytesSent += result;
+//                 retryCount = 0; // Reset retry count on successful send
 
-                // Wait for acknowledgment from client with retry
-                ackReceived = 0;
-                while (retryCount < maxRetries)
-                {
-                    ackReceived = recv(clientSocket, ack, sizeof(ack), 0);
-                    if (ackReceived > 0 && std::string(ack, ackReceived) == "ACK")
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        retryCount++;
-                        Sleep(1000); // Wait 1 second before retrying
-                    }
-                }
+//                 // Wait for acknowledgment from client with retry
+//                 ackReceived = 0;
+//                 while (retryCount < maxRetries)
+//                 {
+//                     ackReceived = recv(clientSocket, ack, sizeof(ack), 0);
+//                     if (ackReceived > 0 && std::string(ack, ackReceived) == "ACK")
+//                     {
+//                         break;
+//                     }
+//                     else
+//                     {
+//                         retryCount++;
+//                         Sleep(1000); // Wait 1 second before retrying
+//                     }
+//                 }
 
-                if (retryCount >= maxRetries)
-                {
-                    std::cerr << "Failed to receive acknowledgment for frame data from client" << std::endl;
-                    return false;
-                }
-            }
-            else
-            {
-                retryCount++;
-                Sleep(50);
-            }
-        }
+//                 if (retryCount >= maxRetries)
+//                 {
+//                     std::cerr << "Failed to receive acknowledgment for frame data from client" << std::endl;
+//                     return false;
+//                 }
+//             }
+//             else
+//             {
+//                 retryCount++;
+//                 Sleep(50);
+//             }
+//         }
 
-        if (retryCount >= maxRetries)
-        {
-            std::cerr << "Max retries reached while sending frame" << std::endl;
-            return false;
-        }
+//         if (retryCount >= maxRetries)
+//         {
+//             std::cerr << "Max retries reached while sending frame" << std::endl;
+//             return false;
+//         }
 
-        return true;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Exception in sendFrame: " << e.what() << std::endl;
-        return false;
-    }
-}
+//         return true;
+//     }
+//     catch (const std::exception &e)
+//     {
+//         std::cerr << "Exception in sendFrame: " << e.what() << std::endl;
+//         return false;
+//     }
+// }
+
 std::string ServerHandler::receiveMessage(SOCKET clientSocket)
 {
     char buffer[1024];

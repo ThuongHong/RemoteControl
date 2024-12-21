@@ -1,5 +1,5 @@
 #include "App.h"
-#include "RemoteControlDraft.h"
+#include "RemoteControlFrame.h"
 #include <wx/wx.h>
 
 wxIMPLEMENT_APP(App);
@@ -8,7 +8,7 @@ bool App::OnInit()
 {
 	wxInitAllImageHandlers();
 
-	RemoteControlDraft *mainFrame = new RemoteControlDraft("Remote Control via Gmail");
+	RemoteControlFrame *mainFrame = new RemoteControlFrame("Remote Control via Gmail");
 	mainFrame->SetClientSize(550, 400);
 	mainFrame->Center();
 

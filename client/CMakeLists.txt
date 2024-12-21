@@ -24,8 +24,8 @@ set(SOURCE_FILES
     src/HTTPListener.cpp
     src/App.cpp
     src/App.h
-    src/RemoteControlDraft.cpp
-    src/RemoteControlDraft.h
+    src/RemoteControlFrame.cpp
+    src/RemoteControlFrame.h
     src/Panels.h
     src/Panels.cpp
 )

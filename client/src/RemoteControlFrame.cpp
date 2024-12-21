@@ -1,6 +1,6 @@
-#include "RemoteControlDraft.h"
+#include "RemoteControlFrame.h"
 
-RemoteControlDraft::RemoteControlDraft(const wxString &title) : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxDefaultSize,
+RemoteControlFrame::RemoteControlFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxDefaultSize,
 																		wxDEFAULT_FRAME_STYLE & ~wxMINIMIZE_BOX & ~wxMAXIMIZE_BOX & ~wxRESIZE_BORDER)
 {
 	wxInitAllImageHandlers();
@@ -53,7 +53,7 @@ RemoteControlDraft::RemoteControlDraft(const wxString &title) : wxFrame(nullptr,
 	this->SetSizer(sizerMain);
 }
 
-void RemoteControlDraft::BindControl(wxScopedPtr<Client> &client)
+void RemoteControlFrame::BindControl(wxScopedPtr<Client> &client)
 {
 	Bind(wxEVT_CLOSE_WINDOW, [this, &client](wxCloseEvent &evt)
 		 {
@@ -61,16 +61,10 @@ void RemoteControlDraft::BindControl(wxScopedPtr<Client> &client)
 		evt.Skip(); });
 }
 
-bool RemoteControlDraft::CreateOAuth2Handler(const std::string &client_id, const std::string &client_secret, const std::string &redirect_uri, wxScopedPtr<OAuth2Handler> &oAuth2Handler)
+bool RemoteControlFrame::CreateOAuth2Handler(const std::string &client_id, const std::string &client_secret, const std::string &redirect_uri, wxScopedPtr<OAuth2Handler> &oAuth2Handler)
 {
 	oAuth2Handler.reset(new OAuth2Handler(client_id, client_secret, redirect_uri));
 	if (oAuth2Handler)
 		return true;
 	return false;
 }
-
-void RemoteControlDraft::OnClose(wxScopedPtr<Client> &client)
-{
-}
-
-// Todo: OnButtonExitClicked -> Close socket, OnPanelAuthorizationEventListened -> Listen to command,

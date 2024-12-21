@@ -7,10 +7,10 @@
 #include "panels.h"
 #include "gmail.h"
 
-class RemoteControlDraft : public wxFrame
+class RemoteControlFrame : public wxFrame
 {
 public:
-	RemoteControlDraft(const wxString &title);
+	RemoteControlFrame(const wxString &title);
 	void BindControl(wxScopedPtr<Client> &client);
 
 private:
@@ -48,5 +48,4 @@ private:
 	wxScopedPtr<GmailReceiver> gmailReceiver;
 
 	bool CreateOAuth2Handler(const std::string &client_id, const std::string &client_secret, const std::string &redirect_uri, wxScopedPtr<OAuth2Handler> &oAuth2Handler);
-	void OnClose(wxScopedPtr<Client> &client);
 };

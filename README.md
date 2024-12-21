@@ -1,6 +1,20 @@
 # Remote Control using Gmail
 
-## Prerequisites
+## Table of Contents
+- [Requirements](#requirements)
+  - [Client](#client)
+    - [cURL](#curl)
+    - [OpenSSL](#openssl)
+    - [wxWidgets](#wxwidgets)
+  - [Server](#server)
+    - [OpenCV](#opencv)
+- [Setup](#setup)
+  - [Client Setup](#client-setup)
+  - [Server Setup](#server-setup)
+- [Run Code](#run-code)
+- [License](#license)
+
+## 1. Prerequisites
 * **C++20**
 * **CMake 3.24** or later
 
@@ -14,7 +28,7 @@
 * GDI+  (Built-in library in Windows)
 * OpenCV
 
-## Installation
+## 2. Installation
 Follow these steps to build the project from source.
 
 
@@ -22,8 +36,8 @@ First, clone this repo:
 ```bash 
 git clone https://github.com/ThuongHong/RemoteControl.git
 ```
-# Client setup
-## curl
+### Client setup
+#### curl
 * Clone the CURL repository:
 ```bash
 git clone https://github.com/curl/curl.git 
@@ -45,22 +59,22 @@ git clone https://github.com/curl/curl.git
     * Right-click on **INSTALL** and select **Build**.
     * Repeat the above steps for the **Debug** configuration.
 
-## OpenSSL:
+#### OpenSSL:
 * Download **Win64 OpenSSL** MSI file from [Shining Line Productions](https://slproweb.com/products/Win32OpenSSL.html).
 * Extract the folder and place it in the `/lib`.
 
-## wxWidgets
+#### wxWidgets
 * Download wxWidgets ZIP from [wxWidgets Downloads](https://www.wxwidgets.org/downloads/).
 
 
 * Unzip the folder and place it in the ```/lib```
 
-# Server setup
-## OpenCV
+### Server setup
+#### OpenCV
 * Download OpenCV from [OpenCV Releases](https://opencv.org/releases/).
 * Unzip the folder and place it in ```server/lib```
 
-# Run code (In Visual Studio 2022):
+## 3. Run code (In Visual Studio 2022):
 * Open the ```client``` or ```server``` folder in Visual Studio.
 * Open ```CMakeLists.txt```and press **Ctrl+S** to configure the project.
 * Build the project:
@@ -69,6 +83,6 @@ git clone https://github.com/curl/curl.git
     * **Shift+F5**: Run with Debug configuration.
 
 
-## License
+## 4. License
 
 [MIT](https://choosealicense.com/licenses/mit/)

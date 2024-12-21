@@ -11,15 +11,18 @@
 * wxWidgets
 
 **Libraries for Server:**
-* GDI+
+* GDI+  (Built-in library in Windows)
 * OpenCV
 
 ## Installation
+Follow these steps to build the project from source.
+
+
 First, clone this repo:
 ```bash 
 git clone https://github.com/ThuongHong/RemoteControl.git
 ```
-# Client
+# Client setup
 ## curl
 * Clone the CURL repository:
 ```bash
@@ -50,26 +53,14 @@ git clone https://github.com/curl/curl.git
 * Download wxWidgets ZIP from [wxWidgets Downloads](https://www.wxwidgets.org/downloads/).
 
 
-* Unzip the folder and place it in a location of your choice.
-* Set up the wxWidgets path in Windows environment variables:
-    * Open **Environment Variables**.
-    * In **System variables**, click **New**:
-        * **Varialbe name**: WXWIN
-        * **Variable value**: ```<your_path>\WxWidget```
-    * Confirm by clicking OK to save changes.
+* Unzip the folder and place it in the ```/lib```
 
-# Server
+# Server setup
 ## OpenCV
 * Download OpenCV from [OpenCV Releases](https://opencv.org/releases/).
-* Unzip the folder and place it in a suitable location.
-* Set up the OpenCV path in Windows environment variables:
-    * Open **Environment Variables**.
-    * Under **Path**, click **New** and add:
-        * ```<your_path>\opencv\build\x64\vc16\bin```
-        * ```<your_path>\opencv\build\x64\vc16\lib```
-    * Confirm by clicking OK to save changes.
+* Unzip the folder and place it in ```server/lib```
 
-### Run code (In Visual Studio 2022):
+# Run code (In Visual Studio 2022):
 * Open the ```client``` or ```server``` folder in Visual Studio.
 * Open ```CMakeLists.txt```and press **Ctrl+S** to configure the project.
 * Build the project:

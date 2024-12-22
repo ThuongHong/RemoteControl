@@ -274,13 +274,13 @@ bool Client::receiveFile(const std::wstring &filename)
     std::cout << "Expecting file size: " << fileSize << " bytes" << std::endl;
 
     // Send ACK for file size
-    const char *ack = "ACK";
-    if (send(server_socket_, ack, strlen(ack), 0) <= 0)
-    {
-        std::cerr << "Failed to send ACK for file size" << std::endl;
-        file.close();
-        return false;
-    }
+    //const char *ack = "ACK";
+    //if (send(server_socket_, ack, strlen(ack), 0) <= 0)
+    //{
+    //    std::cerr << "Failed to send ACK for file size" << std::endl;
+    //    file.close();
+    //    return false;
+    //}
 
     // Receive file in chunks
     std::vector<char> buffer(MAX_PACKET_SIZE);
@@ -293,39 +293,39 @@ bool Client::receiveFile(const std::wstring &filename)
         size_t chunkSize = (((remaining) < ((uint64_t)MAX_PACKET_SIZE)) ? (remaining) : ((uint64_t)MAX_PACKET_SIZE));
 
         bytesReceived = recv(server_socket_, buffer.data(), chunkSize, 0);
-        if (bytesReceived <= 0)
-        {
-            int error = WSAGetLastError();
-            if (error == WSAETIMEDOUT)
-            {
-                std::cerr << "Connection timed out" << std::endl;
-            }
-            else if (error == WSAECONNRESET)
-            {
-                std::cerr << "Connection reset by peer" << std::endl;
-            }
-            else
-            {
-                std::cerr << "Error receiving data: " << error << std::endl;
-            }
+        //if (bytesReceived <= 0)
+        //{
+        //    int error = WSAGetLastError();
+        //    if (error == WSAETIMEDOUT)
+        //    {
+        //        std::cerr << "Connection timed out" << std::endl;
+        //    }
+        //    else if (error == WSAECONNRESET)
+        //    {
+        //        std::cerr << "Connection reset by peer" << std::endl;
+        //    }
+        //    else
+        //    {
+        //        std::cerr << "Error receiving data: " << error << std::endl;
+        //    }
 
-            // Try to resend last ACK in case it was lost
-            send(server_socket_, ack, strlen(ack), 0);
-            Sleep(1000);
-            file.close();
-            return false;
-        }
+        //    // Try to resend last ACK in case it was lost
+        //    send(server_socket_, ack, strlen(ack), 0);
+        //    Sleep(1000);
+        //    file.close();
+        //    return false;
+        //}
 
         file.write(buffer.data(), bytesReceived);
         totalReceived += bytesReceived;
 
         // Send ACK for chunk
-        if (send(server_socket_, ack, strlen(ack), 0) <= 0)
+        /*if (send(server_socket_, ack, strlen(ack), 0) <= 0)
         {
             std::cerr << "Failed to send chunk ACK" << std::endl;
             file.close();
             return false;
-        }
+        }*/
 
         // Show progress
         int progress = static_cast<int>((totalReceived * 100) / fileSize);

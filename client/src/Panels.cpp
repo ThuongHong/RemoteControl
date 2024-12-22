@@ -591,7 +591,8 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer *panelExplorer, std::stri
 		{
 			// explore app
 			panelExplorer->ReconstructTable(0);
-			if (panelExplorer->PopulateTableFromFile("received\\apps_list.txt", 0))
+			std::wstring dir = L"received\\apps_list.txt";
+			if (panelExplorer->PopulateTableFromFile(dir, 0))
 			{
 				this->Hide();
 				panelExplorer->Show();
@@ -623,7 +624,8 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer *panelExplorer, std::stri
 		{
 			// explore service
 			panelExplorer->ReconstructTable(1);
-			if (panelExplorer->PopulateTableFromFile("received\\services_list.txt", 1))
+			std::wstring dir = L"received\\services_list.txt";
+			if (panelExplorer->PopulateTableFromFile(dir, 1))
 			{
 				this->Hide();
 				panelExplorer->Show();
@@ -655,7 +657,8 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer *panelExplorer, std::stri
 		{
 			// explore file
 			panelExplorer->ReconstructTable(2);
-			if (panelExplorer->PopulateTableFromFile("received\\files_list.txt", 2))
+			std::wstring dir = L"received\\files_list.txt";
+			if (panelExplorer->PopulateTableFromFile(dir, 2))
 			{
 				this->Hide();
 				panelExplorer->Show();
@@ -708,7 +711,7 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer *panelExplorer, std::stri
 		}
 	case 5:
 		// shut down
-		body = "shut down";
+		body = "shutdown";
 		break;
 	}
 
@@ -845,7 +848,7 @@ void PanelExplorer::CreateSizer()
 	this->SetSizer(MainSizer);
 }
 
-bool PanelExplorer::PopulateTableFromFile(const std::string &filePath, int format)
+bool PanelExplorer::PopulateTableFromFile(const std::wstring &filePath, int format)
 {
 	std::ifstream file(filePath);
 	table->DeleteAllItems();
@@ -938,16 +941,20 @@ void PanelExplorer::OnButtonReturnClicked(wxPanel *desPanel)
 
 void PanelExplorer::OnTimer(wxTimerEvent &evt)
 {
+	std::wstring dir;
 	switch (format_)
 	{
 	case 0:
-		PopulateTableFromFile("apps_list.txt", format_);
+		dir = L"received\\apps_list.txt";
+		PopulateTableFromFile(dir, format_);
 		break;
 	case 1:
-		PopulateTableFromFile("services_list.txt", format_);
+		dir = L"received\\services_list.txt";
+		PopulateTableFromFile(dir, format_);
 		break;
 	case 2:
-		PopulateTableFromFile("files_list.txt", format_);
+		dir = L"received\\files_list.txt";
+		PopulateTableFromFile(dir, format_);
 		break;
 	}
 	Timer->Stop();

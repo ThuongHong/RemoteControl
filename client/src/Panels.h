@@ -90,7 +90,7 @@ class PanelExplorer : public wxPanel
 {
 public:
 	PanelExplorer(wxWindow *parent, int &processID);
-	bool PopulateTableFromFile(const std::string &filePath, int format);
+	bool PopulateTableFromFile(const std::wstring &filePath, int format);
 	void BindControl(wxPanel *desPanel, int &processID, std::string &filename, wxScopedPtr<GmailSender> &gmailSender);
 	void ReconstructTable(int format);
 

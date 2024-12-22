@@ -135,9 +135,9 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         }
         else if (messageContent.substr(0, 15) == "take screenshot")
         {
-            if (receiveFile(L"screenshot.jpeg"))
+            if (receiveFile(L"screenshot.jpg"))
             {
-                openFile(L"screenshot.jpeg");
+                openFile(L"screenshot.jpg");
             }
         }
         else if (messageContent.substr(0, 10) == "list files")
@@ -149,9 +149,9 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         }
         else if (messageContent.substr(0, 3) == "get")
         {
-            std::string extension = messageContent.substr(messageContent.find("."));
-            std::wstring wextension(extension.begin(), extension.end());
-            std::wstring wfilename = L"received_file" + wextension;
+            // std::string extension = messageContent.substr(messageContent.find("."));
+            // std::wstring wextension(extension.begin(), extension.end());
+            std::wstring wfilename = L"received_file.txt";
             if (receiveFile(wfilename))
             {
                 openFile(wfilename);
@@ -232,18 +232,30 @@ bool Client::connectToServer(const char *ipAddress, int port)
 
 bool Client::receiveFile(const std::wstring &filename)
 {
-    // Get executable directory
     wchar_t exePath[MAX_PATH];
     GetModuleFileNameW(NULL, exePath, MAX_PATH);
     std::wstring exeDir = std::wstring(exePath);
     exeDir = exeDir.substr(0, exeDir.find_last_of(L"\\/"));
 
-    // Create received files directory
+    // Create received files directory with full path
     std::wstring dirPath = exeDir + L"\\received";
+
     if (!std::filesystem::exists(dirPath))
     {
-        std::filesystem::create_directory(dirPath);
+        if (!std::filesystem::create_directories(dirPath))
+        {
+            std::wcerr << L"Failed to create directory: " << dirPath << std::endl;
+            return false;
+        }
     }
+
+    // Set full permissions
+    std::filesystem::permissions(
+        dirPath,
+        std::filesystem::perms::owner_all |
+            std::filesystem::perms::group_all |
+            std::filesystem::perms::others_all,
+        std::filesystem::perm_options::replace);
 
     // Build full path for saving
     std::wstring fullPath = dirPath + L"\\" + filename;
@@ -274,8 +286,8 @@ bool Client::receiveFile(const std::wstring &filename)
     std::cout << "Expecting file size: " << fileSize << " bytes" << std::endl;
 
     // Send ACK for file size
-    //const char *ack = "ACK";
-    //if (send(server_socket_, ack, strlen(ack), 0) <= 0)
+    // const char *ack = "ACK";
+    // if (send(server_socket_, ack, strlen(ack), 0) <= 0)
     //{
     //    std::cerr << "Failed to send ACK for file size" << std::endl;
     //    file.close();
@@ -293,21 +305,21 @@ bool Client::receiveFile(const std::wstring &filename)
         size_t chunkSize = (((remaining) < ((uint64_t)MAX_PACKET_SIZE)) ? (remaining) : ((uint64_t)MAX_PACKET_SIZE));
 
         bytesReceived = recv(server_socket_, buffer.data(), chunkSize, 0);
-        //if (bytesReceived <= 0)
+        // if (bytesReceived <= 0)
         //{
-        //    int error = WSAGetLastError();
-        //    if (error == WSAETIMEDOUT)
-        //    {
-        //        std::cerr << "Connection timed out" << std::endl;
-        //    }
-        //    else if (error == WSAECONNRESET)
-        //    {
-        //        std::cerr << "Connection reset by peer" << std::endl;
-        //    }
-        //    else
-        //    {
-        //        std::cerr << "Error receiving data: " << error << std::endl;
-        //    }
+        //     int error = WSAGetLastError();
+        //     if (error == WSAETIMEDOUT)
+        //     {
+        //         std::cerr << "Connection timed out" << std::endl;
+        //     }
+        //     else if (error == WSAECONNRESET)
+        //     {
+        //         std::cerr << "Connection reset by peer" << std::endl;
+        //     }
+        //     else
+        //     {
+        //         std::cerr << "Error receiving data: " << error << std::endl;
+        //     }
 
         //    // Try to resend last ACK in case it was lost
         //    send(server_socket_, ack, strlen(ack), 0);

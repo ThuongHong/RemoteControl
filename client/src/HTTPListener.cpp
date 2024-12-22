@@ -1,6 +1,6 @@
-#include "HTTPListener.h"
 #include <iostream>
 #include <sstream>
+#include "HTTPListener.h"
 
 HttpListener::HttpListener(int port) : serverSocket(INVALID_SOCKET)
 {

@@ -3,8 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <curl/curl.h>
-#include "json.hpp"
 #include <vector>
+#include "json.hpp"
 
 class OAuth2Handler
 {

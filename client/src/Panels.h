@@ -2,12 +2,12 @@
 #include <wx/wx.h>
 #include <wx/timer.h>
 #include <wx/webview.h>
-#include "Client.h"
+#include <wx/listctrl.h>
+#include <curl/curl.h>
 #include <memory>
 #include <regex>
+#include "Client.h"
 #include "HTTPListener.h"
-#include <curl/curl.h>
-#include <wx/listctrl.h>
 
 class PanelLogin : public wxPanel
 {
@@ -24,14 +24,7 @@ private:
 	wxStaticText *TextMem2;
 	wxStaticText *TextMem3;
 	wxButton *ButtonLogin;
-	wxImage Image;
 	wxStaticBitmap *Logo;
-	wxArrayString roles;
-
-	wxBoxSizer *MainSizer;
-	wxBoxSizer *SubSizer1;
-	wxBoxSizer *SubSizer2;
-	wxBoxSizer *SubSizer3;
 
 	void Create(wxString description, wxImage image);
 	void Set(wxFont headerFont, wxFont mainFont, wxBitmap bitmap);
@@ -61,13 +54,6 @@ private:
 	wxTextCtrl *InputFieldIP;
 	wxTextCtrl *InputFieldPort;
 	wxButton *ButtonConfirm;
-	wxArrayString roles;
-
-	wxBoxSizer *MainSizer;
-	wxBoxSizer *SubSizer1;
-	wxBoxSizer *SubSizer2;
-	wxBoxSizer *SubSizer3;
-	wxBoxSizer *SubSizer4;
 
 	void Create(wxString description);
 	void Set(wxFont headerFont, wxFont mainFont);
@@ -100,9 +86,7 @@ private:
 
 	wxListCtrl *table;
 	wxButton *ButtonAction;
-	wxButton *ButtonReturn;
-	wxBoxSizer *MainSizer;
-	wxBoxSizer *SubSizer;
+	wxButton* ButtonReturn;
 	wxTimer *Timer;
 
 	void Create();
@@ -122,7 +106,6 @@ public:
 private:
 	wxWindow *parent_;
 
-	wxImage Image;
 	wxStaticText *TextTitle;
 	wxRadioBox *Features;
 	wxRadioBox *OptionsAppSvc;
@@ -134,11 +117,6 @@ private:
 	wxTextCtrl *InputFieldProcessID;
 	wxTextCtrl *InputFieldAppSvcName;
 	wxTextCtrl *InputFieldFileName;
-
-	wxBoxSizer *MainSizer;
-	wxBoxSizer *SubSizer1;
-	wxBoxSizer *SubSizer2;
-	wxBoxSizer *SubSizer3;
 
 	void Create(wxImage image);
 	void Set(wxFont headerFont, wxFont mainFont);
@@ -160,15 +138,11 @@ public:
 private:
 	wxWindow *parent_;
 
-	wxImage Image;
 	wxStaticText *TextTitle;
 	wxButton *ButtonExit;
 	wxStaticBitmap *ImageDisplay;
 	Client *m_client;
 	wxTextCtrl *inputMessage;
-
-	wxBoxSizer *MainSizer;
-	wxBoxSizer *SubSizer1;
 
 	void Create(wxImage image);
 	void Set(wxFont headerFont, wxFont mainFont);

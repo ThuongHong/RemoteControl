@@ -9,8 +9,8 @@
 #include <locale>
 #include <codecvt>
 #include <winsock2.h>
-#include "gmail.h"
 #include <wx/wx.h>
+#include "gmail.h"
 
 #pragma comment(lib, "Ws2_32.lib") // Link Winsock library
 

@@ -3,9 +3,9 @@
 RemoteControlFrame::RemoteControlFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxDefaultSize,
 																		wxDEFAULT_FRAME_STYLE & ~wxMINIMIZE_BOX & ~wxMAXIMIZE_BOX & ~wxRESIZE_BORDER)
 {
+	// Allow wxApp to load images
 	wxInitAllImageHandlers();
 
-	// Meta Data
 	wxString description("Our program allows you to control computers through Gmail. Send commands, execute tasks, all from your Gmail inbox.");
 	wxFont headerFont(35, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Impact"); // Unispace, Impact
 	wxFont mainFont(11, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
@@ -15,24 +15,25 @@ RemoteControlFrame::RemoteControlFrame(const wxString &title) : wxFrame(nullptr,
 	icon = icon.Scale(50, 50, wxIMAGE_QUALITY_HIGH);
 	wxBitmap bitmap(icon);
 
+	// Create OAuth Handler
 	CreateOAuth2Handler(client_id, client_secret, redirect_uri, oAuth2Handler);
 
-	/*Create Panel*/
+	// Create Panel
 	panelLogin = new PanelLogin(this, description, image, headerFont, mainFont, bitmap);
 	panelRoles = new PanelRoles(this, description, headerFont, mainFont, bitmap);
 	panelSender = new PanelSender(this, image, headerFont, mainFont);
 	panelReceiver = new PanelReceiver(this, image, headerFont, mainFont, m_statusText);
 	panelExplorer = new PanelExplorer(this, processID);
-
 	m_statusText = new wxStaticText(panelReceiver, wxID_ANY, "Initializing...");
-	m_statusText->SetFont(processFont);
 
-	// panelLogin->Hide();
+	// Set
+	m_statusText->SetFont(processFont);
 	panelRoles->Hide();
 	panelSender->Hide();
 	panelReceiver->Hide();
 	panelExplorer->Hide();
 
+	// Bind event
 	panelLogin->BindControl(panelRoles, redirect_uri, client_id, access_token, refresh_token, oAuth2Handler);
 	panelRoles->BindControl(panelSender, panelReceiver, ip_address, port, receive_email, send_email, m_statusText, client, access_token, gmailSender, tasks, gmailReceiver);
 	panelSender->BindControl(panelExplorer, file_name, app_svc_name, processID, receive_email, gmailSender);
@@ -42,8 +43,8 @@ RemoteControlFrame::RemoteControlFrame(const wxString &title) : wxFrame(nullptr,
 
 	panelReceiver->CreateSizer(m_statusText);
 
-	/* Create Sizer */
-	sizerMain = new wxBoxSizer(wxVERTICAL);
+	// Create Sizer
+	wxBoxSizer* sizerMain = new wxBoxSizer(wxVERTICAL);
 	sizerMain->Add(panelLogin, 1, wxEXPAND);
 	sizerMain->Add(panelRoles, 1, wxEXPAND);
 	sizerMain->Add(panelSender, 1, wxEXPAND);

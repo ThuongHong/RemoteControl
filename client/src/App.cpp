@@ -1,6 +1,6 @@
+#include <wx/wx.h>
 #include "App.h"
 #include "RemoteControlFrame.h"
-#include <wx/wx.h>
 
 wxIMPLEMENT_APP(App);
 

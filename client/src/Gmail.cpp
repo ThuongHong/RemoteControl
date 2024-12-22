@@ -133,10 +133,6 @@ void OAuth2Handler::saveAccessTokenToFile(const std::string &access_token)
 }
 
 // GmailReceiver implementation
-// GmailReceiver::GmailReceiver(const std::string &access_token)
-//     : m_access_token(access_token)
-// {
-// }
 
 void GmailReceiver::markAsRead(const std::string &message_id)
 {

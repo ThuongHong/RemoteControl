@@ -9,8 +9,8 @@ PanelLogin::PanelLogin(wxWindow *parent, wxString description, wxImage image, wx
 }
 void PanelLogin::Create(wxString description, wxImage image)
 {
-	Image = image.Scale(180, 180, wxIMAGE_QUALITY_HIGH);
-	roles = {"Sender", "Receiver"};
+	wxImage Image = image.Scale(180, 180, wxIMAGE_QUALITY_HIGH);
+	wxArrayString roles = {"Sender", "Receiver"};
 	TextTitle = new wxStaticText(this, wxID_ANY, "PC REMOTE CONTROL", wxDefaultPosition, wxSize(600, -1), wxALIGN_CENTER);
 	TextDescription = new wxStaticText(this, wxID_ANY, description);
 	TextMem1 = new wxStaticText(this, wxID_ANY, "Luu Thuong Hong - 23122006");
@@ -37,10 +37,10 @@ void PanelLogin::Set(wxFont headerFont, wxFont mainFont, wxBitmap bitmap)
 }
 void PanelLogin::CreateSizer()
 {
-	MainSizer = new wxBoxSizer(wxVERTICAL);
-	SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
-	SubSizer2 = new wxBoxSizer(wxHORIZONTAL);
-	SubSizer3 = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* MainSizer = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* SubSizer2 = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* SubSizer3 = new wxBoxSizer(wxVERTICAL);
 
 	SubSizer1->Add(Logo, 0, wxLEFT, 20);
 	SubSizer1->Add(ButtonLogin, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 35);
@@ -131,7 +131,7 @@ PanelRoles::PanelRoles(wxWindow *parent, wxString description, wxFont headerFont
 }
 void PanelRoles::Create(wxString description)
 {
-	roles = {"Sender", "Receiver"};
+	wxArrayString roles = {"Sender", "Receiver"};
 	TextTitle = new wxStaticText(this, wxID_ANY, "PC REMOTE CONTROL", wxDefaultPosition, wxSize(600, -1), wxALIGN_CENTER);
 	TextDescription = new wxStaticText(this, wxID_ANY, description);
 	TextMem1 = new wxStaticText(this, wxID_ANY, "Luu Thuong Hong - 23122006");
@@ -168,11 +168,11 @@ void PanelRoles::Set(wxFont headerFont, wxFont mainFont)
 }
 void PanelRoles::CreateSizer()
 {
-	MainSizer = new wxBoxSizer(wxVERTICAL);
-	SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
-	SubSizer2 = new wxBoxSizer(wxVERTICAL);
-	SubSizer3 = new wxBoxSizer(wxHORIZONTAL);
-	SubSizer4 = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* MainSizer = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* SubSizer2 = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* SubSizer3 = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* SubSizer4 = new wxBoxSizer(wxVERTICAL);
 
 	SubSizer2->Add(TextEmail, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 5);
 	SubSizer2->Add(InputFieldEmail, 0, wxEXPAND | wxBOTTOM, 5);
@@ -290,7 +290,8 @@ void PanelRoles::OnButtonClicked(wxPanel *desPanel1, wxPanel *desPanel2, std::st
 		{
 			wxMessageBox("IP or port incorrect!", "Error", wxOK | wxICON_ERROR);
 
-			// Stop timer first -------- CRITICAL
+			// -------- CRITICAL --------
+			// Stop timer first
 			if (client && client->m_checkMessageTimer)
 			{
 				client->m_checkMessageTimer->Stop();
@@ -400,7 +401,7 @@ void PanelSender::BindControl(PanelExplorer *panelExplorer, std::string &file_na
 }
 void PanelSender::Create(wxImage image)
 {
-	Image = image.Scale(120, 120, wxIMAGE_QUALITY_HIGH);
+	wxImage Image = image.Scale(120, 120, wxIMAGE_QUALITY_HIGH);
 	wxArrayString features = {"Application", "Service", "File", "Screen Capture", "Webcam", "Shutdown"};
 	wxArrayString optionsAppSvc = {"List", "Explore", "Start", "Stop"};
 	wxArrayString optionsLGD = {"List", "Explore", "Get", "Delete"};
@@ -438,10 +439,10 @@ void PanelSender::Set(wxFont headerFont, wxFont mainFont)
 }
 void PanelSender::CreateSizer()
 {
-	MainSizer = new wxBoxSizer(wxVERTICAL);
-	SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
-	SubSizer2 = new wxBoxSizer(wxHORIZONTAL);
-	SubSizer3 = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* MainSizer = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* SubSizer2 = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* SubSizer3 = new wxBoxSizer(wxVERTICAL);
 
 	SubSizer3->Add(ButtonConfirm, 0, wxTOP | wxBOTTOM | wxALIGN_CENTER_HORIZONTAL, 10);
 	SubSizer3->Add(OptionsAppSvc);
@@ -736,7 +737,6 @@ PanelReceiver::PanelReceiver(wxWindow *parent, wxImage image, wxFont headerFont,
 	parent_ = parent;
 	Create(image);
 	Set(headerFont, mainFont);
-	// CreateSizer(m_statusText);
 }
 void PanelReceiver::BindControl(wxScopedPtr<Client> &client)
 {
@@ -745,7 +745,7 @@ void PanelReceiver::BindControl(wxScopedPtr<Client> &client)
 }
 void PanelReceiver::Create(wxImage image)
 {
-	Image = image.Scale(120, 120, wxIMAGE_QUALITY_HIGH);
+	wxImage Image = image.Scale(120, 120, wxIMAGE_QUALITY_HIGH);
 	TextTitle = new wxStaticText(this, wxID_ANY, "ROLE: RECEIVER");
 	ButtonExit = new wxButton(this, wxID_ANY, "Exit");
 	ImageDisplay = new wxStaticBitmap(this, wxID_ANY, wxBitmap(Image));
@@ -757,8 +757,8 @@ void PanelReceiver::Set(wxFont headerFont, wxFont mainFont)
 }
 void PanelReceiver::CreateSizer(wxStaticText *m_statusText)
 {
-	MainSizer = new wxBoxSizer(wxVERTICAL);
-	SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* MainSizer = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* SubSizer1 = new wxBoxSizer(wxHORIZONTAL);
 
 	SubSizer1->AddSpacer(30);
 	SubSizer1->Add(TextTitle, 0, wxTOP, 25);
@@ -830,15 +830,15 @@ void PanelExplorer::ReconstructTable(int format)
 		ButtonAction->SetLabel("Stop");
 		break;
 	case 2:
-		table->InsertColumn(0, "File name", wxLIST_FORMAT_LEFT, 300);
+		table->InsertColumn(0, "File name", wxLIST_FORMAT_LEFT, 550);
 		ButtonAction->SetLabel("Delete");
 		break;
 	}
 }
 void PanelExplorer::CreateSizer()
 {
-	MainSizer = new wxBoxSizer(wxVERTICAL);
-	SubSizer = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* MainSizer = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* SubSizer = new wxBoxSizer(wxHORIZONTAL);
 
 	SubSizer->Add(ButtonAction, 0, wxALL, 10);
 	SubSizer->Add(ButtonReturn, 0, wxALL, 10);
@@ -880,7 +880,7 @@ bool PanelExplorer::PopulateTableFromFile(const std::wstring &filePath, int form
 			{
 				// Extract PID and Name
 				std::string pid = line.substr(pidPos + 5, namePos - pidPos - 7);
-				if (pid == "0")
+				if (pid == "0") // Skip services with PID = 0
 					continue;
 				std::string name = line.substr(namePos + 5);
 

@@ -142,19 +142,19 @@ bool ServerHandler::sendFile(SOCKET clientSocket, const std::wstring &filename)
     const int retryDelay = 1000;
     const size_t chunkSize = 8192;
 
-    while (retryCount < maxRetries)
-    {
-        int ackReceived = recv(clientSocket, ack, sizeof(ack), 0);
-        if (ackReceived > 0 && std::string(ack, ackReceived) == "ACK")
-            break;
-        Sleep(retryDelay);
-        if (++retryCount >= maxRetries)
-        {
-            std::cerr << "Failed to receive initial acknowledgment" << std::endl;
-            file.close();
-            return false;
-        }
-    }
+    // while (retryCount < maxRetries)
+    // {
+    //     int ackReceived = recv(clientSocket, ack, sizeof(ack), 0);
+    //     if (ackReceived > 0 && std::string(ack, ackReceived) == "ACK")
+    //         break;
+    //     Sleep(retryDelay);
+    //     if (++retryCount >= maxRetries)
+    //     {
+    //         std::cerr << "Failed to receive initial acknowledgment" << std::endl;
+    //         file.close();
+    //         return false;
+    //     }
+    // }
 
     // Send file in chunks
     std::vector<char> buffer(chunkSize);
@@ -178,13 +178,13 @@ bool ServerHandler::sendFile(SOCKET clientSocket, const std::wstring &filename)
 
         totalSent += bytesSent;
 
-        // Wait for chunk acknowledgment
-        if (recv(clientSocket, ack, sizeof(ack), 0) <= 0)
-        {
-            std::cerr << "Failed to receive chunk acknowledgment" << std::endl;
-            file.close();
-            return false;
-        }
+        // // Wait for chunk acknowledgment
+        // if (recv(clientSocket, ack, sizeof(ack), 0) <= 0)
+        // {
+        //     std::cerr << "Failed to receive chunk acknowledgment" << std::endl;
+        //     file.close();
+        //     return false;
+        // }
 
         // Show progress
         int percentComplete = static_cast<int>((totalSent * 100) / fileSize);

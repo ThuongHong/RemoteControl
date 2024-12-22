@@ -84,10 +84,27 @@ void Client::updateStatus(const wxString &message, wxStaticText *m_statusText)
 
 bool Client::openFile(const std::wstring &filename)
 {
-    HINSTANCE result = ShellExecute(NULL, L"open", filename.c_str(), NULL, NULL, SW_SHOWNORMAL);
+    // Get executable directory
+    wchar_t exePath[MAX_PATH];
+    GetModuleFileNameW(NULL, exePath, MAX_PATH);
+    std::wstring exeDir = std::wstring(exePath);
+    exeDir = exeDir.substr(0, exeDir.find_last_of(L"\\/"));
+
+    // Build full path
+    std::wstring fullPath = exeDir + L"\\received\\" + filename;
+
+    // Check if file exists
+    if (!std::filesystem::exists(fullPath))
+    {
+        std::wcerr << L"File does not exist: " << fullPath << std::endl;
+        return false;
+    }
+
+    // Open file with full path
+    HINSTANCE result = ShellExecute(NULL, L"open", fullPath.c_str(), NULL, NULL, SW_SHOWNORMAL);
     if ((int)result <= 32)
     {
-        std::cerr << "Failed to open file: " << std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(filename) << std::endl;
+        std::wcerr << L"Failed to open file: " << fullPath << std::endl;
         return false;
     }
     return true;

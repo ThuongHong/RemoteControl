@@ -223,6 +223,7 @@ int main()
             if (!server.recordWebcam())
             {
                 std::cerr << "Failed to record webcam" << std::endl;
+                server.sendMessage(clientSocket, "Record failed");
             }
             else
             {
@@ -239,6 +240,7 @@ int main()
             if (!server.takeWebcamShot())
             {
                 std::cerr << "Failed to capture webcam shot" << std::endl;
+                server.sendMessage(clientSocket, "Capture failed");
             }
             else
             {

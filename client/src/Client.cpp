@@ -188,6 +188,11 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
             {
                 openFile(imageFilename);
             }
+            else
+            {
+                std::cerr << "Failed to receive image file." << std::endl;
+                return false;
+            }
         }
         else if (messageContent.substr(0, 6) == "remove")
         {

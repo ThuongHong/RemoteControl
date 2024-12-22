@@ -17,7 +17,6 @@ public:
                                         std::string &access_token,
                                         std::string &refresh_token);
     static void saveAccessTokenToFile(const std::string &access_token);
-    // bool refreshAccessToken(const std::string& refresh_token, std::string& new_access_token);
 
 private:
     std::string m_client_id;
@@ -28,7 +27,6 @@ private:
 class GmailReceiver
 {
 public:
-    // explicit GmailReceiver(const std::string &access_token);
     void setAccessToken(const std::string &access_token) { m_access_token = access_token; }
     void markAsRead(const std::string &message_id);
     std::string getMessageContent(const std::string &message_id);
@@ -42,7 +40,6 @@ private:
 class GmailSender
 {
 public:
-    // explicit GmailSender(const std::string &access_token);
     void setAccessToken(const std::string &access_token) { m_access_token = access_token; }
     void setTo(const std::string &to) { m_to = to; }
     void setSubject(const std::string &subject) { m_subject = subject; }

@@ -172,10 +172,6 @@ void GmailReceiver::markAsRead(const std::string &message_id)
     {
         std::cerr << "CURL error: " << curl_easy_strerror(res) << std::endl;
     }
-    else
-    {
-        std::cout << "Marked message as read: " << message_id << std::endl;
-    }
 }
 
 std::string base64url_decode(const std::string &input)
@@ -194,72 +190,6 @@ std::string base64url_decode(const std::string &input)
     }
     return base64_decode(base64);
 }
-
-// std::string GmailReceiver::getMessageContent(const std::string &message_id)
-// {
-//     CURL *curl = curl_easy_init();
-//     if (!curl)
-//     {
-//         std::cerr << "Failed to initialize CURL" << std::endl;
-//         return "";
-//     }
-
-//     std::string url = "https://gmail.googleapis.com/gmail/v1/users/me/messages/" + message_id;
-//     std::string response;
-//     struct curl_slist *headers = NULL;
-//     std::string auth_header = "Authorization: Bearer " + m_access_token;
-//     headers = curl_slist_append(headers, auth_header.c_str());
-
-//     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-//     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-//     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-//     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-//     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L); // Disable SSL verification
-//     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L); // Disable SSL verification
-
-//     CURLcode res = curl_easy_perform(curl);
-//     curl_slist_free_all(headers);
-//     curl_easy_cleanup(curl);
-
-//     if (res != CURLE_OK)
-//     {
-//         std::cerr << "CURL error: " << curl_easy_strerror(res) << std::endl;
-//         return "";
-//     }
-
-//     json json_response;
-//     try
-//     {
-//         json_response = json::parse(response);
-//     }
-//     catch (const json::parse_error &e)
-//     {
-//         std::cerr << "JSON parse error: " << e.what() << std::endl;
-//         return "";
-//     }
-
-//     std::string message_content;
-//     if (json_response.contains("payload") && json_response["payload"].contains("parts"))
-//     {
-//         for (const auto &part : json_response["payload"]["parts"])
-//         {
-//             if (part.contains("mimeType") && part["mimeType"] == "text/plain" && part.contains("body") && part["body"].contains("data"))
-//             {
-//                 std::string encoded_content = part["body"]["data"];
-//                 message_content = base64url_decode(encoded_content);
-//                 break;
-//             }
-//         }
-//     }
-//     else
-//     {
-//         std::cerr << "No message content found in the response." << std::endl;
-//     }
-
-//     markAsRead(message_id);
-
-//     return message_content;
-// }
 
 std::string GmailReceiver::getMessageContent(const std::string &message_id)
 {
@@ -469,10 +399,6 @@ std::vector<std::string> GmailReceiver::getUnreadMessageContentsFromSender(const
 }
 
 // GmailSender implementation
-// GmailSender::GmailSender(const std::string &access_token)
-//     : m_access_token(access_token)
-// {
-// }
 
 std::string GmailSender::createMimeMessage() const
 {

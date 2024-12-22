@@ -226,7 +226,7 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         {
             if (!receiveFile(L"services_list.txt"))
             {
-                std::cout << "Failed to receive apps list" << std::endl;
+                std::cout << "Failed to receive services list" << std::endl;
             }
         }
         else if (messageContent.substr(0, 3) == "end")

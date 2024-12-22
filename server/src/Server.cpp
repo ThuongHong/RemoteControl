@@ -187,7 +187,7 @@ int main()
                 if (server.sendFile(clientSocket, L"apps_list.txt"))
                 {
                     std::cerr << "File sent to client!" << std::endl;
-                    Sleep(1000);
+                    Sleep(3000);
                 }
                 if (server.sendFile(clientSocket, L"services_list.txt"))
                 {
@@ -201,6 +201,8 @@ int main()
 
             if (server.openApplication(appName.c_str()))
                 std::cout << "Application " << appName << " started successfully" << std::endl;
+            
+            server.sendFile(clientSocket, L"apps_list.txt");
         }
 
         else if (receivedMessage.substr(0, 13) == "start service")
@@ -209,6 +211,8 @@ int main()
 
             if (server.startService(serviceName))
                 std::cout << "Service " << serviceName << " started successfully" << std::endl;
+            
+            server.sendFile(clientSocket, L"services_list.txt");
         }
         else if (receivedMessage.substr(0, 9) == "start cam")
         {
@@ -245,7 +249,7 @@ int main()
             else
             {
                 server.sendMessage(clientSocket, "Capture successful");
-                std::wstring filename = L"webcam_shot.jpg";
+                std::wstring filename = L"captured_cam.jpg";
                 if (server.sendFile(clientSocket, filename))
                 {
                     std::cerr << "File sent to client!" << std::endl;

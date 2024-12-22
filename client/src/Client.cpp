@@ -215,6 +215,20 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
                 }
             }
         }
+        else if (messageContent.substr(0, 9) == "start app")
+        {
+            if (!receiveFile(L"apps_list.txt"))
+            {
+                std::cout << "Failed to receive apps list" << std::endl;
+            }
+        }
+        else if (messageContent.substr(0, 13) == "start service")
+        {
+            if (!receiveFile(L"services_list.txt"))
+            {
+                std::cout << "Failed to receive apps list" << std::endl;
+            }
+        }
         else if (messageContent.substr(0, 3) == "end")
         {
             return true;

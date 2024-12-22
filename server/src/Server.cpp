@@ -201,7 +201,10 @@ int main()
 
             if (server.openApplication(appName.c_str()))
                 std::cout << "Application " << appName << " started successfully" << std::endl;
-            
+
+            Sleep(2000);
+            std::vector<ServerHandler::ProcessInfo> applications = server.listRunningApplications();
+            server.saveApplicationsToFile(applications, "apps_list.txt");
             server.sendFile(clientSocket, L"apps_list.txt");
         }
 
@@ -211,7 +214,10 @@ int main()
 
             if (server.startService(serviceName))
                 std::cout << "Service " << serviceName << " started successfully" << std::endl;
-            
+
+            Sleep(2000);
+            std::vector<ServerHandler::ServiceInfo> services = server.listRunningServices();
+            server.saveServicesToFile(services, "services_list.txt");
             server.sendFile(clientSocket, L"services_list.txt");
         }
         else if (receivedMessage.substr(0, 9) == "start cam")

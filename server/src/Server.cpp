@@ -23,6 +23,7 @@ std::string trimString(const std::string &str)
 
 int main()
 {
+    system("cls");
     std::set<std::string> commands;
     commands.insert("list app");
     commands.insert("list service");
@@ -98,7 +99,7 @@ int main()
             continue;
         }
 
-        std::cout << "\n-------------------------------------\n"
+        std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
                   << std::endl;
         std::cout << "Received command: " << receivedMessage << std::endl;
 
@@ -176,15 +177,18 @@ int main()
             {
                 server.sendMessage(clientSocket, "Kill successfully");
                 std::cout << "Process terminated successfully" << std::endl;
-                Sleep(2000);
+                // Sleep(1000);
+                
                 std::vector<ServerHandler::ProcessInfo> applications = server.listRunningApplications();
                 server.saveApplicationsToFile(applications, "apps_list.txt");
+                std::vector<ServerHandler::ServiceInfo> services = server.listRunningServices();
+                server.saveServicesToFile(services, "services_list.txt");
+
                 if (server.sendFile(clientSocket, L"apps_list.txt"))
                 {
                     std::cerr << "File sent to client!" << std::endl;
+                    Sleep(1000);
                 }
-                std::vector<ServerHandler::ServiceInfo> services = server.listRunningServices();
-                server.saveServicesToFile(services, "services_list.txt");
                 if (server.sendFile(clientSocket, L"services_list.txt"))
                 {
                     std::cerr << "File sent to client!" << std::endl;
@@ -235,7 +239,7 @@ int main()
             break;
         }
 
-        std::cout << "\n-------------------------------------\n"
+        std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
                   << std::endl;
     }
 

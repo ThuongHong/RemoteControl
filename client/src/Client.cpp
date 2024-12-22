@@ -215,10 +215,27 @@ bool Client::connectToServer(const char *ipAddress, int port)
 
 bool Client::receiveFile(const std::wstring &filename)
 {
-    std::ofstream file(filename, std::ios::binary);
+    // Get executable directory
+    wchar_t exePath[MAX_PATH];
+    GetModuleFileNameW(NULL, exePath, MAX_PATH);
+    std::wstring exeDir = std::wstring(exePath);
+    exeDir = exeDir.substr(0, exeDir.find_last_of(L"\\/"));
+
+    // Create received files directory
+    std::wstring dirPath = exeDir + L"\\received";
+    if (!std::filesystem::exists(dirPath))
+    {
+        std::filesystem::create_directory(dirPath);
+    }
+
+    // Build full path for saving
+    std::wstring fullPath = dirPath + L"\\" + filename;
+
+    // Open file with full path
+    std::ofstream file(fullPath, std::ios::binary);
     if (!file.is_open())
     {
-        std::cerr << "Failed to open file: " << std::string(filename.begin(), filename.end()) << std::endl;
+        std::wcerr << L"Failed to open file: " << fullPath << std::endl;
         return false;
     }
 

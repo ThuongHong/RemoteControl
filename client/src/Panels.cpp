@@ -591,7 +591,7 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer *panelExplorer, std::stri
 		{
 			// explore app
 			panelExplorer->ReconstructTable(0);
-			if (panelExplorer->PopulateTableFromFile("apps_list.txt", 0))
+			if (panelExplorer->PopulateTableFromFile("received\\apps_list.txt", 0))
 			{
 				this->Hide();
 				panelExplorer->Show();
@@ -623,7 +623,7 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer *panelExplorer, std::stri
 		{
 			// explore service
 			panelExplorer->ReconstructTable(1);
-			if (panelExplorer->PopulateTableFromFile("services_list.txt", 1))
+			if (panelExplorer->PopulateTableFromFile("received\\services_list.txt", 1))
 			{
 				this->Hide();
 				panelExplorer->Show();
@@ -655,7 +655,7 @@ void PanelSender::OnButtonConfirmClicked(PanelExplorer *panelExplorer, std::stri
 		{
 			// explore file
 			panelExplorer->ReconstructTable(2);
-			if (panelExplorer->PopulateTableFromFile("files_list.txt", 2))
+			if (panelExplorer->PopulateTableFromFile("received\\files_list.txt", 2))
 			{
 				this->Hide();
 				panelExplorer->Show();

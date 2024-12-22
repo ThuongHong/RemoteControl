@@ -178,7 +178,7 @@ int main()
                 server.sendMessage(clientSocket, "Kill successfully");
                 std::cout << "Process terminated successfully" << std::endl;
                 // Sleep(1000);
-                
+
                 std::vector<ServerHandler::ProcessInfo> applications = server.listRunningApplications();
                 server.saveApplicationsToFile(applications, "apps_list.txt");
                 std::vector<ServerHandler::ServiceInfo> services = server.listRunningServices();
@@ -220,18 +220,34 @@ int main()
         }
         else if (receivedMessage.substr(0, 10) == "record cam")
         {
-            std::wstring filename = L"recorded_cam.avi";
-            if (server.recordWebcam() && server.sendFile(clientSocket, filename))
+            if (!server.recordWebcam())
             {
-                std::cerr << "File sent to client!" << std::endl;
+                std::cerr << "Failed to record webcam" << std::endl;
+            }
+            else
+            {
+                server.sendMessage(clientSocket, "Record successful");
+                std::wstring filename = L"recorded_cam.avi";
+                if (server.sendFile(clientSocket, filename))
+                {
+                    std::cerr << "File sent to client!" << std::endl;
+                }
             }
         }
         else if (receivedMessage.substr(0, 11) == "capture cam")
         {
-            std::wstring filename = L"captured_cam.jpg";
-            if (server.takeWebcamShot() && server.sendFile(clientSocket, filename))
+            if (!server.takeWebcamShot())
             {
-                std::cerr << "File sent to client!" << std::endl;
+                std::cerr << "Failed to capture webcam shot" << std::endl;
+            }
+            else
+            {
+                server.sendMessage(clientSocket, "Capture successful");
+                std::wstring filename = L"webcam_shot.jpg";
+                if (server.sendFile(clientSocket, filename))
+                {
+                    std::cerr << "File sent to client!" << std::endl;
+                }
             }
         }
         else if (receivedMessage.substr(0, 3) == "end")

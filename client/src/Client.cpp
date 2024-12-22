@@ -159,7 +159,12 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         }
         else if (messageContent.substr(0, 10) == "record cam")
         {
-            Sleep(6000);
+            Sleep(3000);
+            if (receiveMessage() != "Record successful")
+            {
+                std::cerr << "Failed to record webcam." << std::endl;
+                return false;
+            }
             std::wstring videoFilename = L"recorded_webcam.avi";
             if (receiveFile(videoFilename))
             {
@@ -173,6 +178,11 @@ bool Client::processMessage(const std::string &messageContent, wxStaticText *m_s
         }
         else if (messageContent.substr(0, 11) == "capture cam")
         {
+            if (receiveMessage() != "Capture successful")
+            {
+                std::cerr << "Failed to capture webcam." << std::endl;
+                return false;
+            }
             std::wstring imageFilename = L"captured_webcam.jpg";
             if (receiveFile(imageFilename))
             {

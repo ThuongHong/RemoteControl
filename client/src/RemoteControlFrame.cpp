@@ -10,6 +10,17 @@ RemoteControlFrame::RemoteControlFrame(const wxString &title) : wxFrame(nullptr,
 	wxFont headerFont(35, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Impact"); // Unispace, Impact
 	wxFont mainFont(11, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
 	wxFont processFont(28, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Impact");
+
+	// Get executable path
+	wchar_t exePath[MAX_PATH];
+	GetModuleFileNameW(NULL, exePath, MAX_PATH);
+	std::wstring exeDir = std::wstring(exePath);
+	exeDir = exeDir.substr(0, exeDir.find_last_of(L"\\/"));
+
+	// Load images with full path and error checking
+	wxString hcmusPath = wxString(exeDir) + "\\assets\\HCMUS.png";
+	wxString iconPath = wxString(exeDir) + "\\assets\\google_icon.png";
+
 	wxImage image("assets\\HCMUS.png", wxBITMAP_TYPE_PNG);
 	wxImage icon("assets\\google_icon.png", wxBITMAP_TYPE_PNG);
 	icon = icon.Scale(50, 50, wxIMAGE_QUALITY_HIGH);
@@ -44,7 +55,7 @@ RemoteControlFrame::RemoteControlFrame(const wxString &title) : wxFrame(nullptr,
 	panelReceiver->CreateSizer(m_statusText);
 
 	// Create Sizer
-	wxBoxSizer* sizerMain = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer *sizerMain = new wxBoxSizer(wxVERTICAL);
 	sizerMain->Add(panelLogin, 1, wxEXPAND);
 	sizerMain->Add(panelRoles, 1, wxEXPAND);
 	sizerMain->Add(panelSender, 1, wxEXPAND);

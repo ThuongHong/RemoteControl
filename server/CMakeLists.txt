@@ -68,7 +68,7 @@ install(TARGETS ${PROJECT_NAME}
 
 if(OpenCV_FOUND)
     install(FILES 
-        "${OpenCV_DIR}/../bin/opencv_world4100.dll"
+        "${OpenCV_DIR}/x64/vc16/bin/opencv_world4100.dll"
         DESTINATION bin
     )
 endif()

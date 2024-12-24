@@ -58,7 +58,7 @@ git clone https://github.com/curl/curl.git
     * Select **Release** configuration.
     * Locate the **INSTALL** project in the **Solution Explorer**.
     * Right-click on **INSTALL** and select **Build**.
-    * Repeat the above steps for the **Debug** configuration.
+    * *Optional*: Repeat the above steps for the **Debug** configuration.
 
 #### OpenSSL:
 * Download **Win64 OpenSSL** MSI file from [Shining Line Productions](https://slproweb.com/products/Win32OpenSSL.html).

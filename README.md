@@ -17,6 +17,7 @@
 ## 1. Prerequisites
 * **C++20**
 * **CMake 3.24** or later
+* **Visual Studio 2022**
 
 **Libraries for Client:**
 * curl
@@ -57,17 +58,16 @@ git clone https://github.com/curl/curl.git
     * Select **Release** configuration.
     * Locate the **INSTALL** project in the **Solution Explorer**.
     * Right-click on **INSTALL** and select **Build**.
-    * Repeat the above steps for the **Debug** configuration.
+    * *Optional*: Repeat the above steps for the **Debug** configuration.
 
 #### OpenSSL:
 * Download **Win64 OpenSSL** MSI file from [Shining Line Productions](https://slproweb.com/products/Win32OpenSSL.html).
-* Extract the folder and place it in the `/lib`.
+* Extract the folder and place it in the `/lib`, set its name as **OpenSSL**.
 
 #### wxWidgets
 * Download wxWidgets ZIP from [wxWidgets Downloads](https://www.wxwidgets.org/downloads/).
-
-
-* Unzip the folder and place it in the ```/lib```
+* Unzip the folder and place it in the ```/lib```, set its name as **wxWidgets**.
+* Open ```wxWidgets/build/msw/wx_vc17.sln```, choose **Release** configure then build the solution.
 
 ### Server setup
 #### OpenCV

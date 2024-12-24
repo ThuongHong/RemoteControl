@@ -38,8 +38,8 @@ set(BUILD_SHARED_LIBS OFF)
 # Dependencies paths
 set(DEPS_ROOT "${CMAKE_SOURCE_DIR}/lib")
 set(CURL_ROOT "${DEPS_ROOT}/curl")
-set(OPENSSL_ROOT "${DEPS_ROOT}/OpenSSL-Win64")
-set(WX_ROOT "${DEPS_ROOT}/WxWidget")
+set(OPENSSL_ROOT "${DEPS_ROOT}/OpenSSL")
+set(WX_ROOT "${DEPS_ROOT}/WxWidgets")
 
 # Configure cURL
 set(CURL_INCLUDE_DIR "${CURL_ROOT}/install/include")

@@ -21,8 +21,9 @@ RemoteControlFrame::RemoteControlFrame(const wxString &title) : wxFrame(nullptr,
 	wxString hcmusPath = wxString(exeDir) + "\\assets\\HCMUS.png";
 	wxString iconPath = wxString(exeDir) + "\\assets\\google_icon.png";
 
-	wxImage image("assets\\HCMUS.png", wxBITMAP_TYPE_PNG);
-	wxImage icon("assets\\google_icon.png", wxBITMAP_TYPE_PNG);
+	wxImage image(hcmusPath, wxBITMAP_TYPE_PNG);
+	wxImage icon(iconPath, wxBITMAP_TYPE_PNG);
+
 	icon = icon.Scale(50, 50, wxIMAGE_QUALITY_HIGH);
 	wxBitmap bitmap(icon);
 
